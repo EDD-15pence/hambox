@@ -24,6 +24,13 @@
       <text class="tool-desc">记录你的打卡时间</text>
     </view>
 
+    <!-- 智能仓储工具卡片 -->
+    <view class="tool-card" bindtap="navigateToTool" data-tool="storage">
+      <view class="tool-icon">📦</view>
+      <text class="tool-name">智能仓储</text>
+      <text class="tool-desc">管理物品保质期与库存</text>
+    </view>
+
     <!-- Prompt模板工具卡片 -->
     <view class="tool-card" bindtap="navigateToTool" data-tool="prompt">
       <view class="tool-icon">📝</view>

@@ -3,6 +3,9 @@
   "pages/index/index",
   "pages/relationship/relationship",
   "pages/punchin/punchin",
+  "pages/storage/list/list",
+  "pages/storage/detail/detail",
+  "pages/storage/edit/edit",
   "pages/prompt/index/index",
   "pages/prompt/detail/index"
   ],

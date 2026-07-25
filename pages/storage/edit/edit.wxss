@@ -1,0 +1,347 @@
+/* ============================== */
+/* 智能仓储 - 添加/编辑页样式     */
+/* ============================== */
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  background: #ffffff;
+  color: #000000;
+}
+
+/* ---------- 导航栏 ---------- */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 24rpx;
+  background: #ffffff;
+  border-bottom: 1rpx solid #f0f0f0;
+  flex-shrink: 0;
+}
+.nav-back {
+  font-size: 28rpx;
+  color: #007aff;
+  min-width: 120rpx;
+}
+.navbar-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #000000;
+}
+.nav-spacer {
+  min-width: 120rpx;
+}
+
+/* ---------- 表单滚动区 ---------- */
+.form-scroll {
+  flex: 1;
+  padding: 24rpx;
+}
+.form-item {
+  margin-bottom: 32rpx;
+}
+.form-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #000000;
+  display: block;
+  margin-bottom: 12rpx;
+}
+.required {
+  color: #e53935;
+}
+.form-input {
+  width: 100%;
+  height: 80rpx;
+  padding: 0 20rpx;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  color: #000000;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+.input-placeholder {
+  color: #bbbbbb;
+}
+.form-textarea {
+  width: 100%;
+  min-height: 120rpx;
+  padding: 16rpx 20rpx;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  color: #000000;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+/* ---------- Picker 显示 ---------- */
+.picker-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 80rpx;
+  padding: 0 20rpx;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 12rpx;
+  background: #ffffff;
+}
+.picker-text {
+  font-size: 28rpx;
+  color: #000000;
+}
+.picker-placeholder {
+  font-size: 28rpx;
+  color: #bbbbbb;
+}
+.picker-arrow {
+  font-size: 32rpx;
+  color: #cccccc;
+}
+
+/* ---------- 数量 + 单位 ---------- */
+.qty-row {
+  display: flex;
+  gap: 16rpx;
+}
+.qty-input {
+  flex: 1;
+}
+.unit-picker {
+  width: 160rpx;
+  flex-shrink: 0;
+}
+
+/* ---------- 保质期模式切换 ---------- */
+.expiry-mode-row {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+.expiry-mode-option {
+  flex: 1;
+  text-align: center;
+  padding: 18rpx 0;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 10rpx;
+  font-size: 26rpx;
+  color: #888888;
+  background: #fafafa;
+  transition: all 0.2s ease;
+}
+.expiry-mode-option.active {
+  border-color: #007aff;
+  background: #eef5ff;
+  color: #007aff;
+  font-weight: 600;
+}
+.expiry-sub {
+  padding: 0;
+}
+
+/* 按月计算 */
+.months-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.months-input {
+  flex: 1;
+}
+.months-label {
+  font-size: 28rpx;
+  color: #888888;
+  flex-shrink: 0;
+}
+.calculated-hint {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 12rpx;
+  padding: 16rpx;
+  background: #f5f5f5;
+  border-radius: 10rpx;
+  font-size: 26rpx;
+  color: #555555;
+}
+.calc-status {
+  font-size: 24rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 20rpx;
+  font-weight: 500;
+}
+.calc-fresh {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+.calc-warning {
+  background: #fff3e0;
+  color: #e65100;
+}
+.calc-expired {
+  background: #fce4ec;
+  color: #c62828;
+}
+
+/* ---------- 照片 ---------- */
+.photo-area {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+.preview-image {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 12rpx;
+  border: 2rpx solid #e0e0e0;
+}
+.photo-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 160rpx;
+  height: 160rpx;
+  border: 2rpx dashed #cccccc;
+  border-radius: 12rpx;
+  background: #fafafa;
+  padding: 0;
+  gap: 8rpx;
+}
+.photo-btn::after {
+  border: none;
+}
+.photo-btn-icon {
+  font-size: 48rpx;
+}
+.photo-btn-text {
+  font-size: 22rpx;
+  color: #888888;
+}
+
+/* ---------- 操作按钮 ---------- */
+.form-actions {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 40rpx;
+}
+.btn-cancel {
+  flex: 1;
+  padding: 24rpx 0;
+  border-radius: 12rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+  border: none;
+  background: #f2f2f2;
+  color: #333333;
+}
+.btn-cancel::after {
+  border: none;
+}
+.btn-save {
+  flex: 1;
+  padding: 24rpx 0;
+  border-radius: 12rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+  border: none;
+  background: #007aff;
+  color: #ffffff;
+}
+.btn-save::after {
+  border: none;
+}
+
+/* ---------- 删除按钮（编辑模式） ---------- */
+.delete-section {
+  margin-top: 32rpx;
+  text-align: center;
+}
+.btn-delete {
+  background: transparent;
+  border: none;
+  font-size: 28rpx;
+  color: #e53935;
+  padding: 20rpx 0;
+}
+.btn-delete::after {
+  border: none;
+}
+
+.form-bottom-spacer {
+  height: 60rpx;
+}
+
+/* ============================== */
+/* 暗黑模式                        */
+/* ============================== */
+.container.dark {
+  background: #121212;
+}
+.container.dark .navbar {
+  background: #1c1c1c;
+  border-bottom-color: #2a2a2a;
+}
+.container.dark .navbar-title {
+  color: #eaeaea;
+}
+.container.dark .form-label {
+  color: #eaeaea;
+}
+.container.dark .form-input,
+.container.dark .form-textarea {
+  background: #1a1a1a;
+  border-color: #444444;
+  color: #eaeaea;
+}
+.container.dark .picker-display {
+  background: #1a1a1a;
+  border-color: #444444;
+}
+.container.dark .picker-text {
+  color: #eaeaea;
+}
+.container.dark .picker-placeholder {
+  color: #777777;
+}
+.container.dark .expiry-mode-option {
+  background: #1a1a1a;
+  border-color: #444444;
+  color: #999999;
+}
+.container.dark .expiry-mode-option.active {
+  border-color: #007aff;
+  background: #1a2a3a;
+  color: #007aff;
+}
+.container.dark .calculated-hint {
+  background: #1a1a1a;
+  color: #cccccc;
+}
+.container.dark .calc-fresh {
+  background: #1b5e20;
+  color: #a5d6a7;
+}
+.container.dark .calc-warning {
+  background: #3e2723;
+  color: #ffb74d;
+}
+.container.dark .calc-expired {
+  background: #4a1c1c;
+  color: #ef9a9a;
+}
+.container.dark .photo-btn {
+  background: #1a1a1a;
+  border-color: #444444;
+}
+.container.dark .btn-cancel {
+  background: #3a3a3a;
+  color: #eaeaea;
+}
+.container.dark .btn-delete {
+  color: #ef5350;
+}

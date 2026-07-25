@@ -22,6 +22,7 @@
     const toolMap = {
       relationship: '/pages/relationship/relationship',
       punchin: '/pages/punchin/punchin',
+      storage: '/pages/storage/list/list',
       prompt: '/pages/prompt/index/index'
     };
 

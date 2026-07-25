@@ -1,0 +1,161 @@
+<view class="container {{isDark ? 'dark' : ''}}">
+  <!-- 顶部导航栏 -->
+  <view class="navbar">
+    <text class="nav-back" bindtap="onBack">← 返回</text>
+    <text class="navbar-title">{{isEdit ? '编辑物品' : '添加物品'}}</text>
+    <view class="nav-spacer"></view>
+  </view>
+
+  <!-- 表单滚动区 -->
+  <scroll-view class="form-scroll" scroll-y>
+    <!-- 名称 -->
+    <view class="form-item">
+      <text class="form-label">物品名称 <text class="required">*</text></text>
+      <input class="form-input"
+        placeholder="例如：可口可乐 330ml"
+        placeholder-class="input-placeholder"
+        value="{{item.name}}"
+        bindinput="onFieldInput"
+        data-field="name"
+        maxlength="30" />
+    </view>
+
+    <!-- 分类 -->
+    <view class="form-item">
+      <text class="form-label">分类 <text class="required">*</text></text>
+      <picker mode="selector" range="{{categoryNames}}" bindchange="onCategoryChange">
+        <view class="picker-display">
+          <text wx:if="{{selectedCategoryName}}" class="picker-text">{{selectedCategoryName}}</text>
+          <text wx:else class="picker-placeholder">请选择分类</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 数量 + 单位 -->
+    <view class="form-item">
+      <text class="form-label">数量</text>
+      <view class="qty-row">
+        <input class="form-input qty-input"
+          type="number"
+          placeholder="数量"
+          placeholder-class="input-placeholder"
+          value="{{item.quantity}}"
+          bindinput="onFieldInput"
+          data-field="quantity" />
+        <picker mode="selector" range="{{presetUnits}}" bindchange="onUnitChange">
+          <view class="picker-display unit-picker">
+            <text class="picker-text">{{item.unit || '单位'}}</text>
+            <text class="picker-arrow">›</text>
+          </view>
+        </picker>
+      </view>
+    </view>
+
+    <!-- 存放位置 -->
+    <view class="form-item">
+      <text class="form-label">存放位置</text>
+      <input class="form-input"
+        placeholder="例如：厨房上层橱柜"
+        placeholder-class="input-placeholder"
+        value="{{item.location}}"
+        bindinput="onFieldInput"
+        data-field="location"
+        maxlength="50" />
+    </view>
+
+    <!-- 生产日期 -->
+    <view class="form-item">
+      <text class="form-label">生产日期</text>
+      <picker mode="date" bindchange="onProduceDateChange" value="{{item.produceDate}}">
+        <view class="picker-display">
+          <text wx:if="{{item.produceDate}}" class="picker-text">{{item.produceDate}}</text>
+          <text wx:else class="picker-placeholder">选择日期</text>
+          <text class="picker-arrow">📅</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 保质期 -->
+    <view class="form-item">
+      <text class="form-label">保质期</text>
+      <view class="expiry-mode-row">
+        <view class="expiry-mode-option {{expiryMode === 'date' ? 'active' : ''}}"
+          bindtap="onSelectExpiryMode" data-mode="date">
+          <text>直接选日期</text>
+        </view>
+        <view class="expiry-mode-option {{expiryMode === 'months' ? 'active' : ''}}"
+          bindtap="onSelectExpiryMode" data-mode="months">
+          <text>按月计算</text>
+        </view>
+      </view>
+
+      <!-- 直接选日期 -->
+      <view wx:if="{{expiryMode === 'date'}}" class="expiry-sub">
+        <picker mode="date" bindchange="onExpireDateChange" value="{{item.expireDate}}">
+          <view class="picker-display">
+            <text wx:if="{{item.expireDate}}" class="picker-text">{{item.expireDate}}</text>
+            <text wx:else class="picker-placeholder">选择过期日期</text>
+            <text class="picker-arrow">📅</text>
+          </view>
+        </picker>
+      </view>
+
+      <!-- 按月计算 -->
+      <view wx:if="{{expiryMode === 'months'}}" class="expiry-sub">
+        <view class="months-row">
+          <input class="form-input months-input"
+            type="digit"
+            placeholder="输入月数"
+            placeholder-class="input-placeholder"
+            value="{{expiryMonths}}"
+            bindinput="onMonthsInput" />
+          <text class="months-label">个月</text>
+        </view>
+        <view wx:if="{{calculatedExpire}}" class="calculated-hint">
+          <text>预计过期日：{{calculatedExpire}}</text>
+          <text wx:if="{{calculatedStatusText}}" class="calc-status calc-{{calculatedStatus}}">{{calculatedStatusText}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 备注 -->
+    <view class="form-item">
+      <text class="form-label">备注</text>
+      <textarea class="form-textarea"
+        placeholder="添加备注信息..."
+        placeholder-class="input-placeholder"
+        value="{{item.note}}"
+        bindinput="onFieldInput"
+        data-field="note"
+        maxlength="200"
+        auto-height />
+    </view>
+
+    <!-- 照片 -->
+    <view class="form-item">
+      <text class="form-label">照片</text>
+      <view class="photo-area">
+        <image wx:if="{{item.image}}" class="preview-image" src="{{item.image}}" mode="aspectFill" bindtap="onChoosePhoto" />
+        <button class="photo-btn" bindtap="onChoosePhoto">
+          <text class="photo-btn-icon">{{item.image ? '🔄' : '📷'}}</text>
+          <text class="photo-btn-text">{{item.image ? '重新选择' : '选择照片'}}</text>
+        </button>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="form-actions">
+      <button class="btn-cancel" bindtap="onBack">取消</button>
+      <button class="btn-save" bindtap="onSave">保存</button>
+    </view>
+
+    <!-- 编辑模式下显示删除按钮 -->
+    <view wx:if="{{isEdit}}" class="delete-section">
+      <button class="btn-delete" bindtap="onDelete">🗑️ 删除此物品</button>
+    </view>
+
+    <!-- 底部留白 -->
+    <view class="form-bottom-spacer"></view>
+  </scroll-view>
+</view>
