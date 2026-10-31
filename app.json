@@ -6,8 +6,10 @@
   "pages/storage/list/list",
   "pages/storage/detail/detail",
   "pages/storage/edit/edit",
+  "pages/storage/quick/quick",
   "pages/prompt/index/index",
-  "pages/prompt/detail/index"
+  "pages/prompt/detail/index",
+  "pages/flight/flight"
   ],
   "window": {
     "navigationBarTitleText": "亲属称呼换算",
@@ -20,5 +22,4 @@
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents"
 }
-
 

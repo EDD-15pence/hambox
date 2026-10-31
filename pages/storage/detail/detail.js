@@ -1,7 +1,7 @@
 /**
- * 智能仓储 - 物品详情页
+ * 智能仓储 - 物品详情页（数据来自 storage-server 接口）
  */
-var storageUtils = require('../../../utils/storage-utils');
+var api = require('../../../utils/api');
 
 Page({
   data: {
@@ -22,30 +22,18 @@ Page({
       return;
     }
 
-    var items = storageUtils.loadItems();
-    var item = storageUtils.getItemById(items, query.id);
+    self.itemId = query.id;
+    Promise.all([api.getItem(query.id), api.listCategories()])
+      .then(function (results) {
+        self.renderItem(results[0], results[1]);
+      })
+      .catch(function (err) {
+        wx.showToast({ title: err.message, icon: 'none' });
+        setTimeout(function () { wx.navigateBack(); }, 1500);
+      });
+  },
 
-    if (!item) {
-      wx.showToast({ title: '物品不存在', icon: 'none' });
-      setTimeout(function () { wx.navigateBack(); }, 1500);
-      return;
-    }
-
-    // 重算动态字段
-    if (item.expireDate) {
-      item.daysLeft = storageUtils.calcDaysLeft(item.expireDate);
-      item.status = storageUtils.calcStatus(item.daysLeft);
-    } else {
-      item.daysLeft = null;
-      item.status = null;
-    }
-
-    // 格式化时间戳
-    item.createdAt_display = self.formatTimestamp(item.createdAt);
-    item.updatedAt_display = self.formatTimestamp(item.updatedAt);
-
-    // 获取分类信息
-    var categories = storageUtils.loadCategories();
+  renderItem: function (item, categories) {
     var cat = null;
     for (var i = 0; i < categories.length; i++) {
       if (categories[i].id === item.category) { cat = categories[i]; break; }
@@ -60,7 +48,10 @@ Page({
       statusText = '新鲜';
     }
 
-    self.setData({
+    item.createdAt_display = this.formatTimestamp(item.createdAt);
+    item.updatedAt_display = this.formatTimestamp(item.updatedAt);
+
+    this.setData({
       item: item,
       statusText: statusText,
       categoryName: cat ? cat.name : (item.category || '未分类'),
@@ -71,6 +62,7 @@ Page({
   formatTimestamp: function (isoStr) {
     if (!isoStr) return '未知';
     var d = new Date(isoStr);
+    if (isNaN(d.getTime())) return '未知';
     var year = d.getFullYear();
     var month = String(d.getMonth() + 1).padStart(2, '0');
     var day = String(d.getDate()).padStart(2, '0');
@@ -80,11 +72,9 @@ Page({
   },
 
   onPreviewImage: function () {
-    if (this.data.item.image) {
-      wx.previewImage({
-        urls: [this.data.item.image],
-        current: this.data.item.image
-      });
+    var src = this.data.item.imageSrc;
+    if (src) {
+      wx.previewImage({ urls: [src], current: src });
     }
   },
 
@@ -100,13 +90,18 @@ Page({
       title: '确认删除',
       content: '确定要删除「' + self.data.item.name + '」吗？此操作不可恢复。',
       success: function (res) {
-        if (res.confirm) {
-          var items = storageUtils.loadItems();
-          var updated = storageUtils.deleteItem(items, self.data.item.id);
-          storageUtils.saveItems(updated);
-          wx.navigateBack();
-          wx.showToast({ title: '已删除', icon: 'success' });
-        }
+        if (!res.confirm) return;
+        wx.showLoading({ title: '删除中', mask: true });
+        api.deleteItem(self.data.item.id)
+          .then(function () {
+            wx.hideLoading();
+            wx.navigateBack();
+            wx.showToast({ title: '已删除', icon: 'success' });
+          })
+          .catch(function (err) {
+            wx.hideLoading();
+            wx.showToast({ title: err.message, icon: 'none' });
+          });
       }
     });
   },

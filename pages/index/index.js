@@ -1,4 +1,4 @@
-﻿Page({
+Page({
   data: {
     isDark: false,
   },
@@ -23,7 +23,9 @@
       relationship: '/pages/relationship/relationship',
       punchin: '/pages/punchin/punchin',
       storage: '/pages/storage/list/list',
-      prompt: '/pages/prompt/index/index'
+      quick: '/pages/storage/quick/quick',
+      prompt: '/pages/prompt/index/index',
+      flight: '/pages/flight/flight'
     };
 
     const targetPath = toolMap[toolName];

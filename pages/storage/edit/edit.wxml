@@ -136,10 +136,10 @@
     <view class="form-item">
       <text class="form-label">照片</text>
       <view class="photo-area">
-        <image wx:if="{{item.image}}" class="preview-image" src="{{item.image}}" mode="aspectFill" bindtap="onChoosePhoto" />
+        <image wx:if="{{item.imageSrc}}" class="preview-image" src="{{item.imageSrc}}" mode="aspectFill" bindtap="onChoosePhoto" />
         <button class="photo-btn" bindtap="onChoosePhoto">
-          <text class="photo-btn-icon">{{item.image ? '🔄' : '📷'}}</text>
-          <text class="photo-btn-text">{{item.image ? '重新选择' : '选择照片'}}</text>
+          <text class="photo-btn-icon">{{item.imageSrc ? '🔄' : '📷'}}</text>
+          <text class="photo-btn-text">{{item.imageSrc ? '重新选择' : '选择照片'}}</text>
         </button>
       </view>
     </view>

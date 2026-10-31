@@ -1,6 +1,7 @@
 /**
- * 智能仓储 - 添加/编辑物品页
+ * 智能仓储 - 添加/编辑物品页（数据来自 storage-server 接口）
  */
+var api = require('../../../utils/api');
 var storageUtils = require('../../../utils/storage-utils');
 
 Page({
@@ -8,6 +9,8 @@ Page({
     isDark: false,
     isEdit: false,
     editId: null,
+    saving: false,
+    uploading: false,
     item: {
       name: '',
       category: 'food',
@@ -17,7 +20,8 @@ Page({
       produceDate: '',
       expireDate: '',
       note: '',
-      image: ''
+      image: '',
+      imageSrc: ''
     },
     categories: [],
     categoryNames: [],
@@ -33,36 +37,81 @@ Page({
   onLoad: function (query) {
     var self = this;
     var isDark = wx.getStorageSync('darkMode') || false;
-    var categories = storageUtils.loadCategories();
-    var categoryNames = categories.map(function (c) {
-      return c.icon + ' ' + c.name;
-    });
+    this.setData({ isDark: isDark });
 
-    this.setData({
-      isDark: isDark,
-      categories: categories,
-      categoryNames: categoryNames
-    });
-
-    // 编辑模式
-    if (query && query.id) {
-      var items = storageUtils.loadItems();
-      var item = storageUtils.getItemById(items, query.id);
-      if (item) {
-        wx.setNavigationBarTitle({ title: '编辑物品' });
-        // 设置选中分类名
-        var cat = null;
-        for (var i = 0; i < categories.length; i++) {
-          if (categories[i].id === item.category) { cat = categories[i]; break; }
+    api.listCategories()
+      .then(function (categories) {
+        self.setData({
+          categories: categories,
+          categoryNames: categories.map(function (c) { return c.icon + ' ' + c.name; })
+        });
+        if (query && query.id) {
+          return self.loadForEdit(query.id);
         }
+        if (query && query.prefill) {
+          self.applyPrefill(query.prefill);
+          return;
+        }
+        self.setData({ selectedCategoryName: self.categoryLabel(categories, self.data.item.category) });
+      })
+      .catch(function (err) {
+        wx.showToast({ title: err.message, icon: 'none' });
+      });
+  },
+
+  categoryLabel: function (categories, categoryId) {
+    for (var i = 0; i < categories.length; i++) {
+      if (categories[i].id === categoryId) return categories[i].icon + ' ' + categories[i].name;
+    }
+    return '其他';
+  },
+
+  /** 从「快速记录」页带过来的草稿 */
+  applyPrefill: function (encoded) {
+    var draft;
+    try {
+      draft = JSON.parse(decodeURIComponent(encoded));
+    } catch (e) {
+      return;
+    }
+    if (!draft) return;
+    var item = Object.assign({}, this.data.item, {
+      name: draft.name || '',
+      category: draft.category || 'other',
+      quantity: draft.quantity || 1,
+      unit: draft.unit || '个',
+      location: draft.location || '',
+      produceDate: draft.produceDate || '',
+      expireDate: draft.expireDate || '',
+      note: draft.note || ''
+    });
+    var months = draft.shelfLifeMonths;
+    this.setData({
+      item: item,
+      selectedCategoryName: this.categoryLabel(this.data.categories, item.category),
+      expiryMode: months ? 'months' : 'date',
+      expiryMonths: months ? String(months) : '',
+      calculatedExpire: item.expireDate || ''
+    });
+  },
+
+  loadForEdit: function (id) {
+    var self = this;
+    return api.getItem(id)
+      .then(function (item) {
+        wx.setNavigationBarTitle({ title: '编辑物品' });
         self.setData({
           isEdit: true,
-          editId: query.id,
+          editId: item.id,
           item: item,
-          selectedCategoryName: cat ? cat.icon + ' ' + cat.name : '其他'
+          selectedCategoryName: self.categoryLabel(self.data.categories, item.category),
+          calculatedExpire: item.expireDate || ''
         });
-      }
-    }
+      })
+      .catch(function (err) {
+        wx.showToast({ title: err.message, icon: 'none' });
+        setTimeout(function () { wx.navigateBack(); }, 1500);
+      });
   },
 
   // ==============================
@@ -142,16 +191,35 @@ Page({
   },
 
   // ==============================
-  // 照片
+  // 照片：选完立即上传，只把相对路径存进表单
   // ==============================
   onChoosePhoto: function () {
     var self = this;
+    if (this.data.uploading) return;
+
     wx.chooseImage({
       count: 1,
       sizeType: ['compressed'],
       sourceType: ['album', 'camera'],
       success: function (res) {
-        self.setData({ 'item.image': res.tempFilePaths[0] });
+        var filePath = res.tempFilePaths[0];
+        if (!filePath) return;
+        self.setData({ uploading: true });
+        wx.showLoading({ title: '上传中', mask: true });
+        api.uploadImage(filePath)
+          .then(function (url) {
+            wx.hideLoading();
+            self.setData({
+              uploading: false,
+              'item.image': url,
+              'item.imageSrc': api.BASE_URL + url
+            });
+          })
+          .catch(function (err) {
+            wx.hideLoading();
+            self.setData({ uploading: false });
+            wx.showToast({ title: err.message, icon: 'none' });
+          });
       }
     });
   },
@@ -160,28 +228,34 @@ Page({
   // 保存
   // ==============================
   onSave: function () {
+    var self = this;
+    if (this.data.saving) return;
+
     var item = this.data.item;
     if (!item.name || !item.name.trim()) {
       wx.showToast({ title: '请输入物品名称', icon: 'none' });
       return;
     }
-    item.name = item.name.trim();
 
-    var items = storageUtils.loadItems();
-    if (this.data.isEdit) {
-      var updated = storageUtils.updateItem(items, this.data.editId, item);
-      storageUtils.saveItems(updated);
-    } else {
-      var newItem = storageUtils.createItem(item);
-      items.push(newItem);
-      storageUtils.saveItems(items);
-    }
+    this.setData({ saving: true });
+    wx.showLoading({ title: '保存中', mask: true });
 
-    wx.navigateBack();
-    wx.showToast({
-      title: this.data.isEdit ? '已更新' : '已添加',
-      icon: 'success'
-    });
+    var task = this.data.isEdit
+      ? api.updateItem(this.data.editId, item)
+      : api.createItem(item);
+
+    task
+      .then(function () {
+        wx.hideLoading();
+        self.setData({ saving: false });
+        wx.showToast({ title: self.data.isEdit ? '已更新' : '已添加', icon: 'success' });
+        setTimeout(function () { wx.navigateBack(); }, 400);
+      })
+      .catch(function (err) {
+        wx.hideLoading();
+        self.setData({ saving: false });
+        wx.showToast({ title: err.message, icon: 'none', duration: 2500 });
+      });
   },
 
   // ==============================
@@ -191,15 +265,20 @@ Page({
     var self = this;
     wx.showModal({
       title: '确认删除',
-      content: '确定要删除「' + this.data.item.name + '」吗？此操作不可恢复。',
+      content: '确定要删除「' + self.data.item.name + '」吗？此操作不可恢复。',
       success: function (res) {
-        if (res.confirm) {
-          var items = storageUtils.loadItems();
-          var updated = storageUtils.deleteItem(items, self.data.editId);
-          storageUtils.saveItems(updated);
-          wx.navigateBack();
-          wx.showToast({ title: '已删除', icon: 'success' });
-        }
+        if (!res.confirm) return;
+        wx.showLoading({ title: '删除中', mask: true });
+        api.deleteItem(self.data.editId)
+          .then(function () {
+            wx.hideLoading();
+            wx.showToast({ title: '已删除', icon: 'success' });
+            setTimeout(function () { wx.navigateBack(); }, 400);
+          })
+          .catch(function (err) {
+            wx.hideLoading();
+            wx.showToast({ title: err.message, icon: 'none' });
+          });
       }
     });
   },

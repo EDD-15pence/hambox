@@ -31,7 +31,20 @@
       <text class="tool-desc">管理物品保质期与库存</text>
     </view>
 
+    <!-- 快速记录卡片 -->
+    <view class="tool-card" bindtap="navigateToTool" data-tool="quick">
+      <view class="tool-icon">🎙️</view>
+      <text class="tool-name">快速记录</text>
+      <text class="tool-desc">一句话记下买的东西和保质期</text>
+    </view>
+
     <!-- Prompt模板工具卡片 -->
+    <view class="tool-card" bindtap="navigateToTool" data-tool="flight">
+      <view class="tool-icon">✈️</view>
+      <text class="tool-name">机票比价</text>
+      <text class="tool-desc">一键对比多个平台的机票价格</text>
+    </view>
+
     <view class="tool-card" bindtap="navigateToTool" data-tool="prompt">
       <view class="tool-icon">📝</view>
       <text class="tool-name">Prompt模板工具</text>
@@ -53,5 +66,4 @@
     <text class="footer-text">点击卡片打开对应工具</text>
   </view>
 </view>
-
 

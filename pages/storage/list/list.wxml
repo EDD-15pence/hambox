@@ -3,6 +3,7 @@
   <view class="navbar">
     <text class="navbar-title">智能仓储</text>
     <view class="navbar-actions">
+      <button class="icon-btn" hover-class="icon-hover" bindtap="onQuickAdd">🎙️</button>
       <button class="icon-btn" hover-class="icon-hover" bindtap="onToggleSearch">🔍</button>
       <button class="icon-btn" hover-class="icon-hover" bindtap="onOpenCategoryModal">📋</button>
       <button class="icon-btn" hover-class="icon-hover" bindtap="onToggleTheme">{{isDark ? '🌙' : '☀️'}}</button>
@@ -61,7 +62,7 @@
         data-name="{{item.name}}">
 
         <!-- 物品图片缩略图 -->
-        <image wx:if="{{item.image}}" class="item-thumb" src="{{item.image}}" mode="aspectFill" />
+        <image wx:if="{{item.imageSrc}}" class="item-thumb" src="{{item.imageSrc}}" mode="aspectFill" />
         <view wx:else class="item-thumb item-thumb-placeholder">
           <text class="item-thumb-emoji">{{categoryMap[item.category] ? categoryMap[item.category].icon : '📦'}}</text>
         </view>

@@ -10,8 +10,8 @@
 
   <scroll-view class="detail-scroll" scroll-y>
     <!-- 照片大图 -->
-    <view wx:if="{{item.image}}" class="detail-image-wrap" bindtap="onPreviewImage">
-      <image class="detail-image" src="{{item.image}}" mode="aspectFill" />
+    <view wx:if="{{item.imageSrc}}" class="detail-image-wrap" bindtap="onPreviewImage">
+      <image class="detail-image" src="{{item.imageSrc}}" mode="aspectFill" />
     </view>
     <view wx:else class="detail-image-wrap detail-image-empty">
       <text class="detail-image-emoji">{{categoryIcon || '📦'}}</text>
