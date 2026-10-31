@@ -31,7 +31,20 @@
   "libVersion": "3.9.0",
   "simulatorPluginLibVersion": {},
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "type": "file",
+        "value": "utils/quick-parse.test.js"
+      },
+      {
+        "type": "file",
+        "value": "AI_RELATIONSHIPCALC_README.md"
+      },
+      {
+        "type": "file",
+        "value": "PROJECT_SUMMARY.md"
+      }
+    ],
     "include": []
   },
   "editorSetting": {}
