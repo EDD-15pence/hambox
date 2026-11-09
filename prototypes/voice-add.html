@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>语音快速记一笔 · 四态样张</title>
+<style>
+  :root{
+    --bg-page:#E8ECF2; --bg-raised:#E8ECF2; --bg-sunken:#DDE3EC;
+    --text-1:#262E3C; --text-2:#4C566A; --text-3:#58627A;
+    --primary:#007AFF; --primary-strong:#0068E0; --primary-weak:#E2EDFB; --on-primary:#FFF;
+    --warning:#8A5200; --warning-weak:#FBEDD9; --success:#0F6E33; --success-weak:#DFF3E6;
+    --shadow-raised:-4px -4px 10px rgba(255,255,255,1), 6px 6px 16px rgba(148,163,186,.55);
+    --shadow-press:inset -3px -3px 6px rgba(255,255,255,.95), inset 4px 4px 9px rgba(148,163,186,.55);
+    --shadow-sunken:inset -2px -2px 5px rgba(255,255,255,.95), inset 4px 4px 9px rgba(148,163,186,.62);
+    --shadow-sunken-sm:inset -1.5px -1.5px 4px rgba(255,255,255,.95), inset 2.5px 2.5px 6.5px rgba(148,163,186,.58);
+    --shadow-float:0 8px 24px rgba(79,94,117,.24);
+    --shadow-fab:0 6px 16px rgba(0,104,224,.30), -2px -2px 7px rgba(255,255,255,.80);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+  body{background:#cfd6e0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;padding:28px;display:flex;gap:24px;align-items:flex-start}
+  .phone{width:375px;height:812px;background:var(--bg-page);border-radius:34px;overflow:hidden;position:relative;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+  .label{position:absolute;top:-22px;left:0;font-size:12px;color:#556;letter-spacing:.4px}
+
+  /* nav */
+  .nav{padding:44px 16px 8px;display:flex;align-items:center;justify-content:space-between}
+  .nav h1{font-size:17px;color:var(--text-1);font-weight:600}
+  .nav .sub{font-size:11px;color:var(--text-3);margin-top:4px;font-weight:400}
+  .icon-btn{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:var(--bg-raised);box-shadow:var(--shadow-raised);font-size:15px}
+
+  /* grid */
+  .content{padding:8px 12px 70px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .card{background:var(--bg-raised);border-radius:16px;box-shadow:var(--shadow-raised);padding:14px}
+  .card .ico{width:38px;height:38px;border-radius:12px;background:var(--bg-sunken);box-shadow:var(--shadow-sunken-sm);
+    display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px}
+  .card .name{font-size:14px;color:var(--text-1);font-weight:600}
+  .card .desc{font-size:11px;color:var(--text-3);margin-top:4px;line-height:1.5}
+  .footer{text-align:center;font-size:11px;color:var(--text-3);padding:18px 0 24px}
+
+  /* fab */
+  .fab{position:absolute;right:16px;bottom:24px;width:56px;height:56px;border-radius:50%;
+    background:var(--primary-strong);box-shadow:var(--shadow-fab);display:flex;align-items:center;justify-content:center;color:#fff}
+  /* mic：与 voice-add.wxss 同构（flex 居中，尺寸一律 4rpx 的倍数 → 此处 1rpx=0.5px） */
+  .mic{display:flex;flex-direction:column;align-items:center;width:32px;height:32px;color:inherit}
+  .mic .cap{flex:none;margin-top:2px;width:10px;height:14px;border-radius:5px;background:currentColor}
+  .mic .arc{box-sizing:border-box;flex:none;margin-top:-10px;width:18px;height:18px;
+    border:2px solid currentColor;border-top:none;border-radius:0 0 9px 9px}
+  .mic .stem{flex:none;width:2px;height:6px;border-radius:0 0 1px 1px;background:currentColor}
+
+  /* mask + sheet */
+  .mask{position:absolute;inset:0;background:rgba(38,46,60,.34);display:flex;align-items:flex-end}
+  .sheet{width:100%;background:var(--bg-raised);border-radius:16px 16px 0 0;box-shadow:var(--shadow-float);
+    padding:12px 12px 16px}
+  .sheet-head{display:flex;align-items:center;justify-content:space-between;padding-bottom:8px}
+  .sheet-head .t{font-size:16px;font-weight:600;color:var(--text-1)}
+  .sheet-head .close{font-size:12px;color:var(--text-2)}
+
+  /* stage */
+  .stage{display:flex;flex-direction:column;align-items:center;padding:16px 0 12px}
+  .pulse-wrap{position:relative;width:100px;height:100px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+  .pulse{position:absolute;inset:0;border-radius:50%;background:var(--primary-strong);opacity:.24}
+  .rec-btn{position:relative;width:100px;height:100px;border-radius:50%;background:var(--primary-strong);
+    box-shadow:var(--shadow-fab);display:flex;align-items:center;justify-content:center;color:#fff}
+  .rec-btn.is-rec{background:var(--primary);box-shadow:none}
+  .rec-btn .mic{transform:scale(1.45)}
+  .wave{display:flex;align-items:center;gap:5px;height:42px}
+  .wave i{display:block;width:4px;height:12px;border-radius:2px;background:#fff;animation:wave .9s ease-in-out infinite}
+  .wave i:nth-child(1){animation-delay:0s;height:20px}
+  .wave i:nth-child(2){animation-delay:.12s;height:32px}
+  .wave i:nth-child(3){animation-delay:.24s}
+  .wave i:nth-child(4){animation-delay:.36s;height:32px}
+  .wave i:nth-child(5){animation-delay:.48s;height:20px}
+  @keyframes wave{0%,100%{height:12px}50%{height:32px}}
+  .hint{font-size:14px;font-weight:500;color:var(--text-1)}
+  .hint-sub{font-size:11px;color:var(--text-3);margin-top:4px;font-weight:400}
+  .live{width:100%;margin-top:12px;padding:8px 12px;border-radius:12px;background:var(--bg-sunken);
+    box-shadow:var(--shadow-sunken);font-size:12px;color:var(--text-2);line-height:1.6}
+
+  /* preview */
+  .scroll{height:357px;padding:4px 0;overflow-y:auto}
+  .raw{display:flex;gap:8px;padding:8px 12px;border-radius:12px;background:var(--bg-sunken);
+    box-shadow:var(--shadow-sunken);margin-bottom:8px;align-items:flex-start}
+  .raw .txt{flex:1;font-size:12px;color:var(--text-2);line-height:1.6}
+  .raw .again{font-size:11px;color:var(--primary-strong);white-space:nowrap}
+  .field{display:flex;align-items:center;gap:8px;padding:4px 0}
+  .field .lb{width:56px;font-size:12px;color:var(--text-2);flex:none}
+  .field .bd{flex:1;display:flex;gap:8px;align-items:center;min-width:0}
+  .inp{height:44px;border-radius:12px;background:var(--bg-sunken);box-shadow:var(--shadow-sunken);
+    display:flex;align-items:center;padding:0 12px;font-size:14px;color:var(--text-1);flex:1;min-width:0}
+  .inp.qty{width:70px;flex:none;justify-content:center}
+  .inp.pick{justify-content:space-between}
+  .badge{font-size:11px;padding:4px 8px;border-radius:999px;background:var(--warning-weak);color:var(--warning);white-space:nowrap}
+  .badge.fresh{background:var(--success-weak);color:var(--success)}
+  .missing{margin-top:8px;padding:8px 12px;border-radius:12px;background:var(--warning-weak);
+    font-size:11px;color:var(--warning);line-height:1.5}
+  .foot{display:flex;gap:8px;padding-top:12px}
+  .btn{flex:1;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500}
+  .btn.ghost{color:var(--text-2)}
+  .btn.primary{background:var(--primary-strong);color:#fff;box-shadow:0 6px 14px rgba(0,104,224,.30)}
+  .pulse-anim{animation:pulse 1.8s ease-out infinite}
+  @keyframes pulse{0%{transform:scale(1);opacity:.24}100%{transform:scale(1.42);opacity:0}}
+</style>
+</head>
+<body>
+
+<!-- 1. 首页 -->
+<div class="phone" style="position:relative">
+  <div class="label">① 首页：右下悬浮麦克风</div>
+  <div class="nav">
+    <div><h1>工具箱</h1><div class="sub">11月9日 周一 · 6 个工具</div></div>
+    <div class="icon-btn">☀️</div>
+  </div>
+  <div class="content">
+    <div class="grid">
+      <div class="card"><div class="ico">👨‍👩‍👧‍👦</div><div class="name">亲属称呼换算</div><div class="desc">算出该叫对方什么</div></div>
+      <div class="card"><div class="ico">📦</div><div class="name">智能仓储</div><div class="desc">管住家里的保质期</div></div>
+      <div class="card"><div class="ico">🎙️</div><div class="name">快速记录</div><div class="desc">一句话记下买的东西</div></div>
+      <div class="card"><div class="ico">📅</div><div class="name">习惯打卡</div><div class="desc">连续天数看得见</div></div>
+      <div class="card"><div class="ico">📝</div><div class="name">Prompt 模板</div><div class="desc">填几个空，出提示词</div></div>
+      <div class="card"><div class="ico">✈️</div><div class="name">机票比价</div><div class="desc">生成各平台搜索词</div></div>
+    </div>
+    <div class="footer">点卡片进入 · 右下角说话直接记一笔</div>
+  </div>
+  <div class="fab"><div class="mic"><i class="cap"></i><i class="arc"></i><i class="stem"></i></div></div>
+</div>
+
+<!-- 2. 待机 -->
+<div class="phone" style="position:relative">
+  <div class="label">② 面板待机</div>
+  <div class="nav"><div><h1>工具箱</h1><div class="sub">11月9日 周一 · 6 个工具</div></div><div class="icon-btn">☀️</div></div>
+  <div class="content">
+    <div class="grid">
+      <div class="card"><div class="ico">👨‍👩‍👧‍👦</div><div class="name">亲属称呼换算</div><div class="desc">算出该叫对方什么</div></div>
+      <div class="card"><div class="ico">📦</div><div class="name">智能仓储</div><div class="desc">管住家里的保质期</div></div>
+    </div>
+  </div>
+  <div class="mask">
+    <div class="sheet">
+      <div class="sheet-head"><div class="t">快速记一笔</div><div class="close">关闭</div></div>
+      <div class="stage">
+        <div class="pulse-wrap">
+          <div class="rec-btn"><div class="mic"><i class="cap"></i><i class="arc"></i><i class="stem"></i></div></div>
+        </div>
+        <div class="hint">点一下，说一句话</div>
+        <div class="hint-sub">例：布洛芬缓释胶囊 保质期两年 放药箱</div>
+      </div>
+      <div class="foot">
+        <div class="btn ghost">取消</div>
+        <div class="btn primary" style="opacity:.4">确认添加</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. 录音中 -->
+<div class="phone" style="position:relative">
+  <div class="label">③ 录音中</div>
+  <div class="nav"><div><h1>工具箱</h1><div class="sub">11月9日 周一 · 6 个工具</div></div><div class="icon-btn">☀️</div></div>
+  <div class="content"><div class="grid"><div class="card"><div class="ico">👨‍👩‍👧‍👦</div><div class="name">亲属称呼换算</div><div class="desc">算出该叫对方什么</div></div></div></div>
+  <div class="mask">
+    <div class="sheet">
+      <div class="sheet-head"><div class="t">快速记一笔</div><div class="close">关闭</div></div>
+      <div class="stage">
+        <div class="pulse-wrap">
+          <div class="pulse pulse-anim"></div>
+          <div class="rec-btn is-rec">
+            <div class="wave"><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+        </div>
+        <div class="hint">正在听，点一下结束</div>
+        <div class="live">布洛芬缓释胶囊 保质期两年</div>
+      </div>
+      <div class="foot">
+        <div class="btn ghost">取消</div>
+        <div class="btn primary" style="opacity:.4">确认添加</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. 预览 -->
+<div class="phone" style="position:relative">
+  <div class="label">④ 识别完，就地确认</div>
+  <div class="nav"><div><h1>工具箱</h1><div class="sub">11月9日 周一 · 6 个工具</div></div><div class="icon-btn">☀️</div></div>
+  <div class="content"><div class="grid"><div class="card"><div class="ico">👨‍👩‍👧‍👦</div><div class="name">亲属称呼换算</div><div class="desc">算出该叫对方什么</div></div></div></div>
+  <div class="mask">
+    <div class="sheet">
+      <div class="sheet-head"><div class="t">快速记一笔</div><div class="close">关闭</div></div>
+      <div class="scroll">
+        <div class="raw"><div class="txt">布洛芬缓释胶囊 保质期两年 放药箱</div><div class="again">重新说</div></div>
+        <div class="missing" style="margin:0 0 8px">还差：生产日期，可以先确认，也可以补上再存</div>
+        <div class="field"><div class="lb">名称</div><div class="bd"><div class="inp">布洛芬缓释胶囊</div></div></div>
+        <div class="field"><div class="lb">数量</div><div class="bd">
+          <div class="inp qty">1</div><div class="inp pick" style="flex:1">盒</div>
+        </div></div>
+        <div class="field"><div class="lb">分类</div><div class="bd"><div class="inp pick">💊 药品</div></div></div>
+        <div class="field"><div class="lb">位置</div><div class="bd"><div class="inp">药箱</div></div></div>
+        <div class="field"><div class="lb">过期日</div><div class="bd">
+          <div class="inp pick" style="flex:1">2028-11-09</div><span class="badge fresh">还剩 730 天</span>
+        </div></div>
+      </div>
+      <div class="foot">
+        <div class="btn primary">确认添加</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

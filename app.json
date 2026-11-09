@@ -7,17 +7,30 @@
   "pages/storage/detail/detail",
   "pages/storage/edit/edit",
   "pages/storage/quick/quick",
+  "pages/voice-log/voice-log",
   "pages/prompt/index/index",
   "pages/prompt/detail/index",
   "pages/flight/flight"
   ],
   "window": {
-    "navigationBarTitleText": "亲属称呼换算",
+    "navigationStyle": "custom",
+    "navigationBarTitleText": "工具箱",
     "navigationBarBackgroundColor": "#ffffff",
     "navigationBarTextStyle": "black",
     "backgroundTextStyle": "light",
-    "backgroundColor": "#f6f7fb",
+    "backgroundColor": "#E8ECF2",
     "enableShareAppMessage": true
+  },
+  "plugins": {
+    "WechatSI": {
+      "version": "0.3.5",
+      "provider": "wx069ba97219f66d99"
+    }
+  },
+  "permission": {
+    "scope.record": {
+      "desc": "用于语音输入，把你说的话转成文字后记入物品"
+    }
   },
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents"

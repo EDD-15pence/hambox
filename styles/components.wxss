@@ -1,0 +1,515 @@
+/**
+ * 公共组件样式 —— 页面优先复用这里的类，只在页面 wxss 里写差异
+ *
+ * 风格：轻新拟物（AGENTS.md §5）
+ *   · 亮色：元素与页面同色，层级全靠 --shadow-raised / --shadow-sunken
+ *   · 暗色：自动降级为「同色底 + inset 高光 + 微弱投影」，无需页面改代码
+ *   · 禁止在组件上写 1rpx 实色边框（深色场景除外，由令牌控制）
+ *
+ * 约定：公共组件统一 .ui-* / .app-nav 前缀；页面私有样式用 .<页面>-* 前缀。
+ * 所有颜色、间距、圆角必须来自 styles/tokens.wxss。
+ */
+
+/* ============================================================
+ * 材质工具类（最底层，其他组件都建立在它们之上）
+ * 用法：<view class="ui-raised">…</view> / <view class="ui-inset">…</view>
+ * ============================================================ */
+.ui-raised {
+  background: var(--bg-raised);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-raised);
+}
+
+.ui-inset {
+  background: var(--bg-sunken);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sunken);
+}
+
+/* 可点击的凸起面：按下翻成凹陷 */
+.ui-raised.is-pressable {
+  transition: box-shadow var(--dur-fast) ease-out;
+}
+
+.ui-raised.is-pressable:active {
+  box-shadow: var(--shadow-raised-press);
+}
+
+/* ============================================================
+ * 导航栏（配合 app.json 的 navigationStyle: custom 使用）
+ * 用法：<view class="app-nav" style="padding-top:{{statusBarHeight}}px">
+ *         <text class="app-nav__title">标题</text>
+ *         <view class="app-nav__actions">…</view>
+ *       </view>
+ *
+ * 新拟物不用分割线：导航与内容同底色，靠内容起始留白建立区隔。
+ * ============================================================ */
+.app-nav {
+  box-sizing: content-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--nav-h);
+  padding-left: var(--page-x);
+  padding-right: var(--page-x);
+  background: var(--bg-page);
+}
+
+.app-nav__titles {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.app-nav__title {
+  font-size: var(--fs-h1);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-1);
+}
+
+.app-nav__sub {
+  margin-top: 4rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.app-nav__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  flex: none;
+}
+
+/* 图标按钮：视觉小、热区大。做成小块凸起，按下凹陷 */
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--hit);
+  height: var(--hit);
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: var(--r-md);
+  background: transparent;
+  box-shadow: none;
+  font-size: 32rpx;
+  line-height: 1;
+  color: var(--text-1);
+  transition: box-shadow var(--dur-fast) ease-out;
+}
+
+.icon-btn::after {
+  border: none;
+}
+
+.icon-btn:active {
+  box-shadow: var(--shadow-raised-press);
+}
+
+.icon-hover {
+  opacity: 0.6;
+}
+
+/* 返回箭头：自绘导航下每个二级页都必须有的唯一返回入口 */
+.nav-back-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56rpx;
+  height: 88rpx;
+  margin-left: -12rpx;
+  padding-right: 8rpx;
+  font-size: 44rpx;
+  line-height: 1;
+  color: var(--text-1);
+  opacity: 0.9;
+}
+
+.nav-back-icon:active {
+  opacity: 0.5;
+}
+
+/* 导航左侧：返回箭头 + 标题，保证标题仍贴左 */
+.nav-left {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.nav-left .navbar-title,
+.nav-left .title {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 导航右侧文字按钮：按钮内不放 emoji，动作用文字表达
+ * 用法：<text class="nav-text-btn {{active ? 'is-on' : ''}}" bindtap="…">搜索</text>
+ */
+.nav-text-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 88rpx;
+  height: 64rpx;
+  padding: 0 var(--sp-1);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  line-height: 1;
+  color: var(--text-2);
+  transition: color var(--dur-fast) ease-out, box-shadow var(--dur-fast) ease-out;
+}
+
+.nav-text-btn.is-on {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.nav-text-btn:active {
+  box-shadow: var(--shadow-raised-press);
+}
+
+/* ============================================================
+ * 卡片 / 列表 / 分割
+ * ============================================================ */
+.ui-card {
+  padding: var(--sp-3);
+  background: var(--bg-raised);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-raised);
+}
+
+/* 可点击卡片：按下翻成凹陷，不做缩放（缩放会破坏材质连续感） */
+.ui-card.is-pressable {
+  transition: box-shadow var(--dur-fast) ease-out;
+}
+
+.ui-card.is-pressable:active {
+  box-shadow: var(--shadow-raised-press);
+}
+
+.ui-card__title {
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+/* 列表行：每行是一个浅凹槽（像收纳盒的格子），比凸起块安静，
+   20 条以上也不会满屏发光；分隔靠间距而不是线 */
+.ui-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 112rpx;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+}
+
+.ui-row + .ui-row {
+  margin-top: var(--sp-1);
+}
+
+.ui-row__label {
+  font-size: var(--fs-body);
+  color: var(--text-2);
+}
+
+.ui-row__value {
+  font-size: var(--fs-body);
+  color: var(--text-1);
+  text-align: right;
+}
+
+.ui-section-title {
+  display: block;
+  margin: var(--sp-4) 0 var(--sp-2);
+  padding: 0 var(--sp-1);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: 1rpx;
+  color: var(--text-3);
+}
+
+/* 分组只是布局容器，不承担材质——材质由内部 .ui-row 各自负责 */
+.ui-group {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ui-divider {
+  height: 1rpx;
+  margin: 0 var(--sp-3);
+  background: var(--divider);
+}
+
+/* ============================================================
+ * 状态徽标：<text class="ui-badge is-warning">3天</text>
+ * 语义色保持全强度——仓储的核心价值就是靠颜色一眼看出优先级
+ * ============================================================ */
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4rpx 12rpx;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-tiny);
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: var(--text-2);
+  background: var(--bg-sunken);
+}
+
+.ui-badge.is-primary {
+  color: var(--primary);
+  background: var(--primary-weak);
+}
+
+.ui-badge.is-fresh {
+  color: var(--success);
+  background: var(--success-weak);
+}
+
+.ui-badge.is-warning {
+  color: var(--warning);
+  background: var(--warning-weak);
+}
+
+.ui-badge.is-expired {
+  color: var(--danger);
+  background: var(--danger-weak);
+}
+
+/* ============================================================
+ * 按钮
+ * 默认是「同色凸起」；主按钮用主色 + 同色系投影，仍然算凸起
+ * ============================================================ */
+.ui-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--hit);
+  padding: 0 var(--sp-4);
+  margin: 0;
+  border: none;
+  border-radius: var(--r-md);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  line-height: 1;
+  color: var(--text-1);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+  transition: box-shadow var(--dur-fast) ease-out;
+}
+
+.ui-btn::after {
+  border: none;
+}
+
+.ui-btn.is-primary {
+  color: var(--on-primary);
+  background: var(--primary-strong);
+  box-shadow: 0 12rpx 28rpx rgba(0, 104, 224, 0.30),
+              -4rpx -4rpx 14rpx rgba(255, 255, 255, 0.70);
+}
+
+.ui-btn.is-ghost {
+  color: var(--text-2);
+  background: transparent;
+  box-shadow: none;
+}
+
+.ui-btn.is-danger {
+  color: var(--danger);
+  background: var(--danger-weak);
+  box-shadow: none;
+}
+
+.ui-btn.is-block {
+  width: 100%;
+}
+
+/* 按下统一翻成凹陷；主按钮/危险按钮改用亮度变化，避免彩色底上出现脏 inset */
+.ui-btn:active {
+  box-shadow: var(--shadow-raised-press);
+}
+
+.ui-btn.is-primary:active,
+.ui-btn.is-danger:active {
+  opacity: 0.86;
+  box-shadow: none;
+}
+
+.ui-btn[disabled] {
+  opacity: 0.4;
+  box-shadow: none;
+}
+
+/* ============================================================
+ * 表单：输入框是凹陷的"槽"，这是新拟物里最自然的隐喻
+ * ============================================================ */
+.ui-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--hit);
+  padding: 0 var(--sp-3);
+  border: none;
+  border-radius: var(--r-md);
+  font-size: var(--fs-body);
+  color: var(--text-1);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken);
+}
+
+.ui-placeholder {
+  color: var(--text-3);
+}
+
+/* 多行输入：和 .ui-input 同一套凹陷材质 */
+.ui-textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 176rpx;
+  padding: var(--sp-2) var(--sp-3);
+  border: none;
+  border-radius: var(--r-md);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  color: var(--text-1);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken);
+}
+
+/* ============================================================
+ * 悬浮按钮
+ * ============================================================ */
+.ui-fab {
+  position: fixed;
+  right: var(--sp-4);
+  bottom: calc(var(--sp-6) + env(safe-area-inset-bottom));
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: 50%;
+  font-size: 48rpx;
+  color: var(--on-primary);
+  background: var(--primary-strong);
+  box-shadow: var(--shadow-fab);
+  transition: box-shadow var(--dur-fast) ease-out;
+}
+
+.ui-fab:active {
+  box-shadow: none;
+  opacity: 0.86;
+}
+
+/* ============================================================
+ * 底部弹层：<view class="ui-mask"><view class="ui-sheet">…</view></view>
+ * ============================================================ */
+.ui-mask {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(38, 46, 60, 0.34);
+}
+
+.ui-sheet {
+  box-sizing: border-box;
+  width: 100%;
+  max-height: 86vh;
+  padding: var(--sp-3) var(--sp-3) calc(var(--sp-3) + env(safe-area-inset-bottom));
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-float);
+  animation: ui-sheet-in var(--dur-base) ease-out;
+}
+
+.ui-sheet__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--sp-2);
+}
+
+.ui-sheet__title {
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+@keyframes ui-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================
+ * 空状态 / 骨架屏
+ * ============================================================ */
+.ui-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx var(--sp-4);
+  text-align: center;
+}
+
+.ui-empty__icon {
+  font-size: 96rpx;
+  line-height: 1;
+  opacity: 0.9;
+}
+
+.ui-empty__title {
+  margin-top: var(--sp-3);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: var(--text-1);
+}
+
+.ui-empty__hint {
+  margin-top: var(--sp-1);
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+  color: var(--text-3);
+}
+
+.ui-empty__action {
+  margin-top: var(--sp-3);
+}
+
+/* 骨架屏做成凹陷槽，占位块从底板里"挖"出来，比闪白块更符合材质语言 */
+.ui-skeleton {
+  border-radius: var(--r-sm);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+  animation: ui-breathe 1.2s ease-in-out infinite;
+}
+
+@keyframes ui-breathe {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}

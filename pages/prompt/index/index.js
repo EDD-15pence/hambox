@@ -4,14 +4,19 @@
  * docs/prompt-tool-folder-structure.md
  */
 const templates = require('../../../data/prompt-templates');
+const nav = require('../../../utils/nav');
 
 Page({
   data: {
-    templates: []
+    templates: [],
+    statusBarHeight: nav.STATUS_BAR_HEIGHT
   },
   onLoad() {
     // 加载本地模板数据
-    this.setData({ templates });
+    this.setData({ templates, statusBarHeight: nav.STATUS_BAR_HEIGHT });
+  },
+  onBack() {
+    wx.navigateBack({ delta: 1, fail: () => wx.reLaunch({ url: '/pages/index/index' }) });
   },
   onSelectTemplate(e) {
     // try multiple places for dataset (target vs currentTarget)

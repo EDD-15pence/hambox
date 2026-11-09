@@ -1,4 +1,6 @@
 {
-  "navigationBarTitleText": "工具箱"
+  "navigationBarTitleText": "工具箱",
+  "usingComponents": {
+    "voice-add": "/components/voice-add/voice-add"
+  }
 }
-

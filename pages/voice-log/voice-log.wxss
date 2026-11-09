@@ -1,0 +1,59 @@
+.log-tip {
+  padding: var(--sp-1) 0 var(--sp-2);
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.log-route {
+  padding-top: 0;
+  padding-bottom: var(--sp-3);
+  word-break: break-all;
+}
+
+.log-item {
+  margin-bottom: 20rpx;
+}
+
+.log-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-1);
+}
+
+.log-time {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.log-row {
+  display: flex;
+  gap: var(--sp-2);
+  padding: 4rpx 0;
+}
+
+.log-label {
+  flex: none;
+  width: 72rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.log-value {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-caption);
+  line-height: 1.6;
+  color: var(--text-1);
+  word-break: break-all;
+}
+
+.log-footer {
+  padding: var(--sp-4) 0 var(--sp-6);
+  text-align: center;
+}
+
+.log-clear {
+  font-size: var(--fs-caption);
+  color: var(--danger);
+}

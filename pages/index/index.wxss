@@ -1,150 +1,101 @@
+/* 首页 —— 只写本页差异，颜色/间距/圆角/阴影全部取自设计令牌 */
+
 .container {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  background: #ffffff;
-  color: #000000;
+  background: var(--bg-page);
+  color: var(--text-1);
 }
 
-.navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20rpx 24rpx;
-  background: #ffffff;
-  border-bottom: 1rpx solid #f0f0f0;
-}
-
-.navbar-title {
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #000000;
-}
-
-.navbar-actions {
-  display: flex;
-  gap: 12rpx;
-}
-
-.icon-btn {
-  background: transparent;
-  border: none;
-  padding: 8rpx 12rpx;
-  font-size: 32rpx;
-  line-height: 1;
-  color: #000000;
-}
-
-.icon-hover {
-  opacity: 0.6;
-}
-
-/* 工具网格布局 */
-.tools-grid {
+.content {
   flex: 1;
-  padding: 24rpx;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 20rpx;
-  overflow-y: auto;
+  /* 底部留出悬浮麦克风的位置，最后一排卡片不会被压住 */
+  padding: var(--sp-2) var(--page-x) 140rpx;
 }
 
+/* ---------- 工具网格 ---------- */
+/* 卡片间距 20rpx 略小于阴影模糊半径，但只用到 28rpx 的柔和外投影，
+   所以边缘不会互相污染（硬性下限见 AGENTS.md §5.4） */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--sp-2);
+}
+
+/* 凸起卡片：与页面同色，只有影子说明它存在 */
 .tool-card {
-  background: #f9f9f9;
-  border-radius: 16rpx;
-  padding: 24rpx;
   display: flex;
   flex-direction: column;
+  padding: var(--sp-3);
+  border-radius: var(--r-lg);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+  transition: box-shadow var(--dur-fast) ease-out;
+}
+
+/* 按下 = 把这对影子翻成 inset，元素不位移 */
+.tool-card--active {
+  box-shadow: var(--shadow-raised-press);
+}
+
+/* 图标槽：卡片是凸的，槽是凹的，一凸一凹才有材质 */
+.tool-icon {
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12rpx;
-  text-align: center;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: var(--r-md);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
 }
 
-.tool-card:active {
-  transform: scale(0.95);
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
-}
-
-.tool-card:hover {
-  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.1);
-}
-
-.tool-icon {
-  font-size: 64rpx;
+.tool-icon__emoji {
+  font-size: 40rpx;
   line-height: 1;
+}
+
+.tool-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-top: var(--sp-2);
 }
 
 .tool-name {
-  font-size: 28rpx;
+  font-size: var(--fs-body);
   font-weight: 600;
-  color: #000000;
-  word-break: break-all;
+  line-height: 1.3;
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tool-desc {
-  font-size: 24rpx;
-  color: #999999;
-  word-break: break-all;
+  margin-top: 6rpx;
+  font-size: var(--fs-caption);
+  line-height: 1.4;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* 底部说明 */
+/* ---------- 底部说明 ---------- */
 .footer {
-  padding: 20rpx 24rpx;
+  padding: var(--sp-6) 0 calc(var(--sp-4) + env(safe-area-inset-bottom));
   text-align: center;
-  border-top: 1rpx solid #f0f0f0;
-  background: #fafafa;
 }
 
 .footer-text {
-  font-size: 24rpx;
-  color: #999999;
+  display: block;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
 }
 
-/* 夜间模式 */
-.container.dark {
-  background: #121212;
-  color: #eaeaea;
-}
-
-.container.dark .navbar {
-  background: #1c1c1c;
-  border-bottom-color: #2a2a2a;
-}
-
-.container.dark .navbar-title {
-  color: #eaeaea;
-}
-
-.container.dark .icon-btn {
-  color: #eaeaea;
-}
-
-.container.dark .tool-card {
-  background: #1a1a1a;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
-}
-
-.container.dark .tool-card:hover {
-  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.5);
-}
-
-.container.dark .tool-name {
-  color: #eaeaea;
-}
-
-.container.dark .tool-desc {
-  color: #999999;
-}
-
-.container.dark .footer {
-  border-top-color: #2a2a2a;
-  background: #1c1c1c;
-}
-
-.container.dark .footer-text {
-  color: #999999;
+.footer-text--sub {
+  margin-top: 6rpx;
+  opacity: 0.8;
 }

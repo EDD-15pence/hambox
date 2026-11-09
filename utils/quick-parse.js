@@ -70,6 +70,37 @@ function normalize(text) {
   return s.trim();
 }
 
+/**
+ * 洗掉语气词和口头禅。
+ *
+ * 语音转写会把"嗯、那个、然后、帮我"原样带进来，不洗掉就会粘进名称：
+ *   "嗯那个帮我记一下牛奶放冰箱" → 名称变成"那个帮我记一下牛奶"
+ *
+ * 只删「几乎不可能出现在物品名里」的词：
+ *   单字只删 嗯/呃/唉/诶/欸（牛奶、鸡蛋这些常用字一个都不动）
+ *   短语只删 那个/这个/然后/就是/还有/另外/帮我/给我/麻烦/记一下…
+ * 拿不准的（额、啊、哦）只在句首删——"额温枪"的"额"不能被吃掉。
+ */
+function stripFillers(text) {
+  var s = String(text == null ? '' : text);
+
+  // 1. 任意位置的纯语气单字
+  s = s.replace(/[嗯呃唉诶欸]+/g, ' ');
+
+  // 2. 任意位置的口头禅短语
+  s = s.replace(/(那个|这个|然后|就是说|就是|还有|另外)/g, ' ');
+
+  // 3. 句首的动作前缀，循环剥（"帮我记一下"要连剥两层）
+  var PREFIX = /^(啊|哦|噢|呀|帮我|给我|麻烦|我想|我要|记一下|记录一下|记一笔|添加一下|添加|新增|嗯|呃|唉|诶|欸|好的|好)+/;
+  var prev;
+  do {
+    prev = s.trim();
+    s = prev.replace(PREFIX, '');
+  } while (s.trim() !== prev);
+
+  return s.replace(/\s+/g, ' ').trim();
+}
+
 var CN_NUM = { 零: 0, 〇: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10, 半: 0.5 };
 
 /** '三' → 3，'十二' → 12，'3' → 3，失败返回 NaN */
@@ -382,13 +413,18 @@ function extractLocation(rest) {
 function cleanupName(rest) {
   var s = String(rest || '');
   s = s.replace(/(在)?(超市|商场|商店|便利店|小卖部|网上|京东|淘宝|拼多多|药店)(里|买了|买的|买|购)?/g, ' ');
-  s = s.replace(/(买了|买的|买|购入|采购|新买)/g, ' ');
+  s = s.replace(/(买了|买的|买|购入|采购|新买|帮我|给我|麻烦|记一下|记录一下|记一笔|添加一下|添加|新增)/g, ' ');
   s = s.replace(/(生产日期|生产|制造日期|制造|出厂|购买日期|保质期|保质|有效期|保鲜期|贮存期|存放期|到期|过期|截止|放在|放到|放进|放入|存入|收纳在|存放于|收在|置于|搁在|放|存)/g, ' ');
   s = s.replace(/(上午|下午|早上|晚上|中午|夜里|昨天|今天|今日|昨日|前天|大前天|生产的)/g, ' ');
+  // 模糊数量：「几袋薯片」「几个月过期」里的数量词既不是数字也不该进名称
+  s = s.replace(/几\s*(个月|个星期|个|袋|瓶|盒|包|罐|支|条|块|桶|提|箱|斤|片|粒|颗|月|天|年|周|星期|号|日)?/g, ' ');
+  s = s.replace(/(大概|差不多|估计|可能|应该|左右|上下|快要|马上|就要|快|已经|就)/g, ' ');
   s = s.replace(/[。！!，,.:：、;；"'“”]/g, ' ');
   s = s.replace(/\s+/g, ' ').trim();
   s = s.replace(/^[的了和与及我]\s*/, '');
   s = s.replace(/\s*[的了和与及]$/, '');
+  // 数字被吃掉后剩下的孤立量词：「一瓶牛奶」丢了「一」会剩「瓶牛奶」
+  s = s.replace(/^(瓶|袋|盒|包|个|罐|支|条|块|桶|提|箱|斤|片|粒|颗|升|毫升|克|公斤)\s*/, '');
   return s.trim();
 }
 
@@ -418,7 +454,8 @@ function todayOf(opts) {
 function parseQuickInput(text, opts) {
   var raw = normalize(text);
   var today = todayOf(opts);
-  var rest = raw;
+  // 清洗只用于拆字段，raw 仍保留原话（界面与日志都要看到真实识别结果）
+  var rest = stripFillers(raw);
 
   var expire = extractExpireDate(rest, today);
   rest = expire.rest;
@@ -481,6 +518,7 @@ function parseQuickInput(text, opts) {
 module.exports = {
   parseQuickInput: parseQuickInput,
   normalize: normalize,
+  stripFillers: stripFillers,
   guessCategory: guessCategory,
   toNumber: toNumber,
   addMonths: addMonths,

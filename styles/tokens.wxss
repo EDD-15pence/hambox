@@ -1,0 +1,150 @@
+/**
+ * 设计令牌 —— 全项目唯一的色值 / 尺寸来源
+ *
+ * 风格：轻新拟物（Soft Neumorphism），详见 AGENTS.md §5
+ *   - 元素与页面同色，层级由「一组柔和阴影」承担，不用边框
+ *   - 凸起 = 左上白高光 + 右下冷灰暗影；凹陷 = 同一组阴影翻成 inset
+ *   - 强度只有纯新拟物的约 50%，保证文字对比度与密集列表可读
+ *   - 语义色（success/warning/danger）保持全强度，不降级
+ *
+ * 规则：
+ * 1. 页面 wxss 只允许通过 var(--xxx) 取色，禁止再写 #xxxxxx；
+ * 2. 亮色令牌定义在 page 上，暗色令牌在 .container.dark 上覆盖；
+ * 3. 新增令牌必须先加到本文件，并在 AGENTS.md §5 登记。
+ */
+
+page {
+  /* ---------- 底色与容器（同色是新拟物的前提） ---------- */
+  --bg-page: #E8ECF2;
+  --bg-surface: #E8ECF2;
+  --bg-raised: #E8ECF2;
+  --bg-sunken: #DDE3EC;
+
+  /* 描边只在深色与降级场景使用，亮色下不应出现在常规卡片上 */
+  --border: rgba(152, 166, 186, 0.22);
+  --divider: rgba(152, 166, 186, 0.26);
+
+  /* ---------- 文字（三档，全部 ≥ WCAG AA 4.5:1） ---------- */
+  --text-1: #262E3C;
+  --text-2: #4C566A;
+  --text-3: #58627A;
+  --text-invert: #FFFFFF;
+
+  /* ---------- 品牌主色（唯一主色） ---------- */
+  --primary: #007AFF;
+  --primary-weak: #E2EDFB;
+  /* 实心填充专用：白字压在 #007AFF 上只有 4.02:1，加深一档到 5.18:1 */
+  --primary-strong: #0068E0;
+  /* 主色块上的文字/图标（两种模式下都是白色） */
+  --on-primary: #FFFFFF;
+
+  /* ---------- 语义色（保持全强度，不因材质而弱化） ----------
+     * 全部按「在页面底色与自身浅底上都 ≥ 4.5:1」实测定值，
+     * 改值前必须重跑对比度，见 AGENTS.md §5.2 */
+  --success: #0F6E33;
+  --success-weak: #DFF3E6;
+  --warning: #8A5200;
+  --warning-weak: #FBEDD9;
+  --danger: #B42318;
+  --danger-weak: #FBE6E4;
+
+  /* ---------- 光与影（新拟物的两管颜料） ---------- */
+  --highlight: rgba(255, 255, 255, 0.92);
+  --shade: rgba(150, 166, 190, 0.42);
+
+  /* 凸起：左上打光 + 右下投影 */
+  --shadow-raised: -8rpx -8rpx 20rpx rgba(255, 255, 255, 1),
+                   12rpx 12rpx 32rpx rgba(148, 163, 186, 0.55);
+  /* 按下：同一组影子翻成 inset，元素不位移 */
+  --shadow-raised-press: inset -6rpx -6rpx 12rpx rgba(255, 255, 255, 0.95),
+                         inset 8rpx 8rpx 18rpx rgba(148, 163, 186, 0.55);
+  /* 凹陷：输入框、搜索框、进度槽、列表行 */
+  --shadow-sunken: inset -4rpx -4rpx 10rpx rgba(255, 255, 255, 0.95),
+                   inset 8rpx 8rpx 18rpx rgba(148, 163, 186, 0.62);
+  /* 小凹陷：≤96rpx 的槽（图标底、徽标底、骨架块），模糊值必须同比缩小 */
+  --shadow-sunken-sm: inset -3rpx -3rpx 8rpx rgba(255, 255, 255, 0.95),
+                      inset 5rpx 5rpx 13rpx rgba(148, 163, 186, 0.58);
+  /* 浮层（弹窗、悬浮按钮） */
+  --shadow-float: 0 16rpx 48rpx rgba(79, 94, 117, 0.24);
+  --shadow-fab: 0 12rpx 32rpx rgba(0, 104, 224, 0.30),
+                -4rpx -4rpx 14rpx rgba(255, 255, 255, 0.80);
+
+  /* 兼容旧引用：A-07 迁移完成后可删 */
+  --shadow-card: var(--shadow-raised);
+
+  /* ---------- 间距（基数 8rpx） ---------- */
+  --sp-1: 8rpx;
+  --sp-2: 16rpx;
+  --sp-3: 24rpx;
+  --sp-4: 32rpx;
+  --sp-6: 48rpx;
+  --page-x: 24rpx;
+
+  /* ---------- 圆角（新拟物偏柔和，实测 24rpx 起才有材质感） ---------- */
+  --r-sm: 8rpx;
+  --r-md: 24rpx;
+  --r-lg: 32rpx;
+  --r-pill: 999rpx;
+
+  /* ---------- 字号（7 档，勿新增夹层值） ---------- */
+  --fs-display: 44rpx;
+  --fs-h1: 36rpx;
+  --fs-h2: 32rpx;
+  --fs-body: 28rpx;
+  --fs-caption: 24rpx;
+  --fs-tiny: 22rpx;
+
+  /* ---------- 动效 ---------- */
+  --dur-fast: 150ms;
+  --dur-base: 220ms;
+
+  /* ---------- 尺寸 ---------- */
+  --nav-h: 88rpx;
+  --hit: 88rpx;
+}
+
+/* ============================================================
+ * 暗色
+ *
+ * 纯新拟物在深色下不成立（没有可用的光），这里做「暗色降级」：
+ * 保留同色底 + inset 高光的语言，但把外投影压到几乎不可见，
+ * 让层级主要靠「凹陷面更暗」和顶部 1rpx 高光建立。
+ * ============================================================ */
+.container.dark {
+  --bg-page: #23262C;
+  --bg-surface: #23262C;
+  --bg-raised: #2C313A;
+  --bg-sunken: #1A1D22;
+
+  --border: rgba(255, 255, 255, 0.08);
+  --divider: rgba(255, 255, 255, 0.06);
+
+  --text-1: #ECEEF2;
+  --text-2: #AEB6C4;
+  --text-3: #8C95A6;
+  --text-invert: #23262C;
+
+  --primary: #0A84FF;
+  --primary-weak: rgba(10, 132, 255, 0.18);
+  --on-primary: #FFFFFF;
+
+  --success: #30D158;
+  --success-weak: rgba(48, 209, 88, 0.16);
+  --warning: #FF9F0A;
+  --warning-weak: rgba(255, 159, 10, 0.16);
+  --danger: #FF453A;
+  --danger-weak: rgba(255, 69, 58, 0.16);
+
+  --highlight: rgba(255, 255, 255, 0.07);
+  --shade: rgba(0, 0, 0, 0.45);
+
+  --shadow-raised: inset 0 1rpx 0 rgba(255, 255, 255, 0.07),
+                   0 8rpx 24rpx rgba(0, 0, 0, 0.38);
+  --shadow-raised-press: inset 0 3rpx 12rpx rgba(0, 0, 0, 0.55);
+  --shadow-sunken: inset 0 3rpx 12rpx rgba(0, 0, 0, 0.55),
+                   inset 0 -1rpx 0 rgba(255, 255, 255, 0.05);
+  --shadow-sunken-sm: inset 0 2rpx 8rpx rgba(0, 0, 0, 0.50);
+  --shadow-float: 0 16rpx 48rpx rgba(0, 0, 0, 0.6);
+  --shadow-fab: 0 12rpx 32rpx rgba(0, 0, 0, 0.55);
+  --shadow-card: var(--shadow-raised);
+}

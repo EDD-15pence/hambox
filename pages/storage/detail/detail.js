@@ -2,6 +2,8 @@
  * 智能仓储 - 物品详情页（数据来自 storage-server 接口）
  */
 var api = require('../../../utils/api');
+var nav = require('../../../utils/nav');
+var theme = require('../../../utils/theme');
 
 Page({
   data: {
@@ -9,12 +11,19 @@ Page({
     item: {},
     statusText: '',
     categoryName: '',
-    categoryIcon: ''
+    categoryIcon: '',
+    // 倒计时大数字（拆成三块，避免模板里做字符串拼接）
+    daysNum: '',
+    daysPrefix: '',
+    hasDays: false
   },
 
   onLoad: function (query) {
     var self = this;
-    self.setData({ isDark: wx.getStorageSync('darkMode') || false });
+    self.setData({
+      isDark: theme.getTheme(),
+      statusBarHeight: nav.STATUS_BAR_HEIGHT
+    });
 
     if (!query || !query.id) {
       wx.showToast({ title: '物品不存在', icon: 'none' });
@@ -51,11 +60,22 @@ Page({
     item.createdAt_display = this.formatTimestamp(item.createdAt);
     item.updatedAt_display = this.formatTimestamp(item.updatedAt);
 
+    var hasDays = item.daysLeft !== null && item.daysLeft !== undefined;
+    var daysNum = '';
+    var daysPrefix = '';
+    if (hasDays) {
+      daysNum = String(item.status === 'expired' ? -item.daysLeft : item.daysLeft);
+      daysPrefix = item.status === 'expired' ? '已过期' : '还剩';
+    }
+
     this.setData({
       item: item,
       statusText: statusText,
       categoryName: cat ? cat.name : (item.category || '未分类'),
-      categoryIcon: cat ? cat.icon : '📦'
+      categoryIcon: cat ? cat.icon : '📦',
+      daysNum: daysNum,
+      daysPrefix: daysPrefix,
+      hasDays: hasDays
     });
   },
 
@@ -114,8 +134,6 @@ Page({
   // 主题
   // ==============================
   onToggleTheme: function () {
-    var isDark = !this.data.isDark;
-    wx.setStorageSync('darkMode', isDark);
-    this.setData({ isDark: isDark });
+    this.setData({ isDark: theme.toggleTheme() });
   }
 });

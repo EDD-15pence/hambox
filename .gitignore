@@ -5,3 +5,6 @@
 *.backup.*
 /docs
 # /data
+
+# 本地环境：后端地址 + 访问令牌（模板见 utils/env.example.js）
+utils/env.js

@@ -1,69 +1,42 @@
 <view class="container {{isDark ? 'dark' : ''}}">
-  <!-- 顶部导航栏 -->
-  <view class="navbar">
-    <text class="navbar-title">工具箱</text>
-    <view class="navbar-actions">
+  <!-- 自绘导航栏：app.json 已关闭系统导航（navigationStyle: custom） -->
+  <view class="app-nav" style="padding-top:{{statusBarHeight}}px">
+    <view class="app-nav__titles">
+      <text class="app-nav__title">工具箱</text>
+      <text class="app-nav__sub">{{todayText}} · {{tools.length}} 个工具</text>
+    </view>
+    <view class="app-nav__actions">
       <button class="icon-btn" hover-class="icon-hover" bindtap="onToggleTheme">{{isDark ? '🌙' : '☀️'}}</button>
     </view>
   </view>
 
-  <!-- 工具网格 -->
-  <view class="tools-grid">
-    <!-- 亲属称呼换算器卡片 -->
-    <view class="tool-card" bindtap="navigateToTool" data-tool="relationship">
-      <view class="tool-icon">👨‍👩‍👧‍👦</view>
-      <text class="tool-name">亲属称呼换算</text>
-      <text class="tool-desc">快速计算亲属关系称呼</text>
+  <view class="content">
+    <view class="grid">
+      <view
+        class="tool-card"
+        wx:for="{{tools}}"
+        wx:key="key"
+        data-tool="{{item.key}}"
+        bindtap="navigateToTool"
+        hover-class="tool-card--active"
+        hover-stay-time="80">
+        <view class="tool-icon">
+          <text class="tool-icon__emoji">{{item.icon}}</text>
+        </view>
+        <view class="tool-head">
+          <text class="tool-name">{{item.name}}</text>
+          <text wx:if="{{item.tag}}" class="ui-badge">{{item.tag}}</text>
+        </view>
+        <text class="tool-desc">{{item.desc}}</text>
+      </view>
     </view>
 
-
-    <!-- 打卡工具卡片 -->
-    <view class="tool-card" bindtap="navigateToTool" data-tool="punchin">
-      <view class="tool-icon">📅</view>
-      <text class="tool-name">打卡</text>
-      <text class="tool-desc">记录你的打卡时间</text>
+    <view class="footer">
+      <text class="footer-text">点卡片进入 · 右下角说话直接记一笔</text>
+      <text class="footer-text footer-text--sub">智能仓储需与电脑同一 WiFi</text>
     </view>
-
-    <!-- 智能仓储工具卡片 -->
-    <view class="tool-card" bindtap="navigateToTool" data-tool="storage">
-      <view class="tool-icon">📦</view>
-      <text class="tool-name">智能仓储</text>
-      <text class="tool-desc">管理物品保质期与库存</text>
-    </view>
-
-    <!-- 快速记录卡片 -->
-    <view class="tool-card" bindtap="navigateToTool" data-tool="quick">
-      <view class="tool-icon">🎙️</view>
-      <text class="tool-name">快速记录</text>
-      <text class="tool-desc">一句话记下买的东西和保质期</text>
-    </view>
-
-    <!-- Prompt模板工具卡片 -->
-    <view class="tool-card" bindtap="navigateToTool" data-tool="flight">
-      <view class="tool-icon">✈️</view>
-      <text class="tool-name">机票比价</text>
-      <text class="tool-desc">一键对比多个平台的机票价格</text>
-    </view>
-
-    <view class="tool-card" bindtap="navigateToTool" data-tool="prompt">
-      <view class="tool-icon">📝</view>
-      <text class="tool-name">Prompt模板工具</text>
-      <text class="tool-desc">一键生成高质量AI提示词</text>
-    </view>
-
-    <!-- 未来可以添加更多工具卡片 -->
-    <!-- 
-    <view class="tool-card" bindtap="navigateToTool" data-tool="other">
-      <view class="tool-icon">🎯</view>
-      <text class="tool-name">其他工具</text>
-      <text class="tool-desc">敬请期待</text>
-    </view>
-    -->
   </view>
 
-  <!-- 底部说明 -->
-  <view class="footer">
-    <text class="footer-text">点击卡片打开对应工具</text>
-  </view>
+  <!-- 悬浮麦克风：说一句 → 面板内确认 → 直接入库，不跳页面 -->
+  <voice-add bind:saved="onVoiceSaved" />
 </view>
-

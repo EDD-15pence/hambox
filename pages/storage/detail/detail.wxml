@@ -1,97 +1,91 @@
 <view class="container {{isDark ? 'dark' : ''}}">
-  <!-- 顶部导航栏 -->
-  <view class="navbar">
-    <text class="nav-back" bindtap="onBack">← 返回</text>
-    <text class="navbar-title">物品详情</text>
-    <view class="navbar-actions">
-      <button class="icon-btn" hover-class="icon-hover" bindtap="onEdit">✏️</button>
+  <view class="app-nav" style="padding-top:{{statusBarHeight}}px">
+    <view class="nav-left">
+      <text class="nav-back-icon" bindtap="onBack">‹</text>
+      <text class="app-nav__title">物品详情</text>
+    </view>
+    <view class="app-nav__actions">
+      <text class="nav-text-btn" bindtap="onEdit">编辑</text>
     </view>
   </view>
 
-  <scroll-view class="detail-scroll" scroll-y>
-    <!-- 照片大图 -->
-    <view wx:if="{{item.imageSrc}}" class="detail-image-wrap" bindtap="onPreviewImage">
-      <image class="detail-image" src="{{item.imageSrc}}" mode="aspectFill" />
-    </view>
-    <view wx:else class="detail-image-wrap detail-image-empty">
-      <text class="detail-image-emoji">{{categoryIcon || '📦'}}</text>
-    </view>
-
-    <!-- 状态头部 -->
-    <view class="status-header">
-      <view class="big-status-badge status-bg-{{item.status || 'none'}}">
-        <text class="big-status-text">{{statusText}}</text>
-        <text wx:if="{{item.daysLeft !== null}}" class="big-status-days">
-          {{item.status === 'expired' ? '已过期 ' + (-item.daysLeft) + ' 天' : (item.status === 'warning' ? '还剩 ' + item.daysLeft + ' 天' : '还剩 ' + item.daysLeft + ' 天')}}
-        </text>
-        <text wx:else class="big-status-days">未设置保质期</text>
-      </view>
+  <scroll-view class="page-scroll" scroll-y>
+    <view class="page-body">
+    <!-- 主视觉：有照片放照片，没有就放分类图标 -->
+    <view class="hero">
+      <image wx:if="{{item.imageSrc}}" class="hero__image" src="{{item.imageSrc}}" mode="aspectFill" bindtap="onPreviewImage" />
+      <text wx:else class="hero__emoji">{{categoryIcon}}</text>
     </view>
 
-    <!-- 基本信息 -->
-    <view class="detail-section">
-      <view class="detail-row">
-        <text class="detail-label">物品名称</text>
-        <text class="detail-value">{{item.name}}</text>
-      </view>
-      <view class="detail-row">
-        <text class="detail-label">分类</text>
-        <text class="detail-value">{{categoryIcon}} {{categoryName}}</text>
-      </view>
-      <view class="detail-row">
-        <text class="detail-label">数量</text>
-        <text class="detail-value">{{item.quantity}} {{item.unit}}</text>
-      </view>
-      <view class="detail-row">
-        <text class="detail-label">存放位置</text>
-        <text class="detail-value">{{item.location || '未设置'}}</text>
-      </view>
+    <!-- 名称 + 状态 -->
+    <view class="headline">
+      <text class="headline__name">{{item.name}}</text>
+      <text wx:if="{{item.status}}" class="ui-badge is-{{item.status === 'expired' ? 'expired' : (item.status === 'warning' ? 'warning' : 'fresh')}}">{{statusText}}</text>
     </view>
 
-    <!-- 日期信息 -->
-    <view class="detail-section">
-      <text class="section-title">📅 日期信息</text>
-      <view class="detail-row">
-        <text class="detail-label">生产日期</text>
-        <text class="detail-value">{{item.produceDate || '未设置'}}</text>
+    <!-- 倒计时：整页唯一的视觉焦点，放在凹槽里 -->
+    <view class="countdown">
+      <block wx:if="{{hasDays}}">
+        <text class="countdown__prefix">{{daysPrefix}}</text>
+        <text class="countdown__num is-{{item.status}} num">{{daysNum}}</text>
+        <text class="countdown__unit">天</text>
+      </block>
+      <text wx:else class="countdown__none">未设置保质期</text>
+    </view>
+
+    <text class="ui-section-title">基本信息</text>
+    <view class="rows">
+      <view class="ui-row">
+        <text class="ui-row__label">分类</text>
+        <text class="ui-row__value">{{categoryIcon}} {{categoryName}}</text>
       </view>
-      <view class="detail-row">
-        <text class="detail-label">过期日期</text>
-        <text class="detail-value">{{item.expireDate || '未设置'}}</text>
+      <view class="ui-row">
+        <text class="ui-row__label">数量</text>
+        <text class="ui-row__value num">{{item.quantity}} {{item.unit}}</text>
       </view>
-      <view wx:if="{{item.daysLeft !== null}}" class="detail-row">
-        <text class="detail-label">剩余天数</text>
-        <text class="detail-value highlight-{{item.status}}">
-          {{item.status === 'expired' ? '已过期 ' + (-item.daysLeft) + ' 天' : '剩余 ' + item.daysLeft + ' 天'}}
-        </text>
+      <view class="ui-row">
+        <text class="ui-row__label">存放位置</text>
+        <text class="ui-row__value">{{item.location || '未设置'}}</text>
       </view>
     </view>
 
-    <!-- 备注 -->
-    <view wx:if="{{item.note}}" class="detail-section">
-      <text class="section-title">📝 备注</text>
-      <text class="detail-note">{{item.note}}</text>
-    </view>
-
-    <!-- 时间戳 -->
-    <view class="detail-section detail-section-meta">
-      <text class="section-title">🕐 记录信息</text>
-      <view class="detail-row">
-        <text class="detail-label">添加时间</text>
-        <text class="detail-value detail-meta">{{item.createdAt_display}}</text>
+    <text class="ui-section-title">日期</text>
+    <view class="rows">
+      <view class="ui-row">
+        <text class="ui-row__label">生产日期</text>
+        <text class="ui-row__value num">{{item.produceDate || '未设置'}}</text>
       </view>
-      <view class="detail-row">
-        <text class="detail-label">最后修改</text>
-        <text class="detail-value detail-meta">{{item.updatedAt_display}}</text>
+      <view class="ui-row">
+        <text class="ui-row__label">过期日期</text>
+        <text class="ui-row__value num">{{item.expireDate || '未设置'}}</text>
       </view>
     </view>
 
-    <!-- 操作按钮 -->
-    <view class="detail-actions">
-      <button class="btn-edit" bindtap="onEdit">✏️ 编辑物品</button>
-      <button class="btn-delete" bindtap="onDelete">🗑️ 删除物品</button>
+    <block wx:if="{{item.note}}">
+      <text class="ui-section-title">备注</text>
+      <view class="note">
+        <text class="note__text">{{item.note}}</text>
+      </view>
+    </block>
+
+    <text class="ui-section-title">记录</text>
+    <view class="rows">
+      <view class="ui-row">
+        <text class="ui-row__label">添加时间</text>
+        <text class="ui-row__value ui-row__value--meta">{{item.createdAt_display}}</text>
+      </view>
+      <view class="ui-row">
+        <text class="ui-row__label">最后修改</text>
+        <text class="ui-row__value ui-row__value--meta">{{item.updatedAt_display}}</text>
+      </view>
     </view>
 
-    <view class="detail-bottom-spacer"></view>
+    <view class="actions">
+      <button class="ui-btn is-block is-primary" bindtap="onEdit">编辑物品</button>
+      <button class="ui-btn is-block is-danger" bindtap="onDelete">删除物品</button>
+    </view>
+
+    <view class="bottom-spacer"></view>
+    </view>
   </scroll-view>
 </view>

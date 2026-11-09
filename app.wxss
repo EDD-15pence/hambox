@@ -1,7 +1,26 @@
+/**
+ * 全局样式入口
+ * - 设计令牌：styles/tokens.wxss（色值唯一来源）
+ * - 公共组件：styles/components.wxss
+ * - 这里只放全局重置与基础排版，不要写具体页面的类
+ */
+@import "./styles/tokens.wxss";
+@import "./styles/components.wxss";
+
 page {
-  background: #ffffff;
-  color: #000000;
+  background: var(--bg-page);
+  color: var(--text-1);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
+
 button {
-  font-size: 30rpx;
+  font-size: var(--fs-body);
+}
+
+/* 数字类信息（数量、天数、金额）等宽，避免数值变化时抖动 */
+.num {
+  font-variant-numeric: tabular-nums;
 }

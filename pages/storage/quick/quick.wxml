@@ -1,126 +1,149 @@
 <view class="container {{isDark ? 'dark' : ''}}">
-  <!-- 顶部导航栏 -->
-  <view class="navbar">
-    <text class="navbar-title">快速记录</text>
-    <view class="navbar-actions">
-      <button class="icon-btn" hover-class="icon-hover" bindtap="onGoList">📋</button>
-      <button class="icon-btn" hover-class="icon-hover" bindtap="onToggleTheme">{{isDark ? '🌙' : '☀️'}}</button>
+  <view class="app-nav" style="padding-top:{{statusBarHeight}}px">
+    <view class="nav-left">
+      <text class="nav-back-icon" bindtap="onBack">‹</text>
+      <text class="app-nav__title">快速记录</text>
+    </view>
+    <view class="app-nav__actions">
+      <text class="nav-text-btn" bindtap="onGoList">物品列表</text>
+      <text class="nav-text-btn" bindtap="onToggleTheme">{{isDark ? '日间' : '夜间'}}</text>
     </view>
   </view>
 
-  <view class="hint-row">
-    <text class="hint-text">🎙️ 点下面的输入框，用键盘上的麦克风直接说；说完点「解析」</text>
-  </view>
+  <scroll-view class="page-scroll" scroll-y>
+    <view class="page-body">
+    <!-- 输入卡：凸起 -->
+    <view class="input-card">
+      <textarea
+        class="ui-textarea input-card__area"
+        value="{{raw}}"
+        placeholder="例：可乐 生产日期9月1日 保质期9个月 放厨房柜子"
+        placeholder-class="ui-placeholder"
+        maxlength="200"
+        auto-height
+        focus="{{inputFocus}}"
+        confirm-type="done"
+        confirm-hold="true"
+        cursor-spacing="40"
+        bindinput="onRawInput"
+        bindconfirm="onParseTap" />
 
-  <!-- 一句话输入 -->
-  <view class="input-card">
-    <textarea
-      class="quick-input"
-      value="{{raw}}"
-      placeholder="例：可乐 生产日期9月1日 保质期9个月 放厨房柜子"
-      placeholder-class="quick-placeholder"
-      maxlength="200"
-      auto-height
-      focus
-      confirm-type="done"
-      confirm-hold="true"
-      cursor-spacing="40"
-      bindinput="onRawInput"
-      bindconfirm="onParseTap" />
-    <view class="input-actions">
-      <text class="counter">{{raw.length}}/200</text>
-      <button class="btn-parse {{raw ? '' : 'disabled'}}" bindtap="onParseTap">解析</button>
-    </view>
-  </view>
-
-  <!-- 解析结果（可就地改） -->
-  <view wx:if="{{parsed}}" class="preview-card">
-    <view class="preview-header">
-      <text class="preview-title">识别结果</text>
-      <view class="status-badge {{daysLeft === null ? 'status-none' : (daysLeft > 30 ? 'status-fresh' : (daysLeft > 0 ? 'status-warning' : 'status-expired'))}}">
-        <text>{{statusText || '无过期日'}}</text>
+      <!-- 语音输入：点一下开始，再说一句结束 → 自动解析 -->
+      <view
+        class="voice-bar {{recording ? 'is-recording' : ''}} {{voiceAvailable ? '' : 'is-off'}}"
+        bindtap="onVoiceTap">
+        <view class="voice-bar__dot"></view>
+        <text class="voice-bar__text">{{recording ? '点一下结束' : (voiceAvailable ? '点一下说话' : '语音未启用')}}</text>
       </view>
+
+      <view class="input-card__foot">
+        <text class="input-card__hint {{fixNote ? 'is-fix' : ''}}">{{recording ? '正在听…' : (fixNote || '说一句，自动拆成名称、数量、位置')}}</text>
+        <text class="input-card__counter num">{{raw.length}}/200</text>
+      </view>
+      <button class="ui-btn is-block is-primary input-card__btn" bindtap="onParseTap" disabled="{{!raw}}">解析这句话</button>
     </view>
 
-    <view class="field-row">
-      <text class="field-label">名称</text>
-      <input class="field-input" value="{{draft.name}}" data-field="name" bindinput="onFieldInput" placeholder="物品名称" />
-    </view>
+    <!-- 解析结果 -->
+    <view wx:if="{{parsed}}" class="result">
+      <view class="result__head">
+        <text class="result__title">识别结果</text>
+        <text wx:if="{{statusText}}" class="ui-badge is-{{daysLeft === null ? 'primary' : (daysLeft > 30 ? 'fresh' : (daysLeft > 0 ? 'warning' : 'expired'))}}">{{statusText}}</text>
+        <text wx:else class="ui-badge">未设过期日</text>
+      </view>
 
-    <view class="field-row">
-      <text class="field-label">分类</text>
-      <picker mode="selector" range="{{categoryNames}}" value="{{categoryIndex}}" bindchange="onCategoryChange">
-        <view class="field-picker">{{categoryNames[categoryIndex] || '其他'}} ▾</view>
-      </picker>
-    </view>
+      <view class="field">
+        <text class="field__label">名称</text>
+        <input class="ui-input" value="{{draft.name}}" data-field="name" bindinput="onFieldInput" placeholder="物品名称" placeholder-class="ui-placeholder" />
+      </view>
 
-    <view class="field-row">
-      <text class="field-label">数量</text>
-      <view class="qty-row">
-        <input class="field-input qty-input" type="digit" value="{{draft.quantity}}" data-field="quantity" bindinput="onFieldInput" />
-        <picker mode="selector" range="{{presetUnits}}" value="{{unitIndex}}" bindchange="onUnitChange">
-          <view class="field-picker unit-picker">{{draft.unit}} ▾</view>
+      <view class="field">
+        <text class="field__label">分类</text>
+        <picker mode="selector" range="{{categoryNames}}" value="{{categoryIndex}}" bindchange="onCategoryChange">
+          <view class="picker">
+            <text class="picker__text">{{categoryNames[categoryIndex] || '其他'}}</text>
+            <text class="picker__arrow">›</text>
+          </view>
         </picker>
       </view>
-    </view>
 
-    <view class="field-row">
-      <text class="field-label">生产日期</text>
-      <picker mode="date" value="{{draft.produceDate}}" start="2000-01-01" end="2100-12-31" bindchange="onProduceDateChange">
-        <view class="field-picker {{draft.produceDate ? '' : 'empty'}}">{{draft.produceDate || '未填'}} ▾</view>
-      </picker>
-    </view>
+      <view class="field">
+        <text class="field__label">数量</text>
+        <view class="qty-row">
+          <input class="ui-input qty-row__input" type="digit" value="{{draft.quantity}}" data-field="quantity" bindinput="onFieldInput" />
+          <picker mode="selector" range="{{presetUnits}}" value="{{unitIndex}}" bindchange="onUnitChange">
+            <view class="picker qty-row__unit">
+              <text class="picker__text">{{draft.unit}}</text>
+              <text class="picker__arrow">›</text>
+            </view>
+          </picker>
+        </view>
+      </view>
 
-    <view class="field-row">
-      <text class="field-label">保质期</text>
-      <view class="shelf-row">
-        <input class="field-input shelf-input" type="number" value="{{draft.shelfLifeMonths}}" placeholder="月" data-field="shelfLifeMonths" bindinput="onShelfMonthsInput" />
-        <text class="shelf-unit">月</text>
-        <text class="shelf-or">或</text>
-        <input class="field-input shelf-input" type="number" value="{{draft.shelfLifeDays}}" placeholder="天" data-field="shelfLifeDays" bindinput="onShelfDaysInput" />
-        <text class="shelf-unit">天</text>
+      <view class="field">
+        <text class="field__label">生产日期</text>
+        <picker mode="date" value="{{draft.produceDate}}" start="2000-01-01" end="2100-12-31" bindchange="onProduceDateChange">
+          <view class="picker">
+            <text class="{{draft.produceDate ? 'picker__text' : 'picker__placeholder'}}">{{draft.produceDate || '未填'}}</text>
+            <text class="picker__arrow">›</text>
+          </view>
+        </picker>
+      </view>
+
+      <view class="field">
+        <text class="field__label">保质期</text>
+        <view class="shelf">
+          <input class="ui-input shelf__input" type="number" value="{{draft.shelfLifeMonths}}" placeholder="月" placeholder-class="ui-placeholder" data-field="shelfLifeMonths" bindinput="onShelfMonthsInput" />
+          <text class="shelf__unit">月</text>
+          <text class="shelf__or">或</text>
+          <input class="ui-input shelf__input" type="number" value="{{draft.shelfLifeDays}}" placeholder="天" placeholder-class="ui-placeholder" data-field="shelfLifeDays" bindinput="onShelfDaysInput" />
+          <text class="shelf__unit">天</text>
+        </view>
+      </view>
+
+      <view class="field">
+        <text class="field__label">过期日</text>
+        <picker mode="date" value="{{draft.expireDate}}" start="2000-01-01" end="2100-12-31" bindchange="onExpireDateChange">
+          <view class="picker">
+            <text class="{{draft.expireDate ? 'picker__text' : 'picker__placeholder'}}">{{draft.expireDate || '未填'}}</text>
+            <text class="picker__arrow">›</text>
+          </view>
+        </picker>
+      </view>
+
+      <view class="field">
+        <text class="field__label">存放位置</text>
+        <input class="ui-input" value="{{draft.location}}" data-field="location" bindinput="onFieldInput" placeholder="如 冰箱冷藏 / 厨房柜子" placeholder-class="ui-placeholder" />
+      </view>
+
+      <view wx:if="{{missing.length > 0}}" class="missing">
+        <text class="missing__text">
+          没识别到
+          <text wx:for="{{missing}}" wx:key="*this" class="missing__item">{{item === 'produceDate' ? '生产日期' : (item === 'shelfLife' ? '保质期' : '存放位置')}}{{index === missing.length - 1 ? '' : '、'}}</text>
+          ，可以直接在上面补
+        </text>
+      </view>
+
+      <view class="result__actions">
+        <button class="ui-btn is-block is-primary" bindtap="onSave" disabled="{{saving}}">保存并继续记</button>
+        <button class="ui-btn is-block" bindtap="onSaveAndDetail" disabled="{{saving}}">保存并看详情</button>
+        <button class="ui-btn is-block is-ghost" bindtap="onOpenForm">用完整表单填</button>
       </view>
     </view>
 
-    <view class="field-row">
-      <text class="field-label">过期日</text>
-      <picker mode="date" value="{{draft.expireDate}}" start="2000-01-01" end="2100-12-31" bindchange="onExpireDateChange">
-        <view class="field-picker {{draft.expireDate ? '' : 'empty'}}">{{draft.expireDate || '未填'}} ▾</view>
-      </picker>
+    <!-- 空态示例 -->
+    <view wx:if="{{!parsed && !raw}}" class="tips">
+      <text class="tips__title">这样说就行</text>
+      <text class="tips__line">可乐 生产日期9月1日 保质期9个月 放厨房柜子</text>
+      <text class="tips__line">在超市买了一瓶牛奶 昨天生产 保质期7天 放冰箱</text>
+      <text class="tips__line">感冒药 有效期至12月31日 放药箱</text>
+      <text class="tips__line">三袋薯片 保质期半年 放在客厅茶几</text>
     </view>
 
-    <view class="field-row">
-      <text class="field-label">存放位置</text>
-      <input class="field-input" value="{{draft.location}}" data-field="location" bindinput="onFieldInput" placeholder="如 冰箱冷藏 / 厨房柜子" />
+    <view wx:if="{{savedCount > 0}}" class="saved">
+      <text class="saved__text">本次已连续记录 {{savedCount}} 条</text>
     </view>
 
-    <view wx:if="{{missing.length > 0}}" class="missing-hint">
-      <text>⚠️ 没识别到：</text>
-      <text wx:for="{{missing}}" wx:key="*this" class="missing-item">
-        {{item === 'produceDate' ? '生产日期' : (item === 'shelfLife' ? '保质期' : '存放位置')}}
-      </text>
-      <text>，可直接在上面补</text>
+    <view class="bottom-spacer"></view>
     </view>
-
-    <view class="action-row">
-      <button class="btn-primary" bindtap="onSave" disabled="{{saving}}">保存并继续记</button>
-      <button class="btn-secondary" bindtap="onSaveAndDetail" disabled="{{saving}}">保存并看详情</button>
-    </view>
-    <view class="action-row">
-      <button class="btn-ghost" bindtap="onOpenForm">用完整表单填（照片/备注）</button>
-    </view>
-  </view>
-
-  <!-- 空态提示 -->
-  <view wx:if="{{!parsed && !raw}}" class="tips-card">
-    <text class="tips-title">这样说就行：</text>
-    <text class="tips-line">· 可乐 生产日期9月1日 保质期9个月 放厨房柜子</text>
-    <text class="tips-line">· 在超市买了一瓶牛奶 昨天生产 保质期7天 放冰箱</text>
-    <text class="tips-line">· 感冒药 有效期至12月31日 放药箱</text>
-    <text class="tips-line">· 三袋薯片 保质期半年 放在客厅茶几</text>
-  </view>
-
-  <view wx:if="{{savedCount > 0}}" class="saved-hint">
-    <text>✅ 本次已连续记录 {{savedCount}} 条</text>
-  </view>
+  </scroll-view>
 </view>

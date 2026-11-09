@@ -1,3 +1,5 @@
+const navUtil = require("../../utils/nav");
+
 // 亲属称呼计算核心
 // token：f 爸爸, m 妈妈, h 老公, w 老婆, ob 哥哥, yb 弟弟, os 姐姐, ys 妹妹, s 儿子, d 女儿
 
@@ -1596,6 +1598,8 @@ Page({
     });
   },
   onLoad(options) {
+    this.setData({ statusBarHeight: navUtil.STATUS_BAR_HEIGHT });
+
     const cdnUrls = [
       "https://ghfast.top/https://raw.githubusercontent.com/EDD-15pence/relationship-audio/main/cdn_map_unified.json",
       "https://raw.fastgit.org/EDD-15pence/relationship-audio/main/cdn_map_unified.json",
@@ -1624,6 +1628,10 @@ Page({
       withShareTicket: true,
       menus: ["shareAppMessage", "shareTimeline"],
     });
+  },
+
+  onBack() {
+    wx.navigateBack({ delta: 1, fail: () => wx.reLaunch({ url: "/pages/index/index" }) });
   },
 
   onChangeGender(e) {

@@ -1,0 +1,138 @@
+<!--
+  首页悬浮语音入口 + 底部确认面板
+  点 FAB → 面板升起 → 点麦克风说话 → 再说一次结束 → 预览字段 → 确认添加
+  全程不离开首页。
+-->
+<view class="va-root">
+  <view
+    wx:if="{{!visible}}"
+    class="va-fab"
+    style="bottom: calc({{48 + fabOffset}}rpx + env(safe-area-inset-bottom))"
+    bindtap="onOpen"
+    bindlongpress="onOpenLog"
+    hover-class="va-fab--active"
+    hover-stay-time="80">
+    <view class="va-mic-icon">
+      <view class="va-mic-icon__cap"></view>
+      <view class="va-mic-icon__arc"></view>
+      <view class="va-mic-icon__stem"></view>
+    </view>
+  </view>
+
+  <view wx:if="{{visible}}" class="ui-mask" bindtap="onMaskTap">
+    <view class="ui-sheet va-sheet" catchtap="noop">
+    <view class="ui-sheet__header">
+      <text class="ui-sheet__title">快速记一笔</text>
+      <text class="nav-text-btn" bindtap="onClose">关闭</text>
+    </view>
+
+    <!-- 阶段一：收音 -->
+    <view wx:if="{{!parsed}}" class="va-stage">
+      <view class="va-pulse-wrap">
+        <view wx:if="{{recording}}" class="va-pulse"></view>
+        <view class="va-rec__btn {{recording ? 'is-rec' : ''}}" bindtap="onMicTap">
+          <view wx:if="{{recording}}" class="va-wave">
+            <view
+              wx:for="{{bars}}"
+              wx:key="*this"
+              class="va-wave__bar"
+              style="animation-delay:{{item * 0.12}}s"></view>
+          </view>
+          <view wx:else class="va-mic-icon va-mic-icon--lg">
+            <view class="va-mic-icon__cap"></view>
+            <view class="va-mic-icon__arc"></view>
+            <view class="va-mic-icon__stem"></view>
+          </view>
+        </view>
+      </view>
+
+      <text class="va-hint">{{recognizing ? '识别中…' : (recording ? '正在听，点一下结束' : '点一下，说一句话')}}</text>
+      <text class="va-hint va-hint--sub">例：布洛芬缓释胶囊 保质期两年 放药箱</text>
+
+      <view wx:if="{{raw}}" class="va-live">
+        <text class="va-live__text">{{raw}}</text>
+      </view>
+    </view>
+
+    <!-- 阶段二：确认 -->
+    <scroll-view wx:else scroll-y class="va-scroll">
+      <view class="va-raw">
+        <text class="va-raw__text">{{raw}}</text>
+        <text class="va-raw__again" bindtap="onRetry">重新说</text>
+      </view>
+
+      <view wx:if="{{missing.length}}" class="va-missing">
+        <text class="va-missing__text">还差：{{missingText}}，可以先确认，也可以补上再存</text>
+      </view>
+
+      <view class="va-field">
+        <text class="va-field__label">名称</text>
+        <view class="va-field__body">
+          <input
+            class="ui-input"
+            value="{{draft.name}}"
+            data-field="name"
+            placeholder="物品名称"
+            placeholder-class="ui-placeholder"
+            bindinput="onFieldInput" />
+        </view>
+      </view>
+
+      <view class="va-field">
+        <text class="va-field__label">数量</text>
+        <view class="va-field__body">
+          <input
+            class="ui-input va-qty"
+            type="digit"
+            value="{{draft.quantity}}"
+            data-field="quantity"
+            bindinput="onFieldInput" />
+          <picker range="{{units}}" value="{{unitIndex}}" bindchange="onUnitChange">
+            <view class="ui-input va-picker">{{draft.unit}}</view>
+          </picker>
+        </view>
+      </view>
+
+      <view class="va-field">
+        <text class="va-field__label">分类</text>
+        <view class="va-field__body">
+          <picker range="{{categoryNames}}" value="{{categoryIndex}}" bindchange="onCategoryChange">
+            <view class="ui-input va-picker">{{categoryNames[categoryIndex] || '选择分类'}}</view>
+          </picker>
+        </view>
+      </view>
+
+      <view class="va-field">
+        <text class="va-field__label">位置</text>
+        <view class="va-field__body">
+          <input
+            class="ui-input"
+            value="{{draft.location}}"
+            data-field="location"
+            placeholder="放在哪"
+            placeholder-class="ui-placeholder"
+            bindinput="onFieldInput" />
+        </view>
+      </view>
+
+      <view class="va-field">
+        <text class="va-field__label">过期日</text>
+        <view class="va-field__body">
+          <picker mode="date" value="{{draft.expireDate}}" bindchange="onExpireChange">
+            <view class="ui-input va-picker">{{draft.expireDate || '未设置'}}</view>
+          </picker>
+          <text wx:if="{{statusText}}" class="ui-badge is-{{daysLeft > 30 ? 'fresh' : (daysLeft > 0 ? 'warning' : 'expired')}}">{{statusText}}</text>
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="va-footer">
+      <button wx:if="{{!parsed}}" class="ui-btn is-ghost" bindtap="onClose">取消</button>
+      <button
+        class="ui-btn is-primary"
+        bindtap="onConfirm"
+        disabled="{{!parsed || saving}}">{{saving ? '保存中…' : '确认添加'}}</button>
+    </view>
+  </view>
+</view>
+</view>

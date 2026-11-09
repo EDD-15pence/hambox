@@ -1,0 +1,55 @@
+<view class="container {{isDark ? 'dark' : ''}}">
+  <view class="app-nav" style="padding-top:{{statusBarHeight}}px">
+    <view class="nav-left">
+      <text class="nav-back-icon" bindtap="onBack">‹</text>
+      <text class="app-nav__title">识别日志</text>
+    </view>
+    <view class="app-nav__actions">
+      <text class="nav-text-btn" bindtap="onCopyAll">复制全部</text>
+    </view>
+  </view>
+
+  <scroll-view class="page-scroll" scroll-y>
+    <view class="page-body">
+      <view class="log-tip">长按首页麦克风可进这里 · 共 {{count}} 条，最多留 200 条</view>
+      <view class="log-tip log-route">当前连接：{{routeLabel}}{{baseUrl ? ' · ' + baseUrl : ''}}</view>
+
+      <view wx:if="{{!count}}" class="ui-empty">
+        <text class="ui-empty__title">还没有识别记录</text>
+      </view>
+
+      <view wx:for="{{logs}}" wx:key="t" class="ui-card log-item">
+        <view class="log-head">
+          <text class="log-time num">{{item.timeText}}</text>
+          <text wx:if="{{!item.saved}}" class="ui-badge is-warning">未保存</text>
+          <text wx:elif="{{item.changedText}}" class="ui-badge is-primary">改了 {{item.changedText}}</text>
+          <text wx:else class="ui-badge is-fresh">原样保存</text>
+        </view>
+
+        <view class="log-row">
+          <text class="log-label">原文</text>
+          <text class="log-value">{{item.raw || '（空）'}}</text>
+        </view>
+
+        <view wx:if="{{item.fixed !== item.raw}}" class="log-row">
+          <text class="log-label">纠错</text>
+          <text class="log-value">{{item.fixed}}</text>
+        </view>
+
+        <view class="log-row">
+          <text class="log-label">解析</text>
+          <text class="log-value">{{item.parsedText || '（没拆出来）'}}</text>
+        </view>
+
+        <view wx:if="{{item.saved}}" class="log-row">
+          <text class="log-label">保存</text>
+          <text class="log-value">{{item.finalText}}</text>
+        </view>
+      </view>
+
+      <view wx:if="{{count}}" class="log-footer">
+        <text class="log-clear" bindtap="onClear">清空日志</text>
+      </view>
+    </view>
+  </scroll-view>
+</view>

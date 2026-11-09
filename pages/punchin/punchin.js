@@ -1,3 +1,5 @@
+const nav = require('../../utils/nav');
+
 Page({
   data: {
     nowTime: '',
@@ -15,6 +17,7 @@ Page({
   },
 
   onLoad() {
+    this.setData({ statusBarHeight: nav.STATUS_BAR_HEIGHT });
     this.loadSettings();
     this.updateNowTime();
     this.loadHabits();
@@ -428,6 +431,10 @@ Page({
         }
       }
     });
+  },
+
+  onBack() {
+    wx.navigateBack({ delta: 1, fail: () => wx.reLaunch({ url: '/pages/index/index' }) });
   },
 
   onToggleTheme() {

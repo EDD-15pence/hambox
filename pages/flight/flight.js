@@ -1,3 +1,5 @@
+const nav = require('../../utils/nav');
+
 const PLATFORM_LIST = [
   { name: '携程旅行', shortName: '携程', color: '#2878ff', icon: '携' },
   { name: '去哪儿旅行', shortName: '去哪儿', color: '#13a8ff', icon: '去' },
@@ -14,10 +16,13 @@ function getToday() {
 }
 
 Page({
-  data: { departure: '', destination: '', date: getToday(), minDate: getToday(), searched: false, routeText: '', platforms: [] },
+  data: { departure: '', destination: '', date: getToday(), minDate: getToday(), searched: false, routeText: '', platforms: [], statusBarHeight: nav.STATUS_BAR_HEIGHT },
   onDepartureInput(e) { this.setData({ departure: e.detail.value }); },
   onDestinationInput(e) { this.setData({ destination: e.detail.value }); },
   onDateChange(e) { this.setData({ date: e.detail.value }); },
+  onBack() {
+    wx.navigateBack({ delta: 1, fail: () => wx.reLaunch({ url: '/pages/index/index' }) });
+  },
   onSearch() {
     const departure = this.data.departure.trim();
     const destination = this.data.destination.trim();

@@ -1,6 +1,9 @@
 <view class="container {{isDark ? 'dark' : ''}}">
-  <view class="navbar">
-    <text class="title">习惯打卡</text>
+  <view class="navbar" style="padding-top:{{statusBarHeight}}px">
+    <view class="nav-left">
+      <text class="nav-back-icon" bindtap="onBack">‹</text>
+      <text class="title">习惯打卡</text>
+    </view>
     <view class="navbar-actions">
       <button class="icon-btn" bindtap="onShowAddModal">➕</button>
       <button class="icon-btn" bindtap="onToggleTheme">{{isDark ? '🌙' : '☀️'}}</button>

@@ -4,6 +4,8 @@
  */
 var api = require('../../../utils/api');
 var storageUtils = require('../../../utils/storage-utils');
+var nav = require('../../../utils/nav');
+var theme = require('../../../utils/theme');
 
 Page({
   data: {
@@ -14,10 +16,13 @@ Page({
     defaultCategories: [],
     categoryMap: {},
     selectedCategory: 'all',
+    statusFilter: 'all',
     keyword: '',
     sortBy: 'expiry',
     showSearch: false,
     banner: { show: false, expiredCount: 0, warningCount: 0 },
+    // 顶部三个统计块
+    stats: { expired: 0, warning: 0, fresh: 0, none: 0, total: 0 },
     // 删除弹窗
     showDeleteModal: false,
     deleteTargetId: null,
@@ -31,12 +36,22 @@ Page({
   },
 
   onLoad: function () {
-    this.setData({ isDark: wx.getStorageSync('darkMode') || false });
+    this.setData({
+      isDark: theme.getTheme(),
+      statusBarHeight: nav.STATUS_BAR_HEIGHT
+    });
     this.loadAll();
   },
 
   onShow: function () {
     this.loadAll();
+  },
+
+  onBack: function () {
+    wx.navigateBack({
+      delta: 1,
+      fail: function () { wx.reLaunch({ url: '/pages/index/index' }); }
+    });
   },
 
   // ==============================
@@ -74,6 +89,13 @@ Page({
       tabs.push({ id: cat.id, name: cat.name, icon: cat.icon, count: count });
     });
 
+    var stats = { expired: 0, warning: 0, fresh: 0, none: 0, total: items.length };
+    items.forEach(function (it) {
+      var key = it.status || 'none';
+      if (stats[key] === undefined) stats[key] = 0;
+      stats[key]++;
+    });
+
     this.setData({
       items: items,
       categories: tabs,
@@ -81,6 +103,7 @@ Page({
       defaultCategories: categories.filter(function (c) { return c.isDefault; }),
       customCategories: categories.filter(function (c) { return !c.isDefault; }),
       banner: storageUtils.getStatusBanner(items),
+      stats: stats,
       sortBy: sortBy
     });
     this.applyFilters();
@@ -132,13 +155,34 @@ Page({
   // 过滤 & 排序应用
   // ==============================
   applyFilters: function () {
+    var statusFilter = this.data.statusFilter;
     var filtered = storageUtils.filterItems(
       this.data.items,
       this.data.keyword,
       this.data.selectedCategory
     );
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(function (it) {
+        return (it.status || 'none') === statusFilter;
+      });
+    }
     var sorted = storageUtils.sortItems(filtered, this.data.sortBy);
     this.setData({ displayItems: sorted });
+  },
+
+  // 点顶部统计块筛选状态，再点一次取消
+  onSelectStatus: function (e) {
+    var status = e.currentTarget.dataset.status;
+    if (this.data.stats[status] === 0) return;
+    this.setData({
+      statusFilter: this.data.statusFilter === status ? 'all' : status
+    });
+    this.applyFilters();
+  },
+
+  onClearStatus: function () {
+    this.setData({ statusFilter: 'all' });
+    this.applyFilters();
   },
 
   // ==============================
@@ -162,6 +206,11 @@ Page({
     wx.navigateTo({
       url: '/pages/storage/quick/quick'
     });
+  },
+
+  /** 语音面板保存成功：重新拉一遍，让新物品立刻出现在列表里 */
+  onVoiceSaved: function () {
+    this.loadAll();
   },
 
   // ==============================
@@ -285,9 +334,7 @@ Page({
   // 主题
   // ==============================
   onToggleTheme: function () {
-    var isDark = !this.data.isDark;
-    wx.setStorageSync('darkMode', isDark);
-    this.setData({ isDark: isDark });
+    this.setData({ isDark: theme.toggleTheme() });
   },
 
   stopPropagation: function () { }

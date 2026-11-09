@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "智能仓储"
+  "navigationBarTitleText": "智能仓储",
+  "usingComponents": {
+    "voice-add": "/components/voice-add/voice-add"
+  }
 }

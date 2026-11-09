@@ -1,307 +1,159 @@
-/* ============================== */
-/* 智能仓储 - 详情页样式          */
-/* ============================== */
+/* ============================================================
+ * 智能仓储 · 详情页（轻新拟物 v2）
+ * 只写本页差异；材质、尺寸、颜色全部来自 styles/*
+ * ============================================================ */
 
 .container {
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
+  height: 100vh;
   box-sizing: border-box;
-  background: #ffffff;
-  color: #000000;
+  background: var(--bg-page);
+  color: var(--text-1);
 }
 
-/* ---------- 导航栏 ---------- */
-.navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20rpx 24rpx;
-  background: #ffffff;
-  border-bottom: 1rpx solid #f0f0f0;
-  flex-shrink: 0;
-}
-.nav-back {
-  font-size: 28rpx;
-  color: #007aff;
-  min-width: 120rpx;
-}
-.navbar-title {
-  font-size: 34rpx;
-  font-weight: 600;
-  color: #000000;
-}
-.navbar-actions {
-  min-width: 120rpx;
-  display: flex;
-  justify-content: flex-end;
-}
-.icon-btn {
-  background: transparent;
-  border: none;
-  padding: 8rpx 12rpx;
-  font-size: 36rpx;
-  line-height: 1;
-  color: #000000;
-}
-.icon-btn::after {
-  border: none;
-}
-.icon-hover {
-  opacity: 0.6;
-}
-
-/* ---------- 内容滚动区 ---------- */
-.detail-scroll {
+/* scroll-view 只负责滚动，不带任何横向 padding：
+   它在部分机型上会把 padding 算到 100% 之外，导致内容右移、右侧被裁。
+   页面边距一律交给内部 .page-body。 */
+.page-scroll {
   flex: 1;
+  min-height: 0;
+  width: 100%;
 }
 
-/* ---------- 照片 ---------- */
-.detail-image-wrap {
+.page-body {
+  box-sizing: border-box;
   width: 100%;
-  height: 400rpx;
-  overflow: hidden;
+  padding: 0 var(--page-x);
 }
-.detail-image {
-  width: 100%;
-  height: 100%;
-}
-.detail-image-empty {
+
+/* ---------- 主视觉：凸起相框 ---------- */
+.hero {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f5f5;
-}
-.detail-image-emoji {
-  font-size: 120rpx;
-}
-
-/* ---------- 状态头部 ---------- */
-.status-header {
-  padding: 32rpx 24rpx;
-  text-align: center;
-}
-.big-status-badge {
-  display: inline-block;
-  padding: 24rpx 48rpx;
-  border-radius: 24rpx;
-}
-.big-status-text {
-  font-size: 40rpx;
-  font-weight: 700;
-  display: block;
-  margin-bottom: 8rpx;
-}
-.big-status-days {
-  font-size: 26rpx;
-  font-weight: 400;
-}
-/* 状态背景色 */
-.status-bg-fresh {
-  background: #e8f5e9;
-}
-.status-bg-fresh .big-status-text {
-  color: #2e7d32;
-}
-.status-bg-fresh .big-status-days {
-  color: #43a047;
-}
-.status-bg-warning {
-  background: #fff3e0;
-}
-.status-bg-warning .big-status-text {
-  color: #e65100;
-}
-.status-bg-warning .big-status-days {
-  color: #f57c00;
-}
-.status-bg-expired {
-  background: #fce4ec;
-}
-.status-bg-expired .big-status-text {
-  color: #c62828;
-}
-.status-bg-expired .big-status-days {
-  color: #e53935;
-}
-.status-bg-none {
-  background: #f5f5f5;
-}
-.status-bg-none .big-status-text {
-  color: #888888;
-}
-.status-bg-none .big-status-days {
-  color: #aaaaaa;
+  height: 320rpx;
+  margin-top: var(--sp-1);
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
 }
 
-/* ---------- 信息区域 ---------- */
-.detail-section {
-  margin: 0 24rpx 24rpx;
-  padding: 24rpx;
-  background: #ffffff;
-  border-radius: 16rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
-}
-.section-title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #333333;
+.hero__image {
+  width: 100%;
+  height: 100%;
   display: block;
-  margin-bottom: 20rpx;
-  padding-bottom: 16rpx;
-  border-bottom: 1rpx solid #f0f0f0;
 }
-.detail-row {
+
+.hero__emoji {
+  font-size: 128rpx;
+  line-height: 1;
+}
+
+/* ---------- 标题行 ---------- */
+.headline {
   display: flex;
-  align-items: flex-start;
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid #f8f8f8;
+  align-items: center;
+  gap: var(--sp-1);
+  margin: var(--sp-3) 4rpx 0;
 }
-.detail-row:last-child {
-  border-bottom: none;
-}
-.detail-label {
-  width: 160rpx;
-  flex-shrink: 0;
-  font-size: 26rpx;
-  color: #888888;
-}
-.detail-value {
+
+.headline__name {
   flex: 1;
-  font-size: 28rpx;
-  color: #000000;
-  word-break: break-all;
-}
-.detail-note {
-  font-size: 28rpx;
-  color: #555555;
-  line-height: 1.6;
-  display: block;
+  min-width: 0;
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* 高亮色 */
-.highlight-fresh {
-  color: #2e7d32;
-  font-weight: 600;
-}
-.highlight-warning {
-  color: #e65100;
-  font-weight: 600;
-}
-.highlight-expired {
-  color: #c62828;
-  font-weight: 600;
-}
-
-.detail-meta {
-  font-size: 24rpx;
-  color: #aaaaaa;
-}
-.detail-section-meta {
-  opacity: 0.7;
+/* ---------- 倒计时：凹陷槽 + 大数字 ---------- */
+.countdown {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 12rpx;
+  margin-top: var(--sp-2);
+  padding: var(--sp-4) var(--sp-3);
+  border-radius: var(--r-lg);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken);
 }
 
-/* ---------- 操作按钮 ---------- */
-.detail-actions {
-  padding: 24rpx;
+.countdown__prefix {
+  font-size: var(--fs-caption);
+  color: var(--text-3);
+}
+
+.countdown__num {
+  font-size: 88rpx;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--text-1);
+}
+
+.countdown__num.is-expired {
+  color: var(--danger);
+}
+
+.countdown__num.is-warning {
+  color: var(--warning);
+}
+
+.countdown__num.is-fresh {
+  color: var(--success);
+}
+
+.countdown__unit {
+  font-size: var(--fs-body);
+  color: var(--text-3);
+}
+
+.countdown__none {
+  padding: var(--sp-2) 0;
+  font-size: var(--fs-body);
+  color: var(--text-3);
+}
+
+/* ---------- 信息行 ---------- */
+.rows {
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
-}
-.btn-edit {
-  width: 100%;
-  padding: 24rpx 0;
-  border-radius: 12rpx;
-  font-size: 30rpx;
-  font-weight: 500;
-  border: none;
-  background: #007aff;
-  color: #ffffff;
-}
-.btn-edit::after {
-  border: none;
-}
-.btn-delete {
-  width: 100%;
-  padding: 24rpx 0;
-  border-radius: 12rpx;
-  font-size: 28rpx;
-  font-weight: 500;
-  border: none;
-  background: transparent;
-  color: #e53935;
-}
-.btn-delete::after {
-  border: none;
 }
 
-.detail-bottom-spacer {
-  height: 60rpx;
+.ui-row__value--meta {
+  font-size: var(--fs-caption);
+  color: var(--text-3);
 }
 
-/* ============================== */
-/* 暗黑模式                        */
-/* ============================== */
-.container.dark {
-  background: #121212;
+/* ---------- 备注 ---------- */
+.note {
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
 }
-.container.dark .navbar {
-  background: #1c1c1c;
-  border-bottom-color: #2a2a2a;
+
+.note__text {
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  color: var(--text-2);
+  word-break: break-all;
 }
-.container.dark .navbar-title {
-  color: #eaeaea;
+
+/* ---------- 操作 ---------- */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-6);
 }
-.container.dark .icon-btn {
-  color: #eaeaea;
-}
-.container.dark .detail-image-empty {
-  background: #1a1a1a;
-}
-.container.dark .detail-section {
-  background: #1c1c1c;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
-}
-.container.dark .section-title {
-  color: #eaeaea;
-  border-bottom-color: #2a2a2a;
-}
-.container.dark .detail-row {
-  border-bottom-color: #2a2a2a;
-}
-.container.dark .detail-label {
-  color: #999999;
-}
-.container.dark .detail-value {
-  color: #eaeaea;
-}
-.container.dark .detail-note {
-  color: #cccccc;
-}
-.container.dark .detail-meta {
-  color: #777777;
-}
-.container.dark .status-bg-fresh {
-  background: #1b5e20;
-}
-.container.dark .status-bg-fresh .big-status-days {
-  color: #a5d6a7;
-}
-.container.dark .status-bg-warning {
-  background: #3e2723;
-}
-.container.dark .status-bg-warning .big-status-days {
-  color: #ffb74d;
-}
-.container.dark .status-bg-expired {
-  background: #4a1c1c;
-}
-.container.dark .status-bg-expired .big-status-days {
-  color: #ef9a9a;
-}
-.container.dark .status-bg-none {
-  background: #1a1a1a;
-}
-.container.dark .btn-delete {
-  color: #ef5350;
+
+.bottom-spacer {
+  height: calc(var(--sp-6) + env(safe-area-inset-bottom));
 }

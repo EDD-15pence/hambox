@@ -3,6 +3,8 @@
  */
 var api = require('../../../utils/api');
 var storageUtils = require('../../../utils/storage-utils');
+var nav = require('../../../utils/nav');
+var theme = require('../../../utils/theme');
 
 Page({
   data: {
@@ -36,8 +38,7 @@ Page({
 
   onLoad: function (query) {
     var self = this;
-    var isDark = wx.getStorageSync('darkMode') || false;
-    this.setData({ isDark: isDark });
+    this.setData({ isDark: theme.getTheme(), statusBarHeight: nav.STATUS_BAR_HEIGHT });
 
     api.listCategories()
       .then(function (categories) {
@@ -212,7 +213,7 @@ Page({
             self.setData({
               uploading: false,
               'item.image': url,
-              'item.imageSrc': api.BASE_URL + url
+              'item.imageSrc': api.getBaseUrl() + url
             });
           })
           .catch(function (err) {

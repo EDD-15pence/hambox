@@ -144,5 +144,40 @@ check('年月日过期日', r.expireDate, '2027-01-05');
 // 20. 月末收敛：1月31日 + 1个月 = 2月28日
 check('月末收敛', P.addMonths('2026-01-31', 1), '2026-02-28');
 
+// ============ 语音输入的语气词与残留（真实识别结果） ============
+
+// 21. 句首语气词 + 口头禅
+r = parse('嗯那个帮我记一下牛奶 保质期6个月 放冰箱');
+check('语气词名称', r.name, '牛奶');
+check('语气词数量', r.quantity, 1);
+check('语气词位置', r.location, '冰箱');
+
+// 22. "就过期了" 的"就"不能进名称
+r = parse('呃这个布洛芬缓释胶囊 还有三个月就过期了 放药箱');
+check('就过期名称', r.name, '布洛芬缓释胶囊');
+check('就过期保质期', r.shelfLifeMonths, 3);
+
+// 23. 模糊量词「几袋」「几个月」整体清掉
+r = parse('记一下还有几袋薯片放零食柜');
+check('几袋名称', r.name, '薯片');
+check('几袋位置', r.location, '零食柜');
+
+r = parse('牛奶还有几个月过期 放冰箱');
+check('几个月名称', r.name, '牛奶');
+check('几个月不产生保质期', r.shelfLifeMonths, null);
+
+// 24. 「一瓶牛奶」丢了数字后不能剩「瓶牛奶」
+r = parse('啊我买了瓶牛奶放冰箱冷藏');
+check('孤立量词名称', r.name, '牛奶');
+
+// 25. 安全阀：「额」只在句首删，「额温枪」不能被吃掉
+r = parse('额温枪 放药箱');
+check('额温枪不被误删', r.name, '额温枪');
+
+// 26. 重复口头禅
+r = parse('那个那个 就是 可乐 还有两个月过期');
+check('重复口头禅名称', r.name, '可乐');
+check('重复口头禅保质期', r.shelfLifeMonths, 2);
+
 console.log(failures === 0 ? '\nALL PASS' : '\n' + failures + ' 项失败');
 process.exit(failures === 0 ? 0 : 1);

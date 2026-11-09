@@ -1,3 +1,11 @@
+<view class="flight-root">
+<view class="app-nav" style="padding-top:{{statusBarHeight}}px">
+  <view class="nav-left">
+    <text class="nav-back-icon" bindtap="onBack">‹</text>
+    <text class="app-nav__title">机票比价</text>
+  </view>
+  <text class="ui-badge">原型</text>
+</view>
 <view class="page">
   <view class="hero"><text class="hero-icon">✈️</text><view><text class="hero-title">机票比价</text><text class="hero-subtitle">查询携程、去哪儿、同程、飞猪</text></view></view>
   <view class="search-card">
@@ -11,4 +19,5 @@
     <view class="platform-list"><view wx:for="{{platforms}}" wx:key="name" class="platform-card"><view class="platform-logo" style="background-color: {{item.color}}">{{item.icon}}</view><view class="platform-info"><text class="platform-name">{{item.name}}</text><text class="platform-status">{{item.status}}</text></view><button class="copy-button" bindtap="onCopySearch" data-platform="{{item.shortName}}">复制行程</button></view></view>
   </view>
   <view wx:else class="empty-state"><text class="empty-icon">🛫</text><text class="empty-title">输入行程，开始比价</text><text class="empty-desc">支持国内和国际航线查询</text></view>
+</view>
 </view>

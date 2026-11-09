@@ -4,7 +4,10 @@
   docs/prompt-tool-folder-structure.md
 -->
 <view class="container">
-  <view class="header">Prompt 模板库</view>
+  <view class="header" style="padding-top:{{statusBarHeight}}px">
+    <text class="nav-back-icon" bindtap="onBack">‹</text>
+    <text>Prompt 模板库</text>
+  </view>
   <view class="prompt-list">
     <block wx:for="{{templates}}" wx:key="id" wx:for-item="item">
       <view class="prompt-item" bindtap="onSelectTemplate" data-id="{{item.id}}" hover-class="item-hover">

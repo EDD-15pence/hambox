@@ -4,7 +4,10 @@
   docs/prompt-tool-folder-structure.md
 -->
 <view class="container">
-  <view class="header">Prompt 模板详情</view>
+  <view class="header" style="padding-top:{{statusBarHeight}}px">
+    <text class="nav-back-icon" bindtap="onBack">‹</text>
+    <text>Prompt 模板详情</text>
+  </view>
   <view wx:if="{{template}}">
     <view class="prompt-title">{{template.title}}</view>
     <view class="prompt-desc">{{template.description}}</view>

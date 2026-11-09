@@ -1,174 +1,204 @@
 <view class="container {{isDark ? 'dark' : ''}}">
-  <!-- 顶部导航栏 -->
-  <view class="navbar">
-    <text class="navbar-title">智能仓储</text>
-    <view class="navbar-actions">
-      <button class="icon-btn" hover-class="icon-hover" bindtap="onQuickAdd">🎙️</button>
-      <button class="icon-btn" hover-class="icon-hover" bindtap="onToggleSearch">🔍</button>
-      <button class="icon-btn" hover-class="icon-hover" bindtap="onOpenCategoryModal">📋</button>
-      <button class="icon-btn" hover-class="icon-hover" bindtap="onToggleTheme">{{isDark ? '🌙' : '☀️'}}</button>
+  <!-- 自绘导航：app.json 已设 navigationStyle custom -->
+  <view class="app-nav" style="padding-top:{{statusBarHeight}}px">
+    <view class="nav-left">
+      <text class="nav-back-icon" bindtap="onBack">‹</text>
+      <text class="app-nav__title">智能仓储</text>
+    </view>
+    <view class="app-nav__actions">
+      <text class="nav-text-btn {{showSearch ? 'is-on' : ''}}" bindtap="onToggleSearch">搜索</text>
+      <text class="nav-text-btn" bindtap="onOpenCategoryModal">分类</text>
+      <text class="nav-text-btn" bindtap="onToggleTheme">{{isDark ? '日间' : '夜间'}}</text>
     </view>
   </view>
 
-  <!-- 过期/临期提醒条 -->
-  <view wx:if="{{banner.show}}" class="banner">
-    <text class="banner-text">
-      ⚠️ <text wx:if="{{banner.expiredCount > 0}}">{{banner.expiredCount}}件已过期</text>
-      <text wx:if="{{banner.expiredCount > 0 && banner.warningCount > 0}}"> · </text>
-      <text wx:if="{{banner.warningCount > 0}}">{{banner.warningCount}}件临期</text>
-    </text>
-  </view>
-
-  <!-- 搜索栏 -->
-  <view wx:if="{{showSearch}}" class="search-bar">
-    <input class="search-input"
-      placeholder="搜索物品名称 / 位置 / 备注"
-      placeholder-class="search-placeholder"
-      value="{{keyword}}"
-      bindinput="onSearchInput"
-      confirm-type="search" />
-    <text wx:if="{{keyword}}" class="search-clear" bindtap="onClearSearch">✕</text>
-  </view>
-
-  <!-- 分类标签 -->
-  <scroll-view class="category-tabs" scroll-x enable-flex>
-    <view class="category-tabs-inner">
+  <scroll-view class="page-scroll" scroll-y>
+    <view class="page-body">
+    <!-- 顶部统计：三个凹陷槽，点一下按状态筛选 -->
+    <view class="stats">
       <view
-        wx:for="{{categories}}" wx:key="id" wx:for-item="cat"
-        class="category-tab {{selectedCategory === cat.id ? 'active' : ''}}"
-        bindtap="onSelectCategory" data-id="{{cat.id}}">
-        <text class="category-tab-icon">{{cat.icon}}</text>
-        <text class="category-tab-name">{{cat.name}}</text>
-        <text class="category-tab-count">{{cat.count}}</text>
+        class="stat {{statusFilter === 'expired' ? 'is-on' : ''}}"
+        bindtap="onSelectStatus" data-status="expired">
+        <text class="stat__num {{stats.expired > 0 ? 'is-danger' : ''}}">{{stats.expired}}</text>
+        <text class="stat__label">已过期</text>
+      </view>
+      <view
+        class="stat {{statusFilter === 'warning' ? 'is-on' : ''}}"
+        bindtap="onSelectStatus" data-status="warning">
+        <text class="stat__num {{stats.warning > 0 ? 'is-warning' : ''}}">{{stats.warning}}</text>
+        <text class="stat__label">临期</text>
+      </view>
+      <view
+        class="stat {{statusFilter === 'fresh' ? 'is-on' : ''}}"
+        bindtap="onSelectStatus" data-status="fresh">
+        <text class="stat__num">{{stats.fresh + stats.none}}</text>
+        <text class="stat__label">正常</text>
       </view>
     </view>
-  </scroll-view>
 
-  <!-- 排序切换 -->
-  <view class="sort-row">
-    <text class="sort-label">排序：</text>
-    <text class="sort-option {{sortBy === 'expiry' ? 'active' : ''}}" bindtap="onToggleSort" data-sort="expiry">📅 快过期优先</text>
-    <text class="sort-sep">|</text>
-    <text class="sort-option {{sortBy === 'created' ? 'active' : ''}}" bindtap="onToggleSort" data-sort="created">🕐 最近添加</text>
-  </view>
-
-  <!-- 物品列表 -->
-  <scroll-view class="items-scroll" scroll-y enable-flex>
-    <block wx:for="{{displayItems}}" wx:key="id">
-      <view
-        class="item-card"
-        bindtap="onTapItem" data-id="{{item.id}}"
-        bindlongpress="onLongPressItem" data-id="{{item.id}}"
-        data-name="{{item.name}}">
-
-        <!-- 物品图片缩略图 -->
-        <image wx:if="{{item.imageSrc}}" class="item-thumb" src="{{item.imageSrc}}" mode="aspectFill" />
-        <view wx:else class="item-thumb item-thumb-placeholder">
-          <text class="item-thumb-emoji">{{categoryMap[item.category] ? categoryMap[item.category].icon : '📦'}}</text>
-        </view>
-
-        <!-- 物品信息 -->
-        <view class="item-info">
-          <view class="item-top-row">
-            <text class="item-name">{{item.name}}</text>
-            <view class="status-badge status-{{item.status || 'none'}}">
-              <text wx:if="{{item.status === 'expired'}}">🔴 过期{{-item.daysLeft}}天</text>
-              <text wx:elif="{{item.status === 'warning'}}">🟡 {{item.daysLeft}}天</text>
-              <text wx:elif="{{item.status === 'fresh'}}">🟢 {{item.daysLeft}}天</text>
-            </view>
-          </view>
-          <view class="item-bottom-row">
-            <text class="item-meta">
-              <text wx:if="{{categoryMap[item.category]}}">{{categoryMap[item.category].icon}} {{categoryMap[item.category].name}}</text>
-              <text wx:else>📦 其他</text>
-              <text wx:if="{{item.location}}"> · 📍 {{item.location}}</text>
-            </text>
-            <text class="item-qty">×{{item.quantity}}{{item.unit}}</text>
-          </view>
-        </view>
-
-        <view class="item-arrow">›</view>
+    <!-- 一句话快速记录入口：可点击，所以是凸起的 -->
+    <view class="quick-entry is-pressable" bindtap="onQuickAdd" hover-class="is-pressed">
+      <view class="quick-entry__text">
+        <text class="quick-entry__title">点一下说话，快速记录</text>
+        <text class="quick-entry__desc">也可以直接打字，例：可乐 保质期9个月 放厨房柜子</text>
       </view>
-    </block>
+      <text class="quick-entry__arrow">›</text>
+    </view>
 
-    <!-- 空状态 -->
-    <view wx:if="{{displayItems.length === 0}}" class="empty-state">
-      <text class="empty-icon">{{keyword || selectedCategory !== 'all' ? '🔍' : '📦'}}</text>
-      <text class="empty-text">
-        {{keyword ? '没有匹配的物品' : (selectedCategory !== 'all' ? '该分类下暂无物品' : '还没有物品')}}
+    <!-- 搜索框：展开时出现，凹陷 -->
+    <view wx:if="{{showSearch}}" class="search-wrap">
+      <input class="ui-input search-input"
+        placeholder="搜名称 / 位置 / 备注"
+        placeholder-class="ui-placeholder"
+        value="{{keyword}}"
+        bindinput="onSearchInput"
+        confirm-type="search"
+        focus="{{showSearch}}" />
+      <text wx:if="{{keyword}}" class="search-clear" bindtap="onClearSearch">清空</text>
+    </view>
+
+    <!-- 分类：胶囊，选中态按下去（凹陷） -->
+    <scroll-view class="chips" scroll-x enable-flex>
+      <view class="chips__inner">
+        <view
+          wx:for="{{categories}}" wx:key="id" wx:for-item="cat"
+          class="chip {{selectedCategory === cat.id ? 'is-on' : ''}}"
+          bindtap="onSelectCategory" data-id="{{cat.id}}">
+          <text class="chip__icon">{{cat.icon}}</text>
+          <text class="chip__name">{{cat.name}}</text>
+          <text class="chip__count">{{cat.count}}</text>
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- 列表头：结果数 + 排序 -->
+    <view class="list-bar">
+      <text class="list-bar__count">
+        <text wx:if="{{statusFilter !== 'all'}}" class="list-bar__filter" bindtap="onClearStatus">
+          {{statusFilter === 'expired' ? '已过期' : (statusFilter === 'warning' ? '临期' : '正常')}} ·
+        </text>
+        {{displayItems.length}} 件
       </text>
-      <text class="empty-hint" wx:if="{{!keyword && selectedCategory === 'all'}}">点击右下角 ＋ 添加第一个物品吧！</text>
-      <button wx:if="{{!keyword && selectedCategory === 'all'}}" class="btn-primary" bindtap="onAddItem">＋ 添加物品</button>
+      <view class="sort">
+        <text class="sort__opt {{sortBy === 'expiry' ? 'is-on' : ''}}" bindtap="onToggleSort" data-sort="expiry">过期优先</text>
+        <text class="sort__opt {{sortBy === 'created' ? 'is-on' : ''}}" bindtap="onToggleSort" data-sort="created">最近添加</text>
+      </view>
+    </view>
+
+    <!-- 物品列表：可点击，所以每行凸起 -->
+    <view class="items">
+      <view
+        wx:for="{{displayItems}}" wx:key="id"
+        class="item"
+        bindtap="onTapItem" data-id="{{item.id}}"
+        bindlongpress="onLongPressItem" data-id="{{item.id}}" data-name="{{item.name}}"
+        hover-class="item--pressed" hover-stay-time="60">
+
+        <view wx:if="{{item.imageSrc}}" class="item__thumb">
+          <image class="item__image" src="{{item.imageSrc}}" mode="aspectFill" />
+        </view>
+        <view wx:else class="item__thumb item__thumb--slot">
+          <text class="item__emoji">{{categoryMap[item.category] ? categoryMap[item.category].icon : '📦'}}</text>
+        </view>
+
+        <view class="item__body">
+          <view class="item__row">
+            <text class="item__name">{{item.name}}</text>
+            <text wx:if="{{item.status === 'expired'}}" class="ui-badge is-expired">过期{{-item.daysLeft}}天</text>
+            <text wx:elif="{{item.status === 'warning'}}" class="ui-badge is-warning">剩{{item.daysLeft}}天</text>
+            <text wx:elif="{{item.status === 'fresh'}}" class="ui-badge is-fresh">剩{{item.daysLeft}}天</text>
+          </view>
+          <view class="item__row">
+            <text class="item__meta">
+              <text wx:if="{{categoryMap[item.category]}}">{{categoryMap[item.category].name}}</text>
+              <text wx:else>其他</text>
+              <text wx:if="{{item.location}}"> · {{item.location}}</text>
+            </text>
+            <text class="item__qty num">×{{item.quantity}}{{item.unit}}</text>
+          </view>
+        </view>
+
+        <text class="item__arrow">›</text>
+      </view>
+
+      <!-- 空状态 -->
+      <view wx:if="{{displayItems.length === 0}}" class="ui-empty">
+        <text class="ui-empty__icon">{{keyword ? '🔍' : '📦'}}</text>
+        <text class="ui-empty__title">
+          {{keyword ? '没有匹配的物品' : (statusFilter !== 'all' ? '这个状态下没有物品' : (selectedCategory !== 'all' ? '该分类下暂无物品' : '还没有物品'))}}
+        </text>
+        <text class="ui-empty__hint" wx:if="{{!keyword && selectedCategory === 'all' && statusFilter === 'all'}}">点右下角添加第一个物品，或者用上面的一句话记录</text>
+      </view>
+    </view>
+
+    <view class="bottom-spacer"></view>
     </view>
   </scroll-view>
 
-  <!-- 悬浮添加按钮 -->
-  <view class="fab" bindtap="onAddItem">
-    <text class="fab-text">＋</text>
+  <!-- 悬浮添加：加号用两条线画，不用字符图标 -->
+  <view class="ui-fab" bindtap="onAddItem">
+    <view class="fab-plus"></view>
   </view>
 
-  <!-- 删除确认弹窗 -->
-  <view wx:if="{{showDeleteModal}}" class="modal-overlay" bindtap="onCancelDelete">
-    <view class="modal-content modal-small" catchtap="stopPropagation">
-      <view class="modal-header">
-        <text class="modal-title">确认删除</text>
-        <button class="modal-close" bindtap="onCancelDelete">✕</button>
+  <!-- 语音记账：抬到添加按钮上方，避免两个悬浮球叠在一起 -->
+  <voice-add fab-offset="{{128}}" bind:saved="onVoiceSaved" />
+
+  <!-- 删除确认 -->
+  <view wx:if="{{showDeleteModal}}" class="ui-mask" bindtap="onCancelDelete">
+    <view class="ui-sheet" catchtap="stopPropagation">
+      <view class="ui-sheet__header">
+        <text class="ui-sheet__title">删除物品</text>
+        <text class="sheet-close" bindtap="onCancelDelete">取消</text>
       </view>
-      <view class="modal-body">
-        <text class="modal-message">确定要删除「{{deleteTargetName}}」吗？此操作不可恢复。</text>
+      <view class="sheet-body">
+        <text class="sheet-message">确定删除「{{deleteTargetName}}」吗？删除后无法恢复。</text>
       </view>
-      <view class="modal-footer">
-        <button class="btn-cancel" bindtap="onCancelDelete">取消</button>
-        <button class="btn-save btn-danger" bindtap="onConfirmDelete">删除</button>
+      <view class="sheet-actions">
+        <button class="ui-btn is-block is-danger" bindtap="onConfirmDelete">删除</button>
       </view>
     </view>
   </view>
 
-  <!-- 分类管理弹窗 -->
-  <view wx:if="{{showCategoryModal}}" class="modal-overlay" bindtap="onCloseCategoryModal">
-    <view class="modal-content" catchtap="stopPropagation">
-      <view class="modal-header">
-        <text class="modal-title">管理分类</text>
-        <button class="modal-close" bindtap="onCloseCategoryModal">✕</button>
+  <!-- 分类管理 -->
+  <view wx:if="{{showCategoryModal}}" class="ui-mask" bindtap="onCloseCategoryModal">
+    <view class="ui-sheet" catchtap="stopPropagation">
+      <view class="ui-sheet__header">
+        <text class="ui-sheet__title">管理分类</text>
+        <text class="sheet-close" bindtap="onCloseCategoryModal">完成</text>
       </view>
-      <view class="modal-body">
-        <!-- 预设分类（只读） -->
-        <text class="form-label">预设分类</text>
-        <view class="category-manage-list">
-          <view wx:for="{{defaultCategories}}" wx:key="id" class="category-manage-item readonly">
-            <text>{{item.icon}} {{item.name}}</text>
-            <text class="category-hint">预设</text>
+
+      <scroll-view class="sheet-scroll" scroll-y>
+        <text class="ui-section-title">预设分类</text>
+        <view class="cat-list">
+          <view wx:for="{{defaultCategories}}" wx:key="id" class="cat-item cat-item--readonly">
+            <text class="cat-item__name">{{item.icon}} {{item.name}}</text>
+            <text class="cat-item__hint">预设</text>
           </view>
         </view>
 
-        <!-- 自定义分类 -->
-        <text class="form-label" style="margin-top: 24rpx;">自定义分类</text>
-        <view class="category-manage-list">
-          <view wx:for="{{customCategories}}" wx:key="id" class="category-manage-item">
-            <text>{{item.icon}} {{item.name}}</text>
-            <button class="action-btn-small" bindtap="onDeleteCustomCategory" data-id="{{item.id}}">🗑️</button>
+        <text class="ui-section-title">自定义分类</text>
+        <view class="cat-list">
+          <view wx:for="{{customCategories}}" wx:key="id" class="cat-item">
+            <text class="cat-item__name">{{item.icon}} {{item.name}}</text>
+            <text class="cat-item__action" bindtap="onDeleteCustomCategory" data-id="{{item.id}}">删除</text>
           </view>
-          <view wx:if="{{customCategories.length === 0}}" class="category-empty-hint">
-            <text>暂无自定义分类</text>
-          </view>
+          <view wx:if="{{customCategories.length === 0}}" class="cat-empty">暂无自定义分类</view>
         </view>
 
-        <!-- 添加新分类 -->
-        <view class="add-category-row">
-          <input class="form-input half"
+        <text class="ui-section-title">新增分类</text>
+        <view class="cat-add">
+          <input class="ui-input cat-add__name"
             placeholder="分类名称"
+            placeholder-class="ui-placeholder"
             value="{{newCategoryName}}"
             bindinput="onNewCategoryNameInput"
             maxlength="10" />
           <picker mode="selector" range="{{iconOptions}}" bindchange="onNewCategoryIconChange">
-            <view class="icon-picker-btn">{{newCategoryIcon}}</view>
+            <view class="cat-add__icon">{{newCategoryIcon}}</view>
           </picker>
-          <button class="btn-save small" bindtap="onAddCustomCategory">添加</button>
+          <button class="ui-btn cat-add__btn" bindtap="onAddCustomCategory">添加</button>
         </view>
-      </view>
-      <view class="modal-footer">
-        <button class="btn-save" bindtap="onCloseCategoryModal">完成</button>
-      </view>
+      </scroll-view>
     </view>
   </view>
 </view>

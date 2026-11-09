@@ -5,15 +5,18 @@
  */
 const templates = require('../../../data/prompt-templates');
 const generatePrompt = require('../../../utils/prompt-generator');
+const nav = require('../../../utils/nav');
 
 Page({
   data: {
     template: null,
     varValues: {},
-    copyTip: ''
+    copyTip: '',
+    statusBarHeight: nav.STATUS_BAR_HEIGHT
   },
   onLoad(query) {
     const id = query.id;
+    this.setData({ statusBarHeight: nav.STATUS_BAR_HEIGHT });
     const template = templates.find(t => t.id === id);
     if (template) {
       // 初始化变量值
@@ -23,6 +26,9 @@ Page({
       });
       this.setData({ template, varValues });
     }
+  },
+  onBack() {
+    wx.navigateBack({ delta: 1, fail: () => wx.reLaunch({ url: '/pages/index/index' }) });
   },
   onVarInput(e) {
     const key = e.currentTarget.dataset.key;
