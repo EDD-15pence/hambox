@@ -26,7 +26,11 @@ var ENDPOINTS = {
   },
   wan: {
     label: '外网',
-    // 留空表示还没配，会自动跳过；配好后例如 https://storage.你的域名
+    // 留空表示还没配，会自动跳过；配好后例如 https://storage.你的域名:8443
+    //
+    // ⚠ 端口别想当然写 443：家宽的 80 / 443 常被运营商直接封掉（外部多节点实测全超时），
+    //   只有自己挑的高位端口（如 8443）才是通的。域名后面带端口时，
+    //   mp 后台「服务器域名」里的 request 与 uploadFile 都要写成带端口的形式。
     base: ''
   }
 };
@@ -34,9 +38,32 @@ var ENDPOINTS = {
 // 与后端 .env 的 API_TOKEN 一致；后端留空则不校验，这里也可以留空
 var API_TOKEN = '';
 
-var ORDER = ['lan', 'wan'];
+var ORDER_DEVTOOLS = ['lan', 'wan'];
+// 真机上 http + IP 地址不可能进合法域名白名单，排第一位等于每次都先撞一次墙
+var ORDER_DEVICE = ['wan', 'lan'];
+
 var STORAGE_KEY = 'api_route_v1';
 var TTL = 30 * 60 * 1000;
+
+var _devtools = null;
+
+/** 是否跑在微信开发者工具里：只有工具内能靠「不校验合法域名」直连内网 IP */
+function isDevtools() {
+  if (_devtools !== null) return _devtools;
+  var platform = '';
+  try {
+    var info = wx.getDeviceInfo ? wx.getDeviceInfo() : wx.getSystemInfoSync();
+    platform = (info && info.platform) || '';
+  } catch (e) {
+    platform = '';
+  }
+  _devtools = platform === 'devtools';
+  return _devtools;
+}
+
+function orderKeys() {
+  return isDevtools() ? ORDER_DEVTOOLS : ORDER_DEVICE;
+}
 
 // 内存镜像：列表页一次渲染要拼 20 条图片地址，不能每条都读一次 Storage
 var _route = null;
@@ -63,13 +90,15 @@ function readCache() {
 /** 按"缓存命中优先"返回可用地址列表 */
 function candidates() {
   var all = [];
-  ORDER.forEach(function (key) {
+  orderKeys().forEach(function (key) {
     var ep = ENDPOINTS[key];
     if (!ep || !ep.base) return;
     all.push({ key: key, label: ep.label, base: normalize(ep.base) });
   });
 
   var cached = readCache();
+  // 真机上内网这条基本不通（域名校验会拦 IP），别让工具里留下的旧缓存把它顶到第一位
+  if (cached === 'lan' && !isDevtools()) cached = '';
   if (!cached) return all;
 
   var head = [];
@@ -124,5 +153,6 @@ module.exports = {
   markFail: markFail,
   getBaseUrl: getBaseUrl,
   getToken: getToken,
-  getRouteLabel: getRouteLabel
+  getRouteLabel: getRouteLabel,
+  isDevtools: isDevtools
 };

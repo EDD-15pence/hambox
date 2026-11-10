@@ -25,17 +25,65 @@ function authHeader() {
   return header;
 }
 
-function networkMessage(err, triedAll) {
+/**
+ * 把 wx 的原始 errMsg 压成一句人话。
+ * 只在「两条线路都失败」时用来展示，所以宁可短，不能糊。
+ */
+function shortReason(errMsg) {
+  var m = errMsg || '';
+  if (m.indexOf('domain list') !== -1) return '域名不在白名单';
+  if (m.indexOf('timeout') !== -1) return '超时';
+  if (m.indexOf('ERR_NAME_NOT_RESOLVED') !== -1) return 'DNS 解析失败';
+  if (m.indexOf('ERR_CONNECTION_REFUSED') !== -1) return '连接被拒（没人监听或防火墙拦）';
+  if (m.indexOf('ERR_CONNECTION_RESET') !== -1) return '连接被重置';
+  if (m.indexOf('ERR_CONNECTION_TIMED_OUT') !== -1) return '连接超时（常见于入站被防火墙丢包）';
+  if (m.indexOf('ssl') !== -1 || m.indexOf('certificate') !== -1) return 'TLS/证书错误';
+  var rest = m.replace(/^request:fail\s*/, '').trim();
+  return rest ? rest.slice(0, 36) : '未知错误';
+}
+
+function networkMessage(err, triedAll, ep) {
   var raw = (err && err.errMsg) || '';
+  var base = ep && ep.base ? ep.base : '后端地址';
   if (raw.indexOf('domain list') !== -1) {
-    return '域名未放行：请勾选「不校验合法域名」';
+    // 开发者工具能勾「不校验合法域名」，真机只能靠后台白名单，两者提示不能混
+    if (env.isDevtools()) {
+      return '域名未放行：开发者工具「详情 → 本地设置」勾上「不校验合法域名」';
+    }
+    if (ep && ep.key === 'lan') {
+      return '内网线路被拦：真机只认 HTTPS 域名，' + base + ' 不可能进白名单';
+    }
+    return '域名未放行：' + base + ' 不在 mp 后台 request 合法域名里，或改完没退出小程序重进';
   }
   if (raw.indexOf('timeout') !== -1) {
-    return triedAll ? '连接超时：内网和外网都没通' : '连接超时，请确认后端已启动';
+    return triedAll ? '连接超时：局域网和外网都没通' : '连接超时，请确认后端已启动';
   }
   return triedAll
-    ? '连不上后端：内网和外网都试过了，检查 WiFi 与 lucky 是否正常'
-    : '连接不上后端，请确认服务已启动且与电脑同一 WiFi';
+    ? '连不上后端：局域网和外网都试过了，检查 WiFi 与 lucky 是否正常'
+    : '连接不上后端，请确认服务已启动且与电脑同一 WiFi（' + base + '）';
+}
+
+/**
+ * 全部线路都失败时的提示。
+ *
+ * 踩过的坑：真机顺序是 wan -> lan，5G 下内网那条必然失败，
+ * 以前只报「最后一条」的错误，于是把外网的真实原因盖住了，
+ * 看起来像是内网 IP 的锅。这里把每条线路的原因都列出来。
+ */
+function exhaustedMessage(errors) {
+  var parts = errors.map(function (item) {
+    return (item.key === 'wan' ? '外网 ' : '内网 ') + shortReason(item.errMsg);
+  });
+  var detail = parts.join('，');
+  var allDomain = errors.every(function (item) {
+    return (item.errMsg || '').indexOf('domain list') !== -1;
+  });
+  if (allDomain) {
+    // 两条都是域名校验：说明根本没走网络，IPv6 / WiFi 都无关
+    return '两条线路都被域名校验拦下（' + detail +
+      '）：去 mp 后台「开发管理 → 服务器域名」确认 request 合法域名真的保存成功（每月修改次数有上限，超限不报错）';
+  }
+  return '两条线路都不通（' + detail + '）';
 }
 
 /**
@@ -56,6 +104,7 @@ function request(path, method, data) {
 
   return new Promise(function (resolve, reject) {
     var index = 0;
+    var errors = [];
 
     function go() {
       var ep = list[index];
@@ -81,6 +130,7 @@ function request(path, method, data) {
         },
         fail: function (err) {
           env.markFail(ep.key);
+          errors.push({ key: ep.key, errMsg: (err && err.errMsg) || '' });
           index += 1;
           var exhausted = index >= list.length;
           if (retryable && !exhausted) {
@@ -88,9 +138,11 @@ function request(path, method, data) {
             return;
           }
           // 写操作不重试，但可以告诉用户"再点一次"就够了——下次请求已换到另一条线路
-          var message = networkMessage(err, exhausted);
+          var message = exhausted
+            ? exhaustedMessage(errors)
+            : networkMessage(err, false, ep);
           if (!retryable && !exhausted) {
-            message = '连接不稳定，再点一次会自动换线路';
+            message = '连接不稳定，再点一次会自动换线路（上一次：' + shortReason(err.errMsg) + '）';
           }
           reject(new Error(message));
         }
@@ -274,7 +326,7 @@ function uploadImage(filePath) {
         reject(new Error(body.message || '图片上传失败'));
       },
       fail: function (err) {
-        reject(new Error(networkMessage(err, false)));
+        reject(new Error(networkMessage(err, false, list[0])));
       }
     });
   });

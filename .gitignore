@@ -8,3 +8,6 @@
 
 # 本地环境：后端地址 + 访问令牌（模板见 utils/env.example.js）
 utils/env.js
+
+# 预览二维码（临时生成，会过期）
+.preview-qr*.png
