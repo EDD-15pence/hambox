@@ -33,7 +33,6 @@
 
     <view class="footer">
       <text class="footer-text">点卡片进入 · 右下角说话直接记一笔</text>
-      <text class="footer-text footer-text--sub">智能仓储需与电脑同一 WiFi</text>
     </view>
   </view>
 

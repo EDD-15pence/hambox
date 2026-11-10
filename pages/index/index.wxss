@@ -94,8 +94,3 @@
   font-size: var(--fs-tiny);
   color: var(--text-3);
 }
-
-.footer-text--sub {
-  margin-top: 6rpx;
-  opacity: 0.8;
-}
