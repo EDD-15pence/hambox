@@ -58,9 +58,12 @@ function networkMessage(err, triedAll, ep) {
   if (raw.indexOf('timeout') !== -1) {
     return triedAll ? '连接超时：局域网和外网都没通' : '连接超时，请确认后端已启动';
   }
-  return triedAll
-    ? '连不上后端：局域网和外网都试过了，检查 WiFi 与 lucky 是否正常'
-    : '连接不上后端，请确认服务已启动且与电脑同一 WiFi（' + base + '）';
+  if (triedAll) return '连不上后端：局域网和外网都试过了，检查 WiFi 与 lucky 是否正常';
+  // 外网线路不谈「同一 WiFi」，那会把 5G 用户带偏
+  if (ep && ep.key === 'wan') {
+    return '连不上外网后端（' + base + '），检查手机网络或域名是否可访问';
+  }
+  return '连接不上后端，请确认服务已启动且与电脑处于同一局域网（' + base + '）';
 }
 
 /**
