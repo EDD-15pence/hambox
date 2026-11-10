@@ -26,23 +26,23 @@
     }
   },
   "appid": "wx42e62787a5e9f211",
-  "projectname": "relationshipcalc",
+  "projectname": "hambox",
   "compileType": "miniprogram",
   "libVersion": "3.9.0",
   "simulatorPluginLibVersion": {},
   "packOptions": {
     "ignore": [
       {
-        "type": "file",
-        "value": "utils/quick-parse.test.js"
+        "value": "utils/quick-parse.test.js",
+        "type": "file"
       },
       {
-        "type": "file",
-        "value": "AI_RELATIONSHIPCALC_README.md"
+        "value": "AI_RELATIONSHIPCALC_README.md",
+        "type": "file"
       },
       {
-        "type": "file",
-        "value": "PROJECT_SUMMARY.md"
+        "value": "PROJECT_SUMMARY.md",
+        "type": "file"
       }
     ],
     "include": []

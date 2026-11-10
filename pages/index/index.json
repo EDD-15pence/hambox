@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "工具箱",
+  "navigationBarTitleText": "汉堡盒",
   "usingComponents": {
     "voice-add": "/components/voice-add/voice-add"
   }

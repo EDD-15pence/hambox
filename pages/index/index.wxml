@@ -2,7 +2,7 @@
   <!-- 自绘导航栏：app.json 已关闭系统导航（navigationStyle: custom） -->
   <view class="app-nav" style="padding-top:{{statusBarHeight}}px">
     <view class="app-nav__titles">
-      <text class="app-nav__title">工具箱</text>
+      <text class="app-nav__title">汉堡盒</text>
       <text class="app-nav__sub">{{todayText}} · {{tools.length}} 个工具</text>
     </view>
     <view class="app-nav__actions">

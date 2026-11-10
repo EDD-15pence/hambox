@@ -1,8 +1,8 @@
 {
-  "libVersion": "3.13.0",
-  "projectname": "relationshipcalc",
+  "libVersion": "3.18.0",
+  "projectname": "hambox",
   "setting": {
-    "urlCheck": false,
+    "urlCheck": true,
     "coverView": false,
     "lazyloadPlaceholderEnable": false,
     "skylineRenderEnable": false,
@@ -17,6 +17,7 @@
     "compileHotReLoad": true,
     "checkInvalidKey": true,
     "ignoreDevUnusedFiles": true,
-    "bigPackageSizeSupport": false
+    "bigPackageSizeSupport": false,
+    "useGlassEaselForWxml": false
   }
 }

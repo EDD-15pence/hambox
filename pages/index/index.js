@@ -104,10 +104,10 @@ Page({
   },
 
   onShareAppMessage() {
-    return { title: '工具箱 · 亲属称呼、智能仓储、习惯打卡', path: '/pages/index/index' };
+    return { title: '汉堡盒 · 找东西、随手记、查称呼', path: '/pages/index/index' };
   },
 
   onShareTimeline() {
-    return { title: '工具箱 · 亲属称呼、智能仓储、习惯打卡', query: '' };
+    return { title: '汉堡盒 · 找东西、随手记、查称呼', query: '' };
   },
 });
