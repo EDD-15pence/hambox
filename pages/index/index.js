@@ -64,6 +64,7 @@ const TOOLS = [
 Page({
   data: {
     statusBarHeight: nav.STATUS_BAR_HEIGHT,
+    navRight: nav.SAFE_RIGHT,
     isDark: false,
     todayText: todayText(),
     tools: TOOLS,
@@ -76,6 +77,7 @@ Page({
     this.setData({
       isDark: theme.getTheme(),
       statusBarHeight: nav.STATUS_BAR_HEIGHT,
+      navRight: nav.SAFE_RIGHT,
     });
     wx.showShareMenu({
       withShareTicket: true,

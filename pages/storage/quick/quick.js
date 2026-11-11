@@ -88,6 +88,7 @@ Page({
     this.setData({
       isDark: theme.getTheme(),
       statusBarHeight: nav.STATUS_BAR_HEIGHT,
+      navRight: nav.SAFE_RIGHT,
       todayText: todayText,
       voiceAvailable: voiceAvailable,
       savedCount: todayCount()

@@ -140,8 +140,10 @@
   min-width: 0;
 }
 
+/* 右侧让出胶囊后留给标题的宽度变窄，标题必须能省略，不能顶出去 */
 .nav-left .navbar-title,
-.nav-left .title {
+.nav-left .title,
+.nav-left .app-nav__title {
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;

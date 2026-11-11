@@ -1,5 +1,5 @@
 <view class="container {{isDark ? 'dark' : ''}}">
-  <view class="app-nav" style="padding-top:{{statusBarHeight}}px">
+  <view class="app-nav" style="padding-top:{{statusBarHeight}}px;padding-right:{{navRight}}px">
     <view class="nav-left">
       <text class="nav-back-icon" bindtap="onBack">‹</text>
       <text class="app-nav__title">{{isEdit ? '编辑物品' : '添加物品'}}</text>

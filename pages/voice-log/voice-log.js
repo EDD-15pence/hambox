@@ -19,6 +19,7 @@ Page({
   data: {
     isDark: false,
     statusBarHeight: nav.STATUS_BAR_HEIGHT,
+    navRight: nav.SAFE_RIGHT,
     routeLabel: '',
     baseUrl: '',
     logs: [],
@@ -29,6 +30,7 @@ Page({
     this.setData({
       isDark: theme.getTheme(),
       statusBarHeight: nav.STATUS_BAR_HEIGHT,
+      navRight: nav.SAFE_RIGHT,
       routeLabel: env.getRouteLabel(),
       baseUrl: env.getBaseUrl()
     });

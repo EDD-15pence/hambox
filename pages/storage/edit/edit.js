@@ -46,6 +46,7 @@ Page({
     this.setData({
       isDark: theme.getTheme(),
       statusBarHeight: nav.STATUS_BAR_HEIGHT,
+      navRight: nav.SAFE_RIGHT,
       baseUrl: api.getBaseUrl(),
       // 编辑模式先认下 id：万一只拉到分类没拉到物品，保存也走 PUT，不会误建一条新记录
       isEdit: !!this._query.id,

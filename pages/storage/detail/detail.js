@@ -28,6 +28,7 @@ Page({
     self.setData({
       isDark: theme.getTheme(),
       statusBarHeight: nav.STATUS_BAR_HEIGHT,
+      navRight: nav.SAFE_RIGHT,
       baseUrl: api.getBaseUrl()
     });
 

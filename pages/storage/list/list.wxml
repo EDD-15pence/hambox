@@ -1,6 +1,6 @@
 <view class="container {{isDark ? 'dark' : ''}}">
   <!-- 自绘导航：app.json 已设 navigationStyle custom -->
-  <view class="app-nav" style="padding-top:{{statusBarHeight}}px">
+  <view class="app-nav" style="padding-top:{{statusBarHeight}}px;padding-right:{{navRight}}px">
     <view class="nav-left">
       <text class="nav-back-icon" bindtap="onBack">‹</text>
       <text class="app-nav__title">智能仓储</text>

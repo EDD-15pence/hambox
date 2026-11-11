@@ -48,6 +48,7 @@ Page({
     this.setData({
       isDark: theme.getTheme(),
       statusBarHeight: nav.STATUS_BAR_HEIGHT,
+      navRight: nav.SAFE_RIGHT,
       baseUrl: api.getBaseUrl()
     });
     // 首次拉取交给 onShow：onLoad 之后必然触发一次，避免进页面连发两轮请求
