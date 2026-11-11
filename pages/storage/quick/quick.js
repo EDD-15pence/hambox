@@ -92,6 +92,11 @@ Page({
     var presetLocation = '';
     if (query && query.container) {
       presetLocation = containers.presetLocation(query.container, query.zone || '');
+      // 冷启动直接进这一页时，模块里的容器定义可能还是内置那份（用户改过名字/关键字
+      // 就会预填错位置）。补一次请求，但只在用户没动过位置框时才覆盖。
+      if (containers.source() === 'builtin') {
+        this.refreshContainerDefs(query.container, query.zone || '');
+      }
     }
     this._presetLocation = presetLocation;
     this._fromContainer = !!presetLocation;
@@ -121,8 +126,24 @@ Page({
     if (!this.data.categories.length) this.loadCategories();
   },
 
-  loadCategories: function () {
+  /** 补一次容器定义，并把预填位置换成后端那份容器算出来的 */
+  refreshContainerDefs: function (containerId, zoneKey) {
     var self = this;
+    api.listContainers().then(function (rows) {
+      if (!containers.setDefs(rows)) return;
+      var preset = containers.presetLocation(containerId, zoneKey);
+      if (!preset) return;
+      // 用户已经自己改过位置了，就别再盖回去
+      var current = self.data.draft.location || '';
+      if (current && current !== self._presetLocation) return;
+      self._presetLocation = preset;
+      self.setData({ presetLocation: preset, 'draft.location': preset });
+    }).catch(function () {
+      // 拉不到就继续用内置那份，不打断录入
+    });
+  },
+
+  loadCategories: function () {    var self = this;
     return api.listCategories()
       .then(function (categories) {
         self.setData({

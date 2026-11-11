@@ -2,10 +2,18 @@
   <view class="app-nav" style="padding-top:{{statusBarHeight}}px;padding-right:{{navRight}}px">
     <view class="nav-left">
       <text class="nav-back-icon" bindtap="onBack">‹</text>
-      <text class="app-nav__title">{{view === 'inside' ? active.name : '家里的收纳'}}</text>
+      <text class="app-nav__title">{{view === 'inside' ? active.name : (organizing ? '整理收纳' : '家里的收纳')}}</text>
     </view>
     <view class="app-nav__actions">
       <text class="nav-text-btn {{showSearch ? 'is-on' : ''}}" bindtap="onToggleSearch">搜索</text>
+      <text
+        wx:if="{{view === 'inside'}}"
+        class="nav-text-btn"
+        bindtap="onEditActive">编辑</text>
+      <text
+        wx:else
+        class="nav-text-btn {{organizing ? 'is-on' : ''}}"
+        bindtap="onToggleOrganize">{{organizing ? '完成' : '整理'}}</text>
       <text class="nav-text-btn" bindtap="onToggleTheme">{{isDark ? '日间' : '夜间'}}</text>
     </view>
   </view>
@@ -18,7 +26,8 @@
     </view>
   </view>
 
-  <scroll-view class="page-scroll" scroll-y>
+  <!-- 拖拽时不能滚，否则手势被 scroll-view 吃掉 -->
+  <scroll-view class="page-scroll" scroll-y="{{!drag && !pdrag}}">
     <view class="page-body">
     <!-- 加载中 -->
     <block wx:if="{{loading && !wall.length}}">
@@ -41,6 +50,42 @@
       <view wx:if="{{loadError}}" class="ui-notice" bindtap="onRetry">
         <text class="ui-notice__text">这次没刷新成功 · {{loadError}}</text>
         <text class="ui-notice__action">重试</text>
+      </view>
+
+      <!-- 在路上：买了还没到的，拖到柜子里就算放好了 -->
+      <view wx:if="{{pendingCount > 0}}" class="pending">
+        <view class="pending__head">
+          <text class="pending__title">在路上</text>
+          <text class="pending__count num">{{pendingCount}}</text>
+          <text class="pending__hint">长按拖进柜子</text>
+        </view>
+        <scroll-view class="pending__list" scroll-x enable-flex>
+          <view
+            wx:for="{{pending}}" wx:key="id"
+            class="pchip"
+            data-id="{{item.id}}"
+            data-name="{{item.name}}"
+            data-emoji="{{item.emoji}}"
+            bindlongpress="onPendingLongPress"
+            bindtouchmove="onPendingDragMove"
+            bindtouchend="onPendingDragEnd"
+            bindtap="onPlacePending">
+            <view class="pchip__pic">
+              <image wx:if="{{item.imageSrc}}" class="pchip__img" src="{{item.imageSrc}}" mode="aspectFill" />
+              <text wx:else class="pchip__emoji">{{item.emoji}}</text>
+              <text wx:if="{{item.qtyText}}" class="pchip__qty num">{{item.qtyText}}</text>
+            </view>
+            <text class="pchip__name">{{item.name}}</text>
+            <text class="pchip__days">{{item.waitText}}</text>
+            <text class="pchip__del" data-id="{{item.id}}" catchtap="onDeletePending">✕</text>
+          </view>
+        </scroll-view>
+      </view>
+
+      <!-- 挑选态：点哪个柜子就把这件在途放进去 -->
+      <view wx:if="{{picking}}" class="picking-bar">
+        <text class="picking-bar__text">把「{{pickingName}}」放进哪个柜子？</text>
+        <text class="picking-bar__cancel" bindtap="onCancelPicking">取消</text>
       </view>
 
       <view class="summary">
@@ -69,10 +114,10 @@
         <text wx:if="{{keyword}}" class="ui-search__clear" bindtap="onClearSearch">清空</text>
       </view>
 
-      <view class="wall">
+      <view class="wall {{picking ? 'is-picking' : ''}}">
         <view
           wx:for="{{wall}}" wx:key="id"
-          class="cab"
+          class="cab {{item.empty ? 'is-empty' : ''}} {{dragOver === item.id ? 'is-drop' : ''}}"
           data-id="{{item.id}}"
           bindtap="onOpenContainer"
           hover-class="cab--pressed"
@@ -124,7 +169,7 @@
               <view class="rack__board rack__board--3"></view>
             </view>
 
-            <!-- 纸箱（未归位） -->
+            <!-- 纸箱（未归位 / 自定义选了纸箱） -->
             <view wx:else class="obj obj--carton">
               <view class="carton__flap"></view>
               <view class="carton__tape"></view>
@@ -132,6 +177,7 @@
             </view>
 
             <view class="cab__ground"></view>
+            <text wx:if="{{organizing && item.deletable}}" class="cab__edit">改</text>
           </view>
 
           <view class="cab__info">
@@ -144,11 +190,40 @@
               <view class="cab__preview">
                 <text class="cab__emoji" wx:for="{{item.preview}}" wx:for-item="pe" wx:key="k">{{pe.e}}</text>
               </view>
-              <text wx:if="{{item.expired > 0}}" class="cab__flag is-danger">{{item.expired}} 过期</text>
+              <text wx:if="{{item.empty}}" class="cab__empty">空着</text>
+              <text wx:elif="{{item.expired > 0}}" class="cab__flag is-danger">{{item.expired}} 过期</text>
               <text wx:elif="{{item.warning > 0}}" class="cab__flag is-warning">{{item.warning}} 临期</text>
             </view>
           </view>
         </view>
+
+        <!-- 整理态才能新建：平时不占地方 -->
+        <view wx:if="{{organizing}}" class="wall-new" bindtap="onAddContainer">
+          <text class="wall-new__plus">＋</text>
+          <text class="wall-new__text">新建容器</text>
+        </view>
+      </view>
+
+      <!-- 在途记录入口 -->
+      <view class="pending-add">
+        <block wx:if="{{!showPendingAdd}}">
+          <text class="pending-add__link" bindtap="onTogglePendingAdd">＋ 买了还没到？先记一条</text>
+        </block>
+        <block wx:else>
+          <input
+            class="ui-input pending-add__input"
+            placeholder="买了什么，比如 三箱牛奶"
+            placeholder-class="ui-placeholder"
+            value="{{pendingName}}"
+            bindinput="onPendingName"
+            confirm-type="done"
+            bindconfirm="onSavePending"
+            focus="{{showPendingAdd}}" />
+          <view class="pending-add__row">
+            <text class="pending-add__cancel" bindtap="onTogglePendingAdd">取消</text>
+            <button class="ui-btn is-primary pending-add__ok" bindtap="onSavePending">记下</button>
+          </view>
+        </block>
       </view>
 
       <!-- 搜不到 / 真的一件都没有，是两件事，别用同一句话糊过去 -->
@@ -173,6 +248,7 @@
           <text wx:if="{{active.expired > 0}}" class="ui-badge is-expired">已过期 {{active.expired}}</text>
           <text wx:if="{{active.warning > 0}}" class="ui-badge is-warning">临期 {{active.warning}}</text>
           <text wx:if="{{!active.expired && !active.warning}}" class="ui-badge is-fresh">都还新鲜</text>
+          <text wx:if="{{active.rows > 0}}" class="ui-badge">{{active.rows}} 层</text>
         </view>
       </view>
 
@@ -193,12 +269,21 @@
               catchtap="onAddHere">＋</text>
           </view>
 
-          <view class="shelf" wx:for="{{zone.shelves}}" wx:for-item="shelf" wx:key="k">
+          <view
+            class="shelf {{!shelf.items.length ? 'is-blank' : ''}}"
+            wx:for="{{zone.shelves}}" wx:for-item="shelf" wx:key="k">
             <view class="shelf__tier shelf__tier--{{active.cols}}">
               <view
                 wx:for="{{shelf.items}}" wx:for-item="t" wx:key="id"
-                class="thing {{t.cls}} {{t.hit ? 'is-hit' : ''}} {{t.dim ? 'is-dim' : ''}}"
+                id="t{{t.id}}"
+                class="thing {{t.cls}} {{t.hit ? 'is-hit' : ''}} {{t.dim ? 'is-dim' : ''}} {{dragOver === t.id ? 'is-target' : ''}} {{drag && drag.name === t.name && dragOver === t.id ? 'is-lifted' : ''}}"
                 data-id="{{t.id}}"
+                data-zone="{{zone.key}}"
+                data-name="{{t.name}}"
+                data-emoji="{{t.emoji}}"
+                bindlongpress="onTileLongPress"
+                bindtouchmove="onDragMove"
+                bindtouchend="onDragEnd"
                 bindtap="onTapTile"
                 hover-class="thing--pressed"
                 hover-stay-time="60">
@@ -220,7 +305,7 @@
       </view>
 
       <view class="inside-hint">
-        <text class="inside-hint__text">点一样东西看详情。图案左上角的小点：橙色快到期、红色已过期。</text>
+        <text class="inside-hint__text">点一样东西看详情；长按可以拖着换位置。图案左上角的小点：橙色快到期、红色已过期。</text>
       </view>
 
       <!-- 直接放进这个柜子：预填 location，保存后回到这里看到新块 -->
@@ -235,4 +320,97 @@
     <view class="bottom-spacer"></view>
     </view>
   </scroll-view>
+
+  <!-- 拖拽跟随块：手指移到哪，影子跟到哪 -->
+  <view wx:if="{{drag}}" class="ghost" style="left:{{drag.x}}px;top:{{drag.y}}px">
+    <text class="ghost__emoji">{{drag.emoji}}</text>
+  </view>
+  <view wx:if="{{pdrag}}" class="ghost ghost--pending" style="left:{{pdrag.x}}px;top:{{pdrag.y}}px">
+    <text class="ghost__emoji">{{pdrag.emoji}}</text>
+    <text class="ghost__name">{{pdrag.name}}</text>
+  </view>
+
+  <!-- ==================== 容器编辑面板 ==================== -->
+  <view wx:if="{{editor}}" class="sheet-mask" bindtap="onCloseEditor">
+    <view class="sheet" catchtap="noop">
+      <view class="sheet__head">
+        <text class="sheet__title">{{editor.mode === 'create' ? '新建容器' : '编辑容器'}}</text>
+        <text class="sheet__close" catchtap="onCloseEditor">关闭</text>
+      </view>
+
+      <scroll-view class="sheet__body" scroll-y>
+        <view class="field">
+          <text class="field__label">叫什么</text>
+          <input
+            class="ui-input"
+            value="{{editor.name}}"
+            placeholder="比如 阳台收纳箱"
+            placeholder-class="ui-placeholder"
+            maxlength="12"
+            bindinput="onEditorName" />
+        </view>
+
+        <view class="field">
+          <text class="field__label">图标</text>
+          <view class="chip-row">
+            <text
+              wx:for="{{icons}}" wx:key="*this"
+              class="chip chip--icon {{editor.icon === item ? 'is-on' : ''}}"
+              data-icon="{{item}}"
+              catchtap="onPickIcon">{{item}}</text>
+          </view>
+        </view>
+
+        <view class="field">
+          <text class="field__label">画成什么样</text>
+          <view class="chip-row">
+            <text
+              wx:for="{{skins}}" wx:key="key"
+              class="chip {{editor.skin === item.key ? 'is-on' : ''}}"
+              data-skin="{{item.key}}"
+              catchtap="onPickSkin">{{item.label}}</text>
+          </view>
+        </view>
+
+        <view class="field field--split">
+          <view class="step-block">
+            <text class="field__label">每层放几件</text>
+            <view class="step">
+              <text class="step__btn" data-field="cols" data-delta="-1" catchtap="onStep">−</text>
+              <text class="step__num num">{{editor.cols}}</text>
+              <text class="step__btn" data-field="cols" data-delta="1" catchtap="onStep">＋</text>
+            </view>
+          </view>
+          <view class="step-block">
+            <text class="field__label">几层（0 = 自动）</text>
+            <view class="step">
+              <text class="step__btn" data-field="rows" data-delta="-1" catchtap="onStep">−</text>
+              <text class="step__num num">{{editor.rows}}</text>
+              <text class="step__btn" data-field="rows" data-delta="1" catchtap="onStep">＋</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="field">
+          <text class="field__label">归位关键字</text>
+          <input
+            class="ui-input"
+            value="{{editor.keysText}}"
+            placeholder="位置里会出现的词，顿号隔开"
+            placeholder-class="ui-placeholder"
+            maxlength="60"
+            bindinput="onEditorKeys" />
+          <text class="field__hint">记东西时位置里出现这些词，就归到这个柜子。比如「储物柜、收纳箱」。</text>
+        </view>
+      </scroll-view>
+
+      <view class="sheet__foot">
+        <button
+          wx:if="{{editor.deletable}}"
+          class="ui-btn sheet__del"
+          catchtap="onDeleteContainer">删除</button>
+        <button class="ui-btn is-primary sheet__ok" catchtap="onSaveEditor">保存</button>
+      </view>
+    </view>
+  </view>
 </view>

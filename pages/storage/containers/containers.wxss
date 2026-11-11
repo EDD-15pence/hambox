@@ -1040,3 +1040,440 @@
 .thing.is-dim {
   opacity: 0.30;
 }
+
+/* ==========================================================
+   S-08 / S-09 / S-10 / T-02 / T-03 追加
+   ========================================================== */
+
+/* .cab 要当定位父级：落点高亮和「改」角标都相对它定位 */
+.cab {
+  position: relative;
+}
+
+/* 空容器（整理态 / 有在途待归位时才画）：淡一点，别抢有东西的柜子 */
+.cab.is-empty {
+  opacity: 0.66;
+}
+
+/* 拖在途物品时，手指下方的柜子亮起来 */
+.cab.is-drop::after {
+  content: '';
+  position: absolute;
+  top: -4rpx;
+  right: -4rpx;
+  bottom: -4rpx;
+  left: -4rpx;
+  border: 3rpx solid var(--primary);
+  border-radius: var(--r-lg);
+  background: var(--primary-weak);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* 整理态卡片右上角的小「改」*/
+.cab__edit {
+  position: absolute;
+  top: 4rpx;
+  right: 4rpx;
+  z-index: 3;
+  padding: 2rpx 12rpx;
+  border-radius: var(--r-pill);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: var(--fs-tiny);
+}
+
+.cab__empty {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+/* 新建容器：墙上最后一个格子 */
+.wall-new {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300rpx;
+  border: 2rpx dashed var(--border);
+  border-radius: var(--r-lg);
+  color: var(--text-3);
+}
+
+.wall-new__plus {
+  font-size: 48rpx;
+  line-height: 1;
+  color: var(--primary);
+}
+
+.wall-new__text {
+  margin-top: var(--sp-1);
+  font-size: var(--fs-caption);
+}
+
+/* ---------------- 在路上 ---------------- */
+
+.pending {
+  margin-bottom: var(--sp-2);
+  padding: var(--sp-2) 0 var(--sp-1);
+  border-radius: var(--r-lg);
+  background: var(--bg-sunken);
+}
+
+.pending__head {
+  display: flex;
+  align-items: baseline;
+  padding: 0 var(--sp-3) var(--sp-1);
+}
+
+.pending__title {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.pending__count {
+  margin-left: var(--sp-1);
+  font-size: var(--fs-caption);
+  color: var(--primary);
+}
+
+.pending__hint {
+  margin-left: auto;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.pending__list {
+  display: flex;
+  padding: 0 var(--sp-3);
+  white-space: nowrap;
+}
+
+.pchip {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  width: 148rpx;
+  margin-right: var(--sp-2);
+  padding: var(--sp-2) 0 var(--sp-1);
+  border-radius: var(--r-md);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.pchip__pic {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: var(--r-sm);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+}
+
+.pchip__img {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--r-sm);
+}
+
+.pchip__emoji {
+  font-size: 44rpx;
+  line-height: 1;
+}
+
+.pchip__qty {
+  position: absolute;
+  right: -8rpx;
+  bottom: -8rpx;
+  padding: 0 8rpx;
+  border-radius: var(--r-pill);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: var(--fs-tiny);
+}
+
+.pchip__name {
+  max-width: 128rpx;
+  margin-top: 6rpx;
+  overflow: hidden;
+  font-size: var(--fs-tiny);
+  color: var(--text-1);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pchip__days {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.pchip__del {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 4rpx 10rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+/* 记一条在途 */
+.pending-add {
+  margin-top: var(--sp-2);
+}.pending-add__link {
+  display: block;
+  padding: var(--sp-2) 0;
+  font-size: var(--fs-caption);
+  color: var(--text-3);
+  text-align: center;
+}
+
+.pending-add__input {
+  margin-top: var(--sp-1);
+}
+
+.pending-add__row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: var(--sp-2);
+}
+
+.pending-add__cancel {
+  margin-right: var(--sp-3);
+  font-size: var(--fs-caption);
+  color: var(--text-3);
+}
+
+.pending-add__ok {
+  width: 200rpx;
+  margin: 0;
+}
+
+/* ---------------- 拖拽 ---------------- */
+
+/* 手指下方的格子：描边 + 轻微抬起，告诉人「松手就放这儿」*/
+.thing.is-target {
+  box-shadow: 0 0 0 3rpx var(--primary);
+  border-radius: var(--r-md);
+}
+
+/* 被拖走的那件先淡下去，避免看起来像复制了一份 */
+.thing.is-lifted {
+  opacity: 0.35;
+}
+
+.ghost {
+  position: fixed;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 108rpx;
+  height: 108rpx;
+  margin-top: -54rpx;
+  margin-left: -54rpx;
+  border-radius: var(--r-md);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-float);
+  opacity: 0.92;
+  pointer-events: none;
+  transform: scale(1.06);
+}
+
+.ghost__emoji {
+  font-size: 52rpx;
+  line-height: 1;
+}
+
+.ghost--pending {
+  flex-direction: column;
+  width: 160rpx;
+  height: auto;
+  padding: var(--sp-1);
+}
+
+.ghost__name {
+  margin-top: 4rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-2);
+}
+
+/* 挑选态：现在点柜子是「放进去」，不是「打开」 */
+.picking-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--primary-weak);
+}
+
+.picking-bar__text {
+  font-size: var(--fs-caption);
+  color: var(--primary-strong);
+}
+
+.picking-bar__cancel {
+  font-size: var(--fs-caption);
+  color: var(--text-2);
+}
+
+.wall.is-picking .cab {
+  box-shadow: var(--shadow-raised), 0 0 0 2rpx var(--primary);
+}
+
+/* 定了层数的容器：空层也要占出隔板的高度，不然「4 层」看不出来 */
+.shelf.is-blank .shelf__tier {
+  min-height: 96rpx;
+}
+
+/* ---------------- 容器编辑面板 ---------------- */
+
+.sheet-mask {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 800;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(24, 30, 40, 0.42);
+}
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 84vh;
+  padding: var(--sp-3) var(--sp-3) var(--sp-4);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-float);
+}
+
+.sheet__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: var(--sp-2);
+}
+
+.sheet__title {
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.sheet__close {
+  font-size: var(--fs-caption);
+  color: var(--text-3);
+}
+
+.sheet__body {
+  flex: 1;
+  max-height: 60vh;
+}
+
+.sheet__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-top: var(--sp-3);
+}
+
+.sheet__del {
+  width: 200rpx;
+  margin: 0;
+  color: var(--danger);
+}
+
+.sheet__ok {
+  flex: 1;
+  margin: 0;
+}
+
+.field {
+  margin-bottom: var(--sp-3);
+}
+
+.field__label {
+  display: block;
+  margin-bottom: var(--sp-1);
+  font-size: var(--fs-caption);
+  color: var(--text-3);
+}
+
+.field__hint {
+  display: block;
+  margin-top: 6rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+  line-height: 1.5;
+}
+
+.field--split {
+  display: flex;
+  gap: var(--sp-4);
+}
+
+.step-block {
+  flex: 1;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 76rpx;
+  padding: 0 var(--sp-1);
+  border-radius: var(--r-md);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+}
+
+.step__btn {
+  width: 64rpx;
+  font-size: var(--fs-h2);
+  color: var(--primary);
+  text-align: center;
+}
+
+.step__num {
+  font-size: var(--fs-body);
+  color: var(--text-1);
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.chip {
+  margin: 0 var(--sp-1) var(--sp-1) 0;
+  padding: 8rpx 22rpx;
+  border-radius: var(--r-pill);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+  font-size: var(--fs-caption);
+  color: var(--text-2);
+}
+
+.chip--icon {
+  padding: 8rpx 16rpx;
+  font-size: var(--fs-h2);
+  line-height: 1.2;
+}
+
+.chip.is-on {
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: none;
+}

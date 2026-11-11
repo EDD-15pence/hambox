@@ -141,5 +141,129 @@ check('空关键词无命中数', blank.hitTotal, 0);
 // 搜不到时墙是空的，页面据此显示「没找到」
 check('搜不到返回空墙', C.applyKeyword(searchWall, '西瓜').wall.length, 0);
 
+// ==========================================================
+// S-08 / S-09 / S-10：容器定义可换、层数占位、拖拽位次
+// ==========================================================
+
+// ---------- 后端定义覆盖 ----------
+
+check(
+  '默认用内置定义',
+  C.getDefs().length,
+  8
+);
+
+C.setDefs([
+  {
+    id: 'fridge',
+    name: '大冰箱',
+    icon: '❄️',
+    skin: 'fridge',
+    cols: 2,
+    rows: 3,
+    keys: ['冰箱', '冷藏'],
+    zones: [],
+    sort_order: 10,
+    is_builtin: true,
+    deletable: true
+  },
+  {
+    id: 'c_lunch',
+    name: '便当柜',
+    icon: '🍱',
+    skin: 'glass',
+    cols: 3,
+    rows: 0,
+    keys: ['便当', '饭盒'],
+    zones: [],
+    sort_order: 20,
+    is_builtin: false,
+    deletable: true
+  },
+  {
+    id: 'unplaced',
+    name: '未归位',
+    icon: '📦',
+    skin: 'carton',
+    cols: 4,
+    rows: 0,
+    keys: [],
+    zones: [],
+    sort_order: 999,
+    is_builtin: true,
+    deletable: false
+  }
+]);
+
+check('后端定义生效', C.source(), 'server');
+check('自建容器能被认出来', C.resolve('便当柜第二层'), 'c_lunch');
+check('名字改了按新名字', C.getContainer('fridge').name, '大冰箱');
+check('自建容器不可删标记', C.getContainer('unplaced').deletable, false);
+
+// 后端漏发 unplaced 时前端要自己补，否则认不出的东西没地方放
+C.setDefs([
+  { id: 'fridge', name: '冰箱', skin: 'fridge', cols: 4, rows: 0, keys: ['冰箱'], sort_order: 10 }
+]);
+check('缺 unplaced 自动补', C.resolve('不认识的地方'), 'unplaced');
+
+// ---------- 层数占位 ----------
+
+C.resetDefs();
+check('重置回内置', C.source(), 'builtin');
+
+// 层数占位：给零食柜定 4 层、每层 4 格
+C.setDefs([
+  {
+    id: 'snack',
+    name: '零食柜',
+    icon: '🍪',
+    skin: 'glass',
+    cols: 4,
+    rows: 4,
+    keys: ['零食'],
+    zones: [],
+    sort_order: 10
+  }
+]);
+
+var tall = C.groupByContainer(
+  [
+    { id: '1', name: '可乐', location: '零食柜', status: 'fresh', daysLeft: 100, quantity: 1 },
+    { id: '2', name: '薯片', location: '零食柜', status: 'fresh', daysLeft: 90, quantity: 1 }
+  ],
+  { showEmpty: true }
+);
+var snackCard = null;
+tall.wall.forEach(function (c) { if (c.id === 'snack') snackCard = c; });
+check('定层数的柜子画满层数', snackCard.zones[0].shelves.length, 4);
+check('定层数的柜子只有首层有东西', snackCard.zones[0].shelves[1].items.length, 0);
+
+C.resetDefs();
+
+// 空容器默认不画，showEmpty 才画
+var noEmpty = C.groupByContainer([], {});
+check('默认不画空容器', noEmpty.wall.length, 0);
+var withEmpty = C.groupByContainer([], { showEmpty: true });
+check('showEmpty 画出空盒子', withEmpty.wall.length, 7);
+check('未归位没东西就不出现', withEmpty.wall.some(function (c) { return c.id === 'unplaced'; }), false);
+
+// ---------- 拖拽位次 ----------
+
+var ordered = C.groupByContainer(
+  [
+    { id: 'a', name: '牛奶', location: '冰箱冷藏', status: 'expired', daysLeft: -3, quantity: 1 },
+    { id: 'b', name: '鸡蛋', location: '冰箱冷藏', status: 'fresh', daysLeft: 30, quantity: 1 },
+    { id: 'c', name: '青菜', location: '冰箱冷藏', status: 'fresh', daysLeft: 5, quantity: 1 }
+  ],
+  { order: { a: 2, c: 0 } }
+);
+var fridgeCard = null;
+ordered.wall.forEach(function (c) { if (c.id === 'fridge') fridgeCard = c; });
+var fridgeTiles = fridgeCard.zones[0].tiles.map(function (t) { return t.id; });
+check('手动位次优先且按位次排', fridgeTiles, ['c', 'a', 'b']);
+
+// 拖到 0 号位的那件必须在最前，即使它快过期了
+check('位次压过紧急度', fridgeTiles[0], 'c');
+
 console.log(failures === 0 ? '\nALL PASS' : '\n' + failures + ' 项失败');
 process.exit(failures === 0 ? 0 : 1);

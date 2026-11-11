@@ -358,6 +358,105 @@ function uploadImage(filePath) {
   });
 }
 
+// ==============================
+// 容器（S-08）
+// ==============================
+
+/**
+ * 全部容器定义。**原样返回服务端的行**（snake_case），
+ * 由 `utils/containers.js` 的 `setDefs()` 统一映射成页面用的对象 ——
+ * 多一层 camelCase 转换只会让「容器字段」有两套叫法。
+ */
+function listContainers() {
+  return request('/api/containers').then(function (data) {
+    return data.items || [];
+  });
+}
+
+function createContainer(payload) {
+  return request('/api/containers', 'POST', payload);
+}
+
+function updateContainer(id, patch) {
+  return request('/api/containers/' + encodeURIComponent(id), 'PATCH', patch);
+}
+
+function deleteContainer(id) {
+  return request('/api/containers/' + encodeURIComponent(id), 'DELETE');
+}
+
+/**
+ * 提交某个分区拖拽后的完整顺序（不是增量）。
+ * @param {string} containerId
+ * @param {string} zoneKey 无分区的容器传空串
+ * @param {Array<string|number>} itemIds 从上到下、从左到右的顺序
+ */
+function saveSlots(containerId, zoneKey, itemIds) {
+  return request('/api/containers/' + encodeURIComponent(containerId) + '/slots', 'POST', {
+    zone_key: zoneKey || '',
+    item_ids: (itemIds || []).map(function (id) { return Number(id); })
+  });
+}
+
+// ==============================
+// 在途（T-01）
+// ==============================
+
+function toViewPending(row) {
+  var image = row.image_url || '';
+  return {
+    id: String(row.id),
+    name: row.name,
+    category: row.category_id,
+    quantity: row.quantity,
+    unit: row.unit,
+    note: row.note || '',
+    image: image,
+    imageSrc: image ? env.getBaseUrl() + image : '',
+    daysWaiting: row.days_waiting || 0,
+    // 在途不给 emoji 之外的图形，靠名称猜一个，和容器里的块保持一致
+    createdAt: normalizeTimestamp(row.created_at)
+  };
+}
+
+function listPending() {
+  return request('/api/pending').then(function (data) {
+    return (data.items || []).map(toViewPending);
+  });
+}
+
+function createPending(item) {
+  return request('/api/pending', 'POST', {
+    name: (item.name || '').trim(),
+    category_id: item.category || 'other',
+    quantity: Number(item.quantity) > 0 ? Number(item.quantity) : 1,
+    unit: item.unit || '个',
+    note: item.note || '',
+    image_url: item.image || null
+  }).then(toViewPending);
+}
+
+function updatePending(id, patch) {
+  return request('/api/pending/' + encodeURIComponent(id), 'PATCH', patch).then(toViewPending);
+}
+
+function deletePending(id) {
+  return request('/api/pending/' + encodeURIComponent(id), 'DELETE');
+}
+
+/**
+ * 到了 → 放进某个容器，一步生成正式物品。
+ * location 不传由服务端按容器关键字拼（保证落回这个柜子）。
+ */
+function placePending(id, containerId, zoneKey) {
+  return request('/api/pending/' + encodeURIComponent(id) + '/place', 'POST', {
+    container_id: containerId,
+    zone_key: zoneKey || ''
+  }).then(function (data) {
+    return { item: toViewItem(data.item), pendingDeleted: data.pending_deleted };
+  });
+}
+
 module.exports = {
   getBaseUrl: env.getBaseUrl,
   probe: probe,
@@ -373,5 +472,15 @@ module.exports = {
   createCategory: createCategory,
   deleteCategory: deleteCategory,
   getOverview: getOverview,
-  uploadImage: uploadImage
+  uploadImage: uploadImage,
+  listContainers: listContainers,
+  createContainer: createContainer,
+  updateContainer: updateContainer,
+  deleteContainer: deleteContainer,
+  saveSlots: saveSlots,
+  listPending: listPending,
+  createPending: createPending,
+  updatePending: updatePending,
+  deletePending: deletePending,
+  placePending: placePending
 };
