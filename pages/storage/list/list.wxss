@@ -125,6 +125,48 @@
   color: var(--text-3);
 }
 
+/* ---------- 按容器看：比快速记录矮一档，别抢主入口的视觉 ---------- */
+.wall-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+  transition: box-shadow var(--dur-fast) ease-out;
+}
+
+.wall-entry__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.wall-entry__title {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.wall-entry__desc {
+  margin-top: 2rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wall-entry__arrow {
+  flex: none;
+  font-size: 32rpx;
+  line-height: 1;
+  color: var(--text-3);
+}
+
 /* ---------- 搜索 ---------- */
 .search-wrap {
   position: relative;
@@ -471,4 +513,62 @@
   flex: none;
   height: var(--hit);
   padding: 0 var(--sp-3);
+}
+
+/* ============================================================
+ * 首屏骨架 / 刷新失败提示
+ * ============================================================ */
+.skeleton {
+  padding-top: var(--sp-1);
+}
+
+.skeleton__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+}
+
+.skeleton__stat {
+  height: 132rpx;
+  border-radius: var(--r-md);
+}
+
+.skeleton__entry {
+  height: 128rpx;
+  margin-top: var(--sp-3);
+  border-radius: var(--r-md);
+}
+
+.skeleton__row {
+  display: flex;
+  align-items: center;
+  margin-top: var(--sp-2);
+  padding: var(--sp-2);
+  border-radius: var(--r-md);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.skeleton__thumb {
+  flex: none;
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: var(--r-sm);
+}
+
+.skeleton__lines {
+  flex: 1;
+  min-width: 0;
+  margin-left: var(--sp-2);
+}
+
+.skeleton__line {
+  height: 28rpx;
+  width: 52%;
+  border-radius: var(--r-sm);
+}
+
+.skeleton__line.is-short {
+  width: 30%;
+  margin-top: var(--sp-2);
 }

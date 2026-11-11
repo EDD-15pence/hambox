@@ -26,6 +26,33 @@ var EMPTY_DRAFT = {
   shelfLifeDays: ''
 };
 
+/** 示例句式：既是空态引导，也是解析失败时的"照着说"参照 */
+var EXAMPLES = [
+  '可乐 保质期9个月 放厨房柜子',
+  '牛奶 昨天生产 保质期7天 放冰箱',
+  '感冒药 有效期至12月31日 放药箱',
+  '三袋薯片 放客厅茶几'
+];
+
+/** 今天已记多少条 —— 按日期存，过了零点自动归零 */
+var COUNT_KEY = 'storage_daily_count';
+
+function todayCount() {
+  try {
+    var saved = wx.getStorageSync(COUNT_KEY);
+    if (saved && saved.date === storageUtils.todayDate()) return saved.count || 0;
+  } catch (e) { /* 读不到就当 0 */ }
+  return 0;
+}
+
+function bumpTodayCount() {
+  var count = todayCount() + 1;
+  try {
+    wx.setStorageSync(COUNT_KEY, { date: storageUtils.todayDate(), count: count });
+  } catch (e) { /* 存不下不影响记账 */ }
+  return count;
+}
+
 Page({
   data: {
     isDark: false,
@@ -40,6 +67,10 @@ Page({
     parsed: false,
     saving: false,
     savedCount: 0,
+    // 解析不出名称时走兜底：给示例句式 + 直接聚焦名称框
+    needName: false,
+    focusName: false,
+    examples: EXAMPLES,
     statusText: '',
     daysLeft: null,
     todayText: '',
@@ -58,7 +89,8 @@ Page({
       isDark: theme.getTheme(),
       statusBarHeight: nav.STATUS_BAR_HEIGHT,
       todayText: todayText,
-      voiceAvailable: voiceAvailable
+      voiceAvailable: voiceAvailable,
+      savedCount: todayCount()
     });
     if (voiceAvailable) this.setupSpeech();
     this.loadCategories();
@@ -230,7 +262,14 @@ Page({
   parse: function () {
     var raw = (this.data.raw || '').trim();
     if (!raw) {
-      this.setData({ parsed: false, missing: [], statusText: '', daysLeft: null });
+      this.setData({
+        parsed: false,
+        missing: [],
+        statusText: '',
+        daysLeft: null,
+        needName: false,
+        focusName: false
+      });
       return;
     }
     var result = quickParse.parseQuickInput(raw, { today: this.data.todayText });
@@ -254,9 +293,26 @@ Page({
       shelfLifeMonths: result.shelfLifeMonths || '',
       shelfLifeDays: result.shelfLifeDays || ''
     };
-    this.setData({ draft: draft, parsed: true, missing: result.missing });
+    var needName = !result.name;
+    this.setData({
+      draft: draft,
+      parsed: true,
+      missing: result.missing,
+      // 只提示、不抢焦点：用户可能还在上面那个框里打字
+      needName: needName,
+      focusName: false
+    });
     this.syncPickers();
     this.refreshStatus(draft.expireDate);
+  },
+
+  /** 点了示例句式：直接替换输入框，等于现场演示一次"怎么说才准" */
+  onUseExample: function (e) {
+    var text = e.currentTarget.dataset.text || '';
+    this._rawText = '';
+    this.setData({ raw: text, fixNote: '' });
+    this.parse();
+    wx.showToast({ title: '改成你的东西就行', icon: 'none', duration: 1500 });
   },
 
   /** 下拉选择器要的是下标，把 draft 里的 id/单位换算成 index */
@@ -294,10 +350,15 @@ Page({
     var value = e.detail.value;
     var patch = {};
     patch['draft.' + field] = value;
-    this.setData(patch);
     if (field === 'quantity') {
-      this.setData({ 'draft.quantity': Number(value) || 1 });
+      patch['draft.quantity'] = Number(value) || 1;
     }
+    // 名称一填上，兜底卡片就退场，别一直顶着
+    if (field === 'name' && value && value.trim()) {
+      patch.needName = false;
+      patch.focusName = false;
+    }
+    this.setData(patch);
   },
 
   onCategoryChange: function (e) {
@@ -361,13 +422,22 @@ Page({
     });
   },
 
+  /** 名称空时把光标送到名称框：光弹 toast 用户不知道要改哪里 */
+  focusNameField: function () {
+    var self = this;
+    // 顶部输入框让出焦点，否则两个 focus 会打架、键盘落到上面去
+    this.setData({ needName: true, focusName: false, inputFocus: false });
+    setTimeout(function () { self.setData({ focusName: true }); }, 80);
+  },
+
   onSave: function () {
     var self = this;
     if (this.data.saving) return;
 
     var draft = this.data.draft;
     if (!draft.name || !draft.name.trim()) {
-      wx.showToast({ title: '还没识别出名称，补一下或换个说法', icon: 'none' });
+      this.focusNameField();
+      wx.showToast({ title: '给这件东西填个名称', icon: 'none' });
       return;
     }
 
@@ -393,13 +463,15 @@ Page({
         self.logVoice(payload);
         self.setData({
           saving: false,
-          savedCount: self.data.savedCount + 1,
+          savedCount: bumpTodayCount(),
           raw: '',
           draft: Object.assign({}, EMPTY_DRAFT),
           categoryIndex: 0,
           unitIndex: 0,
           missing: [],
           parsed: false,
+          needName: false,
+          focusName: false,
           statusText: '',
           daysLeft: null,
           fixNote: ''
@@ -418,7 +490,8 @@ Page({
     if (this.data.saving) return;
     var draft = this.data.draft;
     if (!draft.name || !draft.name.trim()) {
-      wx.showToast({ title: '还没识别出名称', icon: 'none' });
+      this.focusNameField();
+      wx.showToast({ title: '给这件东西填个名称', icon: 'none' });
       return;
     }
     this.setData({ saving: true });
@@ -444,7 +517,7 @@ Page({
           expireDate: draft.expireDate,
           category: draft.category
         });
-        self.setData({ saving: false, savedCount: self.data.savedCount + 1 });
+        self.setData({ saving: false, savedCount: bumpTodayCount() });
         wx.navigateTo({ url: '/pages/storage/detail/detail?id=' + item.id });
       })
       .catch(function (err) {

@@ -1,6 +1,7 @@
 {
   "navigationBarTitleText": "智能仓储",
   "usingComponents": {
-    "voice-add": "/components/voice-add/voice-add"
+    "voice-add": "/components/voice-add/voice-add",
+    "conn-error": "/components/conn-error/conn-error"
   }
 }

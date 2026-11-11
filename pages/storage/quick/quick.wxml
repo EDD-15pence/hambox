@@ -43,8 +43,27 @@
       <button class="ui-btn is-block is-primary input-card__btn" bindtap="onParseTap" disabled="{{!raw}}">解析这句话</button>
     </view>
 
+    <view wx:if="{{savedCount > 0}}" class="saved">
+      <text class="saved__text">今天已记 {{savedCount}} 条</text>
+      <text class="saved__hint">接着记下一条就行，不用返回</text>
+    </view>
+
     <!-- 解析结果 -->
     <view wx:if="{{parsed}}" class="result">
+      <!-- 兜底：整句里没认出名称时，别让用户对着空框发呆 -->
+      <view wx:if="{{needName}}" class="fallback">
+        <text class="fallback__title">这次没抓出是哪件东西</text>
+        <text class="fallback__desc">名称是必填的，直接在下面名称框里填；分类、数量、位置也都能手动改，不影响保存。</text>
+        <text class="fallback__label">照着这样说更准</text>
+        <view class="fallback__examples">
+          <text
+            wx:for="{{examples}}" wx:key="*this"
+            class="fallback__eg"
+            data-text="{{item}}"
+            bindtap="onUseExample">{{item}}</text>
+        </view>
+      </view>
+
       <view class="result__head">
         <text class="result__title">识别结果</text>
         <text wx:if="{{statusText}}" class="ui-badge is-{{daysLeft === null ? 'primary' : (daysLeft > 30 ? 'fresh' : (daysLeft > 0 ? 'warning' : 'expired'))}}">{{statusText}}</text>
@@ -52,8 +71,8 @@
       </view>
 
       <view class="field">
-        <text class="field__label">名称</text>
-        <input class="ui-input" value="{{draft.name}}" data-field="name" bindinput="onFieldInput" placeholder="物品名称" placeholder-class="ui-placeholder" />
+        <text class="field__label">名称 <text wx:if="{{needName}}" class="field__required">必填</text></text>
+        <input class="ui-input {{needName ? 'is-alert' : ''}}" value="{{draft.name}}" data-field="name" bindinput="onFieldInput" placeholder="物品名称，如 可乐" placeholder-class="ui-placeholder" focus="{{focusName}}" />
       </view>
 
       <view class="field">
@@ -133,15 +152,9 @@
     <!-- 空态示例 -->
     <view wx:if="{{!parsed && !raw}}" class="tips">
       <text class="tips__title">这样说就行</text>
-      <text class="tips__line">可乐 生产日期9月1日 保质期9个月 放厨房柜子</text>
-      <text class="tips__line">在超市买了一瓶牛奶 昨天生产 保质期7天 放冰箱</text>
-      <text class="tips__line">感冒药 有效期至12月31日 放药箱</text>
-      <text class="tips__line">三袋薯片 保质期半年 放在客厅茶几</text>
+      <text class="tips__line" wx:for="{{examples}}" wx:key="*this">{{item}}</text>
     </view>
 
-    <view wx:if="{{savedCount > 0}}" class="saved">
-      <text class="saved__text">本次已连续记录 {{savedCount}} 条</text>
-    </view>
 
     <view class="bottom-spacer"></view>
     </view>

@@ -157,3 +157,32 @@
 .bottom-spacer {
   height: calc(var(--sp-6) + env(safe-area-inset-bottom));
 }
+
+/* ---------- 加载骨架 ---------- */
+.detail-skeleton {
+  padding-top: var(--sp-2);
+}
+
+.detail-skeleton__hero {
+  height: 240rpx;
+  border-radius: var(--r-lg);
+}
+
+.detail-skeleton__line {
+  height: 44rpx;
+  width: 50%;
+  margin-top: var(--sp-3);
+  border-radius: var(--r-sm);
+}
+
+.detail-skeleton__block {
+  height: 140rpx;
+  margin-top: var(--sp-3);
+  border-radius: var(--r-md);
+}
+
+.detail-skeleton__row {
+  height: 84rpx;
+  margin-top: var(--sp-2);
+  border-radius: var(--r-sm);
+}

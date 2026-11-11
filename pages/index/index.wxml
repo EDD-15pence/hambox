@@ -20,6 +20,10 @@
         bindtap="navigateToTool"
         hover-class="tool-card--active"
         hover-stay-time="80">
+        <!-- 智能仓储有临期/过期时在卡片右上角顶一个数字 -->
+        <view
+          wx:if="{{item.key === 'storage' && storageBadge > 0}}"
+          class="tool-badge is-{{storageBadgeType}}">{{storageBadge}}</view>
         <view class="tool-icon">
           <text class="tool-icon__emoji">{{item.icon}}</text>
         </view>

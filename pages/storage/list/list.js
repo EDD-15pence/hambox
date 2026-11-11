@@ -4,6 +4,7 @@
  */
 var api = require('../../../utils/api');
 var storageUtils = require('../../../utils/storage-utils');
+var containers = require('../../../utils/containers');
 var nav = require('../../../utils/nav');
 var theme = require('../../../utils/theme');
 
@@ -20,6 +21,14 @@ Page({
     keyword: '',
     sortBy: 'expiry',
     showSearch: false,
+    // 三态：首屏加载 / 连不上后端 / 正常渲染
+    loading: true,
+    retrying: false,
+    loadError: '',
+    baseUrl: '',
+    // 「按容器看」入口的副标题：冰箱 3 · 药箱 1 · 储物柜 2
+    containerHint: '',
+    containerCount: 0,
     banner: { show: false, expiredCount: 0, warningCount: 0 },
     // 顶部三个统计块
     stats: { expired: 0, warning: 0, fresh: 0, none: 0, total: 0 },
@@ -38,9 +47,10 @@ Page({
   onLoad: function () {
     this.setData({
       isDark: theme.getTheme(),
-      statusBarHeight: nav.STATUS_BAR_HEIGHT
+      statusBarHeight: nav.STATUS_BAR_HEIGHT,
+      baseUrl: api.getBaseUrl()
     });
-    this.loadAll();
+    // 首次拉取交给 onShow：onLoad 之后必然触发一次，避免进页面连发两轮请求
   },
 
   onShow: function () {
@@ -57,16 +67,34 @@ Page({
   // ==============================
   // 加载数据
   // ==============================
+  /**
+   * 拉列表 + 分类。
+   * 失败分两种情况：手上一条数据都没有 → 整页换成连接引导卡片；
+   * 已经有数据（下拉刷新/切回来） → 保留旧列表，只在顶部提示这次没刷新成功。
+   */
   loadAll: function () {
     var self = this;
     var sortBy = storageUtils.loadSortPreference();
+    var firstLoad = this.data.items.length === 0;
+    if (firstLoad) this.setData({ loading: !this.data.loadError, retrying: !!this.data.loadError });
+
     return Promise.all([api.listItems(), api.listCategories()])
       .then(function (results) {
+        self.setData({ loading: false, retrying: false, loadError: '' });
         self.render(results[0], results[1], sortBy);
       })
       .catch(function (err) {
-        wx.showToast({ title: err.message, icon: 'none', duration: 2500 });
+        var message = (err && err.message) || '请求失败';
+        self.setData({ loading: false, retrying: false, loadError: message });
+        if (self.data.items.length > 0) {
+          wx.showToast({ title: message, icon: 'none', duration: 2500 });
+        }
       });
+  },
+
+  /** 连接引导卡片上的重试 */
+  onRetry: function () {
+    this.loadAll();
   },
 
   /**
@@ -96,6 +124,14 @@ Page({
       stats[key]++;
     });
 
+    // 容器入口只报"有东西的容器"前三名，多了这行字会挤成一团
+    var grouped = containers.groupByContainer(items);
+    var named = grouped.wall.filter(function (c) { return c.id !== 'unplaced'; });
+    var containerHint = named.slice(0, 3).map(function (c) {
+      return c.name + ' ' + c.count;
+    }).join(' · ');
+    if (!containerHint) containerHint = '冰箱、药箱、储物柜…按地方看东西';
+
     this.setData({
       items: items,
       categories: tabs,
@@ -104,7 +140,9 @@ Page({
       customCategories: categories.filter(function (c) { return !c.isDefault; }),
       banner: storageUtils.getStatusBanner(items),
       stats: stats,
-      sortBy: sortBy
+      sortBy: sortBy,
+      containerHint: containerHint,
+      containerCount: named.length
     });
     this.applyFilters();
   },
@@ -205,6 +243,13 @@ Page({
   onQuickAdd: function () {
     wx.navigateTo({
       url: '/pages/storage/quick/quick'
+    });
+  },
+
+  /** 按容器看：同一份数据的另一种视图，回答"冰箱里还有什么" */
+  onOpenContainers: function () {
+    wx.navigateTo({
+      url: '/pages/storage/containers/containers'
     });
   },
 

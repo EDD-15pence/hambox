@@ -1,0 +1,45 @@
+<view class="conn-error {{compact ? 'is-compact' : ''}}">
+  <view class="conn-error__mark">!</view>
+  <text class="conn-error__title">连不上后端</text>
+  <text class="conn-error__msg">{{message || '请求没打通，下面三步按顺序看一下'}}</text>
+
+  <view class="conn-error__hints">
+    <view class="conn-hint">
+      <text class="conn-hint__no">1</text>
+      <view class="conn-hint__body">
+        <text class="conn-hint__title">后端还在跑吗</text>
+        <text class="conn-hint__desc">电脑上 storage-server 的窗口或托盘图标还在不在，重启电脑后要重新拉起。</text>
+      </view>
+    </view>
+
+    <view class="conn-hint">
+      <text class="conn-hint__no">2</text>
+      <view class="conn-hint__body">
+        <text class="conn-hint__title">网络走对了吗</text>
+        <text class="conn-hint__desc">在家连同一个 WiFi 走内网；用流量时走外网 8443，确认 lucky 和端口转发都开着。</text>
+      </view>
+    </view>
+
+    <view class="conn-hint">
+      <text class="conn-hint__no">3</text>
+      <view class="conn-hint__body">
+        <text class="conn-hint__title">域名放行了吗</text>
+        <text class="conn-hint__desc">真机只认 HTTPS 域名，mp 后台「request 合法域名」要带上 :8443；改完要完全退出小程序再进。</text>
+      </view>
+    </view>
+  </view>
+
+  <button
+    class="conn-error__btn"
+    disabled="{{retrying}}"
+    bindtap="onRetry">{{retrying ? '重试中…' : '重试'}}</button>
+
+  <text class="conn-error__more" bindtap="onToggleDetail">{{showDetail ? '收起排查信息' : '看排查信息'}}</text>
+
+  <view wx:if="{{showDetail}}" class="conn-error__detail">
+    <text class="conn-error__row">请求地址</text>
+    <text class="conn-error__value">{{baseUrl || '未配置'}}</text>
+    <text class="conn-error__row">先把后端单独打开试试</text>
+    <text class="conn-error__value">手机浏览器访问上面地址 + /api/health，能看到 JSON 就说明网络这一层是通的。</text>
+  </view>
+</view>

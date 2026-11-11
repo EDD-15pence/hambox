@@ -15,14 +15,20 @@ Page({
     // 倒计时大数字（拆成三块，避免模板里做字符串拼接）
     daysNum: '',
     daysPrefix: '',
-    hasDays: false
+    hasDays: false,
+    // 三态：加载中 / 连不上后端 / 正常
+    loading: true,
+    retrying: false,
+    loadError: '',
+    baseUrl: ''
   },
 
   onLoad: function (query) {
     var self = this;
     self.setData({
       isDark: theme.getTheme(),
-      statusBarHeight: nav.STATUS_BAR_HEIGHT
+      statusBarHeight: nav.STATUS_BAR_HEIGHT,
+      baseUrl: api.getBaseUrl()
     });
 
     if (!query || !query.id) {
@@ -32,14 +38,33 @@ Page({
     }
 
     self.itemId = query.id;
-    Promise.all([api.getItem(query.id), api.listCategories()])
+    self.loadItem();
+  },
+
+  /**
+   * 拉物品详情 + 分类。
+   * 以前失败直接 navigateBack，网络一抖就被弹出页面、还看不到任何原因；
+   * 现在留在原地给连接引导，网络回来点重试就行。
+   */
+  loadItem: function () {
+    var self = this;
+    this.setData({ loading: !this.data.loadError, retrying: !!this.data.loadError });
+    return Promise.all([api.getItem(this.itemId), api.listCategories()])
       .then(function (results) {
+        self.setData({ loading: false, retrying: false, loadError: '' });
         self.renderItem(results[0], results[1]);
       })
       .catch(function (err) {
-        wx.showToast({ title: err.message, icon: 'none' });
-        setTimeout(function () { wx.navigateBack(); }, 1500);
+        self.setData({
+          loading: false,
+          retrying: false,
+          loadError: (err && err.message) || '请求失败'
+        });
       });
+  },
+
+  onRetry: function () {
+    this.loadItem();
   },
 
   renderItem: function (item, categories) {

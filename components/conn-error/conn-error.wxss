@@ -1,0 +1,163 @@
+/* 连不上后端：一张能照着做的卡片，而不是一闪而过的 toast */
+.conn-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  margin: var(--sp-3) var(--page-x);
+  padding: var(--sp-6) var(--sp-4) var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.conn-error.is-compact {
+  margin-top: var(--sp-2);
+  padding: var(--sp-4) var(--sp-3) var(--sp-3);
+}
+
+/* 感叹号用圆形凹陷槽 + 危险色，不引图标字 */
+.conn-error__mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: var(--danger-weak);
+  box-shadow: var(--shadow-sunken-sm);
+  font-size: 52rpx;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--danger);
+}
+
+.conn-error__title {
+  margin-top: var(--sp-3);
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.conn-error__msg {
+  margin-top: var(--sp-1);
+  padding: 0 var(--sp-2);
+  font-size: var(--fs-caption);
+  line-height: 1.6;
+  text-align: center;
+  color: var(--text-3);
+}
+
+/* ---------- 三条排查 ---------- */
+.conn-error__hints {
+  width: 100%;
+  margin-top: var(--sp-4);
+  padding: var(--sp-2);
+  box-sizing: border-box;
+  border-radius: var(--r-md);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+}
+
+.conn-hint {
+  display: flex;
+  align-items: flex-start;
+  padding: var(--sp-2) var(--sp-1);
+}
+
+.conn-hint + .conn-hint {
+  border-top: 1rpx solid var(--divider);
+}
+
+.conn-hint__no {
+  flex: none;
+  width: 36rpx;
+  height: 36rpx;
+  margin-right: var(--sp-2);
+  border-radius: 50%;
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+  font-size: var(--fs-tiny);
+  font-weight: 600;
+  line-height: 36rpx;
+  text-align: center;
+  color: var(--text-2);
+}
+
+.conn-hint__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.conn-hint__title {
+  display: block;
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  color: var(--text-1);
+}
+
+.conn-hint__desc {
+  display: block;
+  margin-top: 4rpx;
+  font-size: var(--fs-tiny);
+  line-height: 1.55;
+  color: var(--text-3);
+}
+
+/* ---------- 操作 ---------- */
+/* 不依赖全局 .ui-btn：组件样式隔离时全局类不一定生效，这里自带一套 */
+.conn-error__btn {
+  width: 100%;
+  height: var(--hit);
+  margin-top: var(--sp-4);
+  padding: 0;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--primary);
+  box-shadow: 0 8rpx 20rpx rgba(0, 104, 224, 0.24);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  line-height: var(--hit);
+  color: var(--on-primary);
+}
+
+.conn-error__btn::after {
+  border: none;
+}
+
+.conn-error__btn[disabled] {
+  opacity: 0.6;
+}
+
+.conn-error__more {
+  margin-top: var(--sp-3);
+  padding: var(--sp-1) var(--sp-2);
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.conn-error__detail {
+  width: 100%;
+  margin-top: var(--sp-1);
+  padding: var(--sp-2);
+  box-sizing: border-box;
+  border-radius: var(--r-md);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+}
+
+.conn-error__row {
+  display: block;
+  font-size: var(--fs-tiny);
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.conn-error__value {
+  display: block;
+  margin: 4rpx 0 var(--sp-2);
+  font-size: var(--fs-tiny);
+  line-height: 1.5;
+  word-break: break-all;
+  color: var(--text-3);
+}

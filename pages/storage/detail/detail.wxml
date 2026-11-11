@@ -11,6 +11,25 @@
 
   <scroll-view class="page-scroll" scroll-y>
     <view class="page-body">
+    <!-- 加载中 -->
+    <block wx:if="{{loading && !item.id}}">
+      <view class="detail-skeleton">
+        <view class="detail-skeleton__hero ui-skeleton"></view>
+        <view class="detail-skeleton__line ui-skeleton"></view>
+        <view class="detail-skeleton__block ui-skeleton"></view>
+        <view class="detail-skeleton__row ui-skeleton" wx:for="{{[1,2,3]}}" wx:key="*this"></view>
+      </view>
+    </block>
+
+    <!-- 连不上后端 -->
+    <conn-error
+      wx:elif="{{loadError && !item.id}}"
+      message="{{loadError}}"
+      base-url="{{baseUrl}}"
+      retrying="{{retrying}}"
+      bind:retry="onRetry" />
+
+    <block wx:else>
     <!-- 主视觉：有照片放照片，没有就放分类图标 -->
     <view class="hero">
       <image wx:if="{{item.imageSrc}}" class="hero__image" src="{{item.imageSrc}}" mode="aspectFill" bindtap="onPreviewImage" />
@@ -86,6 +105,7 @@
     </view>
 
     <view class="bottom-spacer"></view>
+    </block>
     </view>
   </scroll-view>
 </view>

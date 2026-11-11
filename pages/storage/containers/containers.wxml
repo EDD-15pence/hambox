@@ -1,0 +1,107 @@
+<view class="container {{isDark ? 'dark' : ''}}">
+  <view class="app-nav" style="padding-top:{{statusBarHeight}}px">
+    <view class="nav-left">
+      <text class="nav-back-icon" bindtap="onBack">‹</text>
+      <text class="app-nav__title">{{view === 'inside' ? active.name : '按容器看'}}</text>
+    </view>
+    <view class="app-nav__actions">
+      <text wx:if="{{view === 'wall'}}" class="nav-text-btn" bindtap="onGoList">物品列表</text>
+      <text class="nav-text-btn" bindtap="onToggleTheme">{{isDark ? '日间' : '夜间'}}</text>
+    </view>
+  </view>
+
+  <scroll-view class="page-scroll" scroll-y>
+    <view class="page-body">
+    <!-- 加载中 -->
+    <block wx:if="{{loading && !wall.length}}">
+      <view class="wall-skeleton">
+        <view class="wall-skeleton__card ui-skeleton" wx:for="{{[1,2,3,4]}}" wx:key="*this"></view>
+      </view>
+    </block>
+
+    <!-- 连不上后端 -->
+    <conn-error
+      wx:elif="{{loadError && !wall.length}}"
+      message="{{loadError}}"
+      base-url="{{baseUrl}}"
+      retrying="{{retrying}}"
+      bind:retry="onRetry" />
+
+    <block wx:else>
+    <!-- ============ 容器墙 ============ -->
+    <block wx:if="{{view === 'wall'}}">
+      <view wx:if="{{loadError}}" class="ui-notice" bindtap="onRetry">
+        <text class="ui-notice__text">这次没刷新成功 · {{loadError}}</text>
+        <text class="ui-notice__action">重试</text>
+      </view>
+
+      <view class="summary">
+        <text class="summary__num num">{{total}}</text>
+        <text class="summary__label">件东西，分在 {{wall.length}} 个地方</text>
+        <text wx:if="{{expired > 0}}" class="summary__flag is-danger">已过期 {{expired}}</text>
+        <text wx:if="{{warning > 0}}" class="summary__flag is-warning">临期 {{warning}}</text>
+      </view>
+
+      <view class="wall">
+        <view
+          wx:for="{{wall}}" wx:key="id"
+          class="wall-card"
+          data-id="{{item.id}}"
+          bindtap="onOpenContainer"
+          hover-class="wall-card--pressed"
+          hover-stay-time="60">
+          <view class="wall-card__head">
+            <view class="wall-card__icon"><text>{{item.icon}}</text></view>
+            <text class="wall-card__name">{{item.name}}</text>
+          </view>
+          <text class="wall-card__desc">{{item.desc}}</text>
+          <view class="wall-card__foot">
+            <text class="wall-card__count num">{{item.count}} 件</text>
+            <text wx:if="{{item.expired > 0}}" class="ui-badge is-expired">{{item.expired}} 过期</text>
+            <text wx:elif="{{item.warning > 0}}" class="ui-badge is-warning">{{item.warning}} 临期</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="wall-empty" wx:if="{{!wall.length}}">
+        <text class="wall-empty__text">还没有东西可看</text>
+      </view>
+    </block>
+
+    <!-- ============ 容器内部 ============ -->
+    <block wx:else>
+      <view class="inside-head">
+        <text class="inside-head__desc">{{active.desc}} · {{active.count}} 件</text>
+        <view class="inside-head__flags">
+          <text wx:if="{{active.expired > 0}}" class="ui-badge is-expired">已过期 {{active.expired}}</text>
+          <text wx:if="{{active.warning > 0}}" class="ui-badge is-warning">临期 {{active.warning}}</text>
+          <text wx:if="{{!active.expired && !active.warning}}" class="ui-badge is-fresh">都还新鲜</text>
+        </view>
+      </view>
+
+      <!-- 网格：列数由容器定，块自动排布，不落库、不用摆 -->
+      <view class="grid grid--{{active.cols}}">
+        <view
+          wx:for="{{active.tiles}}" wx:key="id"
+          class="tile {{item.cls}}"
+          data-id="{{item.id}}"
+          bindtap="onTapTile"
+          hover-class="tile--pressed"
+          hover-stay-time="60">
+          <image wx:if="{{item.imageSrc}}" class="tile__image" src="{{item.imageSrc}}" mode="aspectFill" />
+          <text wx:else class="tile__initial">{{item.initial}}</text>
+          <text wx:if="{{item.qtyText}}" class="tile__qty num">{{item.qtyText}}</text>
+          <text class="tile__name">{{item.name}}</text>
+        </view>
+      </view>
+
+      <view class="inside-hint">
+        <text class="inside-hint__text">块描边就是保质期状态：橙色临期、红色已过期。点一块看详情。</text>
+      </view>
+    </block>
+    </block>
+
+    <view class="bottom-spacer"></view>
+    </view>
+  </scroll-view>
+</view>

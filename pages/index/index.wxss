@@ -25,6 +25,7 @@
 
 /* 凸起卡片：与页面同色，只有影子说明它存在 */
 .tool-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   padding: var(--sp-3);
@@ -32,6 +33,31 @@
   background: var(--bg-raised);
   box-shadow: var(--shadow-raised);
   transition: box-shadow var(--dur-fast) ease-out;
+}
+
+/* 临期角标：贴在卡片右上角，压住圆角一点才有"挂上去"的感觉 */
+.tool-badge {
+  position: absolute;
+  top: 14rpx;
+  right: 14rpx;
+  min-width: 40rpx;
+  height: 40rpx;
+  padding: 0 10rpx;
+  box-sizing: border-box;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-tiny);
+  font-weight: 600;
+  line-height: 40rpx;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-invert);
+  background: var(--warning);
+  box-shadow: 0 4rpx 12rpx rgba(138, 82, 0, 0.28);
+}
+
+.tool-badge.is-danger {
+  background: var(--danger);
+  box-shadow: 0 4rpx 12rpx rgba(180, 35, 24, 0.28);
 }
 
 /* 按下 = 把这对影子翻成 inset，元素不位移 */

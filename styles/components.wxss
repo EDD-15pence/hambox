@@ -513,3 +513,32 @@
     opacity: 0.55;
   }
 }
+
+/* ============================================================
+ * 轻提示条：数据没刷新 / 某块没拉到，但不该挡住整个页面
+ * ============================================================ */
+.ui-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--warning-weak);
+}
+
+.ui-notice__text {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-tiny);
+  line-height: 1.4;
+  color: var(--warning);
+}
+
+.ui-notice__action {
+  flex: none;
+  margin-left: var(--sp-2);
+  font-size: var(--fs-tiny);
+  font-weight: 600;
+  color: var(--warning);
+}

@@ -33,31 +33,62 @@ Page({
     expiryMonths: '',
     calculatedExpire: '',
     calculatedStatus: '',
-    calculatedStatusText: ''
+    calculatedStatusText: '',
+    // 加载态：编辑模式要先把原物品拉回来；拉不到就留在原地给连接引导
+    loading: false,
+    retrying: false,
+    loadError: '',
+    baseUrl: ''
   },
 
   onLoad: function (query) {
-    var self = this;
-    this.setData({ isDark: theme.getTheme(), statusBarHeight: nav.STATUS_BAR_HEIGHT });
+    this._query = query || {};
+    this.setData({
+      isDark: theme.getTheme(),
+      statusBarHeight: nav.STATUS_BAR_HEIGHT,
+      baseUrl: api.getBaseUrl(),
+      // 编辑模式先认下 id：万一只拉到分类没拉到物品，保存也走 PUT，不会误建一条新记录
+      isEdit: !!this._query.id,
+      editId: this._query.id || null,
+      loading: !!this._query.id
+    });
+    this.loadPage();
+  },
 
-    api.listCategories()
+  /** 分类 +（编辑时）原物品；失败不再弹个 toast 就走人 */
+  loadPage: function () {
+    var self = this;
+    var query = this._query || {};
+    this.setData({ retrying: !!this.data.loadError });
+
+    return api.listCategories()
       .then(function (categories) {
         self.setData({
           categories: categories,
-          categoryNames: categories.map(function (c) { return c.icon + ' ' + c.name; })
+          categoryNames: categories.map(function (c) { return c.icon + ' ' + c.name; }),
+          loadError: '',
+          retrying: false
         });
-        if (query && query.id) {
-          return self.loadForEdit(query.id);
-        }
-        if (query && query.prefill) {
+        if (query.id) return self.loadForEdit(query.id);
+        self.setData({ loading: false });
+        if (query.prefill) {
           self.applyPrefill(query.prefill);
           return;
         }
         self.setData({ selectedCategoryName: self.categoryLabel(categories, self.data.item.category) });
       })
       .catch(function (err) {
-        wx.showToast({ title: err.message, icon: 'none' });
+        self.setData({
+          loading: false,
+          retrying: false,
+          loadError: (err && err.message) || '请求失败'
+        });
       });
+  },
+
+  onRetry: function () {
+    this.setData({ loading: !!this.data.editId });
+    this.loadPage();
   },
 
   categoryLabel: function (categories, categoryId) {
@@ -104,14 +135,18 @@ Page({
         self.setData({
           isEdit: true,
           editId: item.id,
+          loading: false,
           item: item,
           selectedCategoryName: self.categoryLabel(self.data.categories, item.category),
           calculatedExpire: item.expireDate || ''
         });
       })
       .catch(function (err) {
-        wx.showToast({ title: err.message, icon: 'none' });
-        setTimeout(function () { wx.navigateBack(); }, 1500);
+        // 不再直接退出去：连着后端点重试就能回来，表单也不会被清空
+        self.setData({
+          loading: false,
+          loadError: (err && err.message) || '请求失败'
+        });
       });
   },
 

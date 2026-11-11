@@ -1,5 +1,9 @@
 const nav = require('../../utils/nav');
 const theme = require('../../utils/theme');
+const api = require('../../utils/api');
+
+/** 角标不用每次都拉：一分钟内的切页面/返回都复用上次结果 */
+const BADGE_TTL = 60 * 1000;
 
 const WEEKDAY = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -62,6 +66,9 @@ Page({
     isDark: false,
     todayText: todayText(),
     tools: TOOLS,
+    // 智能仓储卡片右上角：几件要提醒的（已过期 + 临期）
+    storageBadge: 0,
+    storageBadgeType: 'warning',
   },
 
   onLoad() {
@@ -79,15 +86,38 @@ Page({
     // 从其他页面切回来时同步主题，避免状态不一致
     const isDark = theme.getTheme();
     if (isDark !== this.data.isDark) this.setData({ isDark });
+    this.refreshStorageBadge();
+  },
+
+  /**
+   * 拉一次过期概览给「智能仓储」卡片挂角标。
+   * 首页是唯一不依赖后端的页面，所以失败一律静默：连不上后端不该让首页变红。
+   * 后端不可达时最长要等「外网 8s + 内网 3s」，反正是异步的，不挡渲染。
+   */
+  refreshStorageBadge() {
+    if (this._badgeAt && Date.now() - this._badgeAt < BADGE_TTL) return;
+    api.getOverview()
+      .then((o) => {
+        this._badgeAt = Date.now();
+        const count = o.expired + o.warning;
+        this.setData({
+          storageBadge: count,
+          storageBadgeType: o.expired > 0 ? 'danger' : 'warning',
+        });
+      })
+      .catch(() => {
+        // 拉不到就保持现状；已经有过角标也不清空，避免网络一抖数字消失
+      });
   },
 
   onToggleTheme() {
     this.setData({ isDark: theme.toggleTheme() });
   },
 
-  /** 语音面板保存成功（提示由组件负责，这里只留扩展点） */
+  /** 语音面板保存成功（提示由组件负责，这里刷新一下角标） */
   onVoiceSaved() {
-    // 首页没有列表要刷新；将来若加「今日已记 N 件」在这里更新
+    this._badgeAt = 0;
+    this.refreshStorageBadge();
   },
 
   navigateToTool(e) {

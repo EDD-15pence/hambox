@@ -9,6 +9,29 @@
 
   <scroll-view class="page-scroll" scroll-y>
     <view class="page-body">
+    <!-- 编辑模式：原物品还没拉回来 -->
+    <block wx:if="{{loading}}">
+      <view class="edit-skeleton">
+        <view class="edit-skeleton__title ui-skeleton"></view>
+        <view class="edit-skeleton__row ui-skeleton" wx:for="{{[1,2,3,4,5]}}" wx:key="*this"></view>
+      </view>
+    </block>
+
+    <!-- 编辑模式且拉不到：留在原地给连接引导，别把人弹出去 -->
+    <conn-error
+      wx:elif="{{loadError && isEdit}}"
+      message="{{loadError}}"
+      base-url="{{baseUrl}}"
+      retrying="{{retrying}}"
+      bind:retry="onRetry" />
+
+    <block wx:else>
+    <!-- 新增模式下拉分类失败：表单照填，只是分类少一项 -->
+    <view wx:if="{{loadError}}" class="ui-notice" bindtap="onRetry">
+      <text class="ui-notice__text">分类没拉到 · {{loadError}}</text>
+      <text class="ui-notice__action">重试</text>
+    </view>
+
     <text class="ui-section-title">基本信息</text>
 
     <view class="field">
@@ -138,6 +161,7 @@
     </view>
 
     <view class="bottom-spacer"></view>
+    </block>
     </view>
   </scroll-view>
 </view>

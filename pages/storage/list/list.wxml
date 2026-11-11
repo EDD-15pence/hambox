@@ -14,6 +14,40 @@
 
   <scroll-view class="page-scroll" scroll-y>
     <view class="page-body">
+    <!-- 首屏加载：骨架屏占位，避免空列表闪一下「还没有物品」 -->
+    <block wx:if="{{loading && items.length === 0}}">
+      <view class="skeleton">
+        <view class="skeleton__stats">
+          <view class="skeleton__stat ui-skeleton"></view>
+          <view class="skeleton__stat ui-skeleton"></view>
+          <view class="skeleton__stat ui-skeleton"></view>
+        </view>
+        <view class="skeleton__entry ui-skeleton"></view>
+        <view class="skeleton__row" wx:for="{{[1,2,3,4]}}" wx:key="*this">
+          <view class="skeleton__thumb ui-skeleton"></view>
+          <view class="skeleton__lines">
+            <view class="skeleton__line ui-skeleton"></view>
+            <view class="skeleton__line is-short ui-skeleton"></view>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!-- 连不上后端：一张能照着排查的卡片，而不是弹一下就消失的 toast -->
+    <conn-error
+      wx:elif="{{loadError && items.length === 0}}"
+      message="{{loadError}}"
+      base-url="{{baseUrl}}"
+      retrying="{{retrying}}"
+      bind:retry="onRetry" />
+
+    <block wx:else>
+    <!-- 已经有数据但这次没刷新成功：保留旧列表，只提示一次 -->
+    <view wx:if="{{loadError}}" class="ui-notice" bindtap="onRetry">
+      <text class="ui-notice__text">这次没刷新成功 · {{loadError}}</text>
+      <text class="ui-notice__action">重试</text>
+    </view>
+
     <!-- 顶部统计：三个凹陷槽，点一下按状态筛选 -->
     <view class="stats">
       <view
@@ -43,6 +77,15 @@
         <text class="quick-entry__desc">也可以直接打字，例：可乐 保质期9个月 放厨房柜子</text>
       </view>
       <text class="quick-entry__arrow">›</text>
+    </view>
+
+    <!-- 按容器看：同一份数据的另一种视图 -->
+    <view class="wall-entry is-pressable" bindtap="onOpenContainers" hover-class="is-pressed">
+      <view class="wall-entry__text">
+        <text class="wall-entry__title">按容器看 · {{containerCount}} 个地方</text>
+        <text class="wall-entry__desc">{{containerHint}}</text>
+      </view>
+      <text class="wall-entry__arrow">›</text>
     </view>
 
     <!-- 搜索框：展开时出现，凹陷 -->
@@ -132,6 +175,7 @@
     </view>
 
     <view class="bottom-spacer"></view>
+    </block>
     </view>
   </scroll-view>
 

@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "添加物品"
+  "navigationBarTitleText": "添加物品",
+  "usingComponents": {
+    "conn-error": "/components/conn-error/conn-error"
+  }
 }

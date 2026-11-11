@@ -190,3 +190,20 @@
 .bottom-spacer {
   height: calc(var(--sp-6) + env(safe-area-inset-bottom));
 }
+
+/* ---------- 加载骨架 ---------- */
+.edit-skeleton {
+  padding-top: var(--sp-2);
+}
+
+.edit-skeleton__title {
+  height: 32rpx;
+  width: 30%;
+  border-radius: var(--r-sm);
+}
+
+.edit-skeleton__row {
+  height: var(--hit);
+  margin-top: var(--sp-3);
+  border-radius: var(--r-md);
+}

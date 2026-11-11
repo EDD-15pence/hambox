@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "按容器看",
+  "usingComponents": {
+    "conn-error": "/components/conn-error/conn-error"
+  }
+}

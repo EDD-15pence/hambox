@@ -292,10 +292,82 @@
 }
 
 .saved__text {
+  display: block;
   font-size: var(--fs-caption);
+  font-weight: 600;
   color: var(--success);
+}
+
+.saved__hint {
+  display: block;
+  margin-top: 4rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
 }
 
 .bottom-spacer {
   height: calc(var(--sp-6) + env(safe-area-inset-bottom));
+}
+
+/* ---------- 名称必填 / 解析兜底 ---------- */
+.field__required {
+  margin-left: var(--sp-1);
+  font-size: var(--fs-tiny);
+  font-weight: 400;
+  color: var(--danger);
+}
+
+/* 名称空着时给输入框一圈警示描边，光靠文字提示不够醒目 */
+.ui-input.is-alert {
+  box-shadow: var(--shadow-sunken-sm), 0 0 0 2rpx var(--danger);
+}
+
+.fallback {
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--warning-weak);
+}
+
+.fallback__title {
+  display: block;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--warning);
+}
+
+.fallback__desc {
+  display: block;
+  margin-top: 6rpx;
+  font-size: var(--fs-tiny);
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+.fallback__label {
+  display: block;
+  margin-top: var(--sp-3);
+  margin-bottom: var(--sp-1);
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.fallback__examples {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.fallback__eg {
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+  font-size: var(--fs-tiny);
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.fallback__eg:active {
+  box-shadow: var(--shadow-raised-press);
 }

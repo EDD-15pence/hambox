@@ -291,6 +291,27 @@ function deleteCategory(id) {
 }
 
 // ==============================
+// 顶部统计
+// ==============================
+
+/**
+ * 全库过期概览，首页卡片角标用。
+ * 只关心「有几件要提醒」，所以把已过期和临期合成一个数，并把更严重的单独标出来。
+ */
+function getOverview() {
+  return request('/api/items/overview').then(function (data) {
+    return {
+      total: data.total || 0,
+      expired: data.expired_count || 0,
+      warning: data.warning_count || 0,
+      fresh: data.fresh_count || 0,
+      noExpiry: data.no_expiry_count || 0,
+      showBanner: !!data.show_banner
+    };
+  });
+}
+
+// ==============================
 // 图片上传
 // ==============================
 
@@ -349,5 +370,6 @@ module.exports = {
   listCategories: listCategories,
   createCategory: createCategory,
   deleteCategory: deleteCategory,
+  getOverview: getOverview,
   uploadImage: uploadImage
 };
