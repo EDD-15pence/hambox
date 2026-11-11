@@ -129,10 +129,17 @@ function buildIndex(defs) {
   var pairs = [];
   defs.forEach(function (c) {
     (c.keys || []).forEach(function (k) {
-      if (k) pairs.push({ key: k, id: c.id });
+      if (k) pairs.push({ key: k, id: c.id, byName: 0 });
     });
+    // 柜子名本身也算归位词。
+    // 自建容器常常只填名字、不填关键字，只认 keys 的话「阳台箱」永远落不进它自己，
+    // 拖进去的东西会绕一圈回到「未归位」。同长度时关键字优先，名字靠后。
+    if (c.name && c.id !== UNPLACED.id) pairs.push({ key: c.name, id: c.id, byName: 1 });
   });
-  pairs.sort(function (a, b) { return b.key.length - a.key.length; });
+  pairs.sort(function (a, b) {
+    if (b.key.length !== a.key.length) return b.key.length - a.key.length;
+    return a.byName - b.byName;
+  });
   return pairs;
 }
 
@@ -367,14 +374,19 @@ function buildZones(container, tiles, cols, rows) {
   }
 
   var zones = [];
+  // 多个分区的容器（目前只有冰箱）即使某个区空了也照样画出来 ——
+  // 否则「把青菜从冷冻拖到冷藏」时，空的那一区没有落点，只能先点「＋」记一件再挪
+  var multiZone = defs.length > 1;
   groups.forEach(function (g) {
     var minRows = rows > 0 ? rows : 0;
     // 空的区不画（冰箱没有冻货就不该出现一块空隔板），
     // 但容器整体定了层数时，最后一个区要撑满，否则「4 层」看不出效果
-    if (!g.items.length && !minRows) return;
+    if (!g.items.length && !minRows && !multiZone) return;
     zones.push({
       key: g.def.key,
       name: g.def.name,
+      // 拖拽落点用的 key：模板里没法拼字符串，先算好
+      dropKey: 'zone:' + g.def.key,
       count: g.items.length,
       warning: countStatus(g.items, 'warning'),
       expired: countStatus(g.items, 'expired'),

@@ -1268,6 +1268,72 @@
   opacity: 0.35;
 }
 
+/* 落进某个分区（冷冻 / 冷藏）：整块亮起来，连空层也算落点 */
+.zone.is-drop {
+  border-radius: var(--r-md);
+  background: var(--primary-weak);
+  box-shadow: 0 0 0 3rpx var(--primary);
+}
+
+/* ---------------- 换柜子条 ---------------- */
+
+/* 只在拖拽时浮在底部：柜内看不见别的柜子，加一条横向目标带
+   放底部而不是顶部，是因为单手拖拽时拇指就在下半屏 */
+.xfer {
+  position: fixed;
+  z-index: 860;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--sp-2) var(--sp-3);
+  padding-bottom: calc(var(--sp-2) + env(safe-area-inset-bottom));
+  background: var(--bg-raised);
+  border-top: 1rpx solid var(--divider);
+  box-shadow: 0 -8rpx 28rpx rgba(79, 94, 117, 0.16);
+}
+
+.xfer__hint {
+  display: block;
+  margin-bottom: 8rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.xfer__list {
+  display: flex;
+  white-space: nowrap;
+}
+
+.xfer__cab {
+  flex: none;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 124rpx;
+  height: 104rpx;
+  margin-right: var(--sp-1);
+  border: 2rpx solid transparent;
+  border-radius: var(--r-md);
+  background: var(--bg-sunken);
+}
+
+.xfer__cab.is-drop {
+  border-color: var(--primary);
+  background: var(--primary-weak);
+}
+
+.xfer__icon {
+  font-size: 34rpx;
+  line-height: 1.1;
+}
+
+.xfer__name {
+  margin-top: 4rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-2);
+}
+
 .ghost {
   position: fixed;
   z-index: 900;

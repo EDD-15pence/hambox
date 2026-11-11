@@ -256,7 +256,10 @@
       <view class="cavity cavity--{{active.skin}}">
         <view wx:if="{{active.skin === 'fridge'}}" class="cavity__lamp"></view>
 
-        <view class="zone" wx:for="{{active.zones}}" wx:for-item="zone" wx:key="key">
+        <view
+          class="zone {{dragOver === zone.dropKey ? 'is-drop' : ''}}"
+          data-zone="{{zone.key}}"
+          wx:for="{{active.zones}}" wx:for-item="zone" wx:key="key">
           <view wx:if="{{zone.name}}" class="zone__bar">
             <text class="zone__name">{{zone.name}}</text>
             <text class="zone__count num">{{zone.count}} 件</text>
@@ -276,7 +279,7 @@
               <view
                 wx:for="{{shelf.items}}" wx:for-item="t" wx:key="id"
                 id="t{{t.id}}"
-                class="thing {{t.cls}} {{t.hit ? 'is-hit' : ''}} {{t.dim ? 'is-dim' : ''}} {{dragOver === t.id ? 'is-target' : ''}} {{drag && drag.name === t.name && dragOver === t.id ? 'is-lifted' : ''}}"
+                class="thing {{t.cls}} {{t.hit ? 'is-hit' : ''}} {{t.dim ? 'is-dim' : ''}} {{dragOver === t.id ? 'is-target' : ''}} {{drag && drag.id === t.id ? 'is-lifted' : ''}}"
                 data-id="{{t.id}}"
                 data-zone="{{zone.key}}"
                 data-name="{{t.name}}"
@@ -320,6 +323,20 @@
     <view class="bottom-spacer"></view>
     </view>
   </scroll-view>
+
+  <!-- 拖拽时浮出的「换柜子」条：柜内看不见别的柜子，靠它把东西拖出去 -->
+  <view wx:if="{{drag && xferTargets.length}}" class="xfer">
+    <text class="xfer__hint">松手放到别的柜子</text>
+    <scroll-view class="xfer__list" scroll-x enable-flex>
+      <view
+        wx:for="{{xferTargets}}" wx:key="id"
+        class="xfer__cab {{dragOver === item.dropKey ? 'is-drop' : ''}}"
+        data-id="{{item.id}}">
+        <text class="xfer__icon">{{item.icon}}</text>
+        <text class="xfer__name">{{item.name}}</text>
+      </view>
+    </scroll-view>
+  </view>
 
   <!-- 拖拽跟随块：手指移到哪，影子跟到哪 -->
   <view wx:if="{{drag}}" class="ghost" style="left:{{drag.x}}px;top:{{drag.y}}px">

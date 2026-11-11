@@ -19,9 +19,18 @@ function check(label, actual, expected) {
   }
 }
 
+/** 按 key 取分区。冰箱现在永远画出冷冻 + 冷藏两段，
+    空的那段也在（拖拽要落点），所以不能再用 zones[0] 当下标 */
+function zoneOf(card, key) {
+  var zones = (card && card.zones) || [];
+  for (var i = 0; i < zones.length; i++) {
+    if (zones[i].key === key) return zones[i];
+  }
+  return { shelves: [], tiles: [] };
+}
+
 // ---------- 归位 ----------
-check('冰箱冷藏', C.resolve('冰箱冷藏'), 'fridge');
-check('路径式位置', C.resolve('冰箱/冷藏第二层'), 'fridge');
+check('冰箱冷藏', C.resolve('冰箱冷藏'), 'fridge');check('路径式位置', C.resolve('冰箱/冷藏第二层'), 'fridge');
 check('冷冻室归冰箱', C.resolve('冷冻室'), 'fridge');
 check('保鲜层归冰箱', C.resolve('保鲜抽屉'), 'fridge');
 check('药箱', C.resolve('药箱'), 'medicine');
@@ -83,8 +92,11 @@ check('空名称兜底 emoji', C.toTile({ quantity: 1 }).emoji, '📦');
 check('空名称按分类兜底', C.toTile({ quantity: 1, category: 'medicine' }).emoji, '💊');
 
 // ---------- 分层 / 分区 ----------
-check('冰箱一层放得下 3 件', fridge.zones[0].shelves.length, 1);
-check('只有一层时不出现冷冻区', fridge.zones.map(function (z) { return z.name; }), ['冷藏室']);
+check('冰箱一层放得下 3 件', zoneOf(fridge, 'chill').shelves.length, 1);
+// 冷冻室空着也画：不然「把东西从冷藏拖到冷冻」时那一区没有落点
+check('空冷冻室照样画出来', fridge.zones.map(function (z) { return z.name; }), ['冷冻室', '冷藏室']);
+check('空冷冻室没有东西', zoneOf(fridge, 'freeze').count, 0);
+check('空冷冻室留了一层空隔板', zoneOf(fridge, 'freeze').shelves.length, 1);
 
 var twin = C.groupByContainer([
   { id: 'a', name: '速冻水饺', quantity: 1, unit: '袋', location: '冰箱冷冻室', status: 'fresh', daysLeft: 90 },
@@ -92,14 +104,14 @@ var twin = C.groupByContainer([
   { id: 'c', name: '雪糕', quantity: 1, unit: '支', location: '冰箱', status: 'fresh', daysLeft: 200 }
 ]).wall[0];
 check('冰箱分冷冻/冷藏两区', twin.zones.map(function (z) { return z.name; }), ['冷冻室', '冷藏室']);
-check('冷冻区只收速冻', twin.zones[0].count, 1);
-check('认不出子区域进冷藏', twin.zones[1].tiles.map(function (t) { return t.id; }), ['b', 'c']);
+check('冷冻区只收速冻', zoneOf(twin, 'freeze').count, 1);
+check('认不出子区域进冷藏', zoneOf(twin, 'chill').tiles.map(function (t) { return t.id; }), ['b', 'c']);
 
 // 超过一层要摊到下一层
 var many = C.groupByContainer([1, 2, 3, 4, 5, 6].map(function (n) {
   return { id: 'x' + n, name: '可乐' + n, quantity: 1, unit: '瓶', location: '冰箱', status: 'fresh', daysLeft: 9 };
 })).wall[0];
-check('6 件摊成两层', many.zones[0].shelves.map(function (s) { return s.items.length; }), [4, 2]);
+check('6 件摊成两层', zoneOf(many, 'chill').shelves.map(function (s) { return s.items.length; }), [4, 2]);
 
 var medicine = C.groupByContainer([
   { id: 'm', name: '布洛芬', quantity: 1, unit: '盒', location: '药箱', status: null, daysLeft: null }
@@ -124,8 +136,9 @@ var hit = C.applyKeyword(searchWall, '可乐');
 check('只留命中的柜子', hit.wall.map(function (c) { return c.id; }), ['fridge']);
 check('命中数', hit.hitTotal, 1);
 check('柜上标命中件数', hit.wall[0].hitCount, 1);
-check('命中的块亮着', hit.wall[0].zones[0].shelves[0].items.filter(function (t) { return t.hit; }).map(function (t) { return t.id; }), ['a']);
-check('同柜其他块变暗', hit.wall[0].zones[0].shelves[0].items.filter(function (t) { return t.dim; }).map(function (t) { return t.id; }), ['b']);
+var hitChill = zoneOf(hit.wall[0], 'chill');
+check('命中的块亮着', hitChill.shelves[0].items.filter(function (t) { return t.hit; }).map(function (t) { return t.id; }), ['a']);
+check('同柜其他块变暗', hitChill.shelves[0].items.filter(function (t) { return t.dim; }).map(function (t) { return t.id; }), ['b']);
 check('柜门预览换成命中的 emoji', hit.wall[0].preview.length, 1);
 
 // 按位置也能搜到：问「冰箱里有什么」
@@ -259,11 +272,43 @@ var ordered = C.groupByContainer(
 );
 var fridgeCard = null;
 ordered.wall.forEach(function (c) { if (c.id === 'fridge') fridgeCard = c; });
-var fridgeTiles = fridgeCard.zones[0].tiles.map(function (t) { return t.id; });
+var fridgeTiles = zoneOf(fridgeCard, 'chill').tiles.map(function (t) { return t.id; });
 check('手动位次优先且按位次排', fridgeTiles, ['c', 'a', 'b']);
 
 // 拖到 0 号位的那件必须在最前，即使它快过期了
 check('位次压过紧急度', fridgeTiles[0], 'c');
+
+// ---------- 跨柜 / 跨区拖拽的归位文本 ----------
+// 拖拽的实质是改 location，所以「改完还能不能认回来」必须由这几条兜住，
+// 否则东西拖过去以后刷新一下又跑回原处（或掉进未归位）。
+C.setDefs([
+  { id: 'balcony', name: '阳台箱', icon: '📦', skin: 'carton', cols: 3, rows: 2, keys: [], zones: [], sort_order: 10, is_builtin: false, deletable: true },
+  { id: 'fridge', name: '冰箱', icon: '❄️', skin: 'fridge', cols: 4, rows: 0,
+    keys: ['冰箱', '冷藏', '冷冻'], sort_order: 20, is_builtin: true, deletable: true,
+    zones: [
+      { key: 'freeze', name: '冷冻室', match: ['冷冻', '冰柜'] },
+      { key: 'chill', name: '冷藏室', match: [] }
+    ] },
+  { id: 'unplaced', name: '未归位', icon: '📦', skin: 'carton', cols: 4, rows: 0, keys: [], sort_order: 999, deletable: false }
+]);
+
+// 只填名字、没填关键字的自建容器，靠名字也得能归位
+check('柜子名也能归位', C.resolve('阳台箱'), 'balcony');
+check('自建容器预填位置', C.presetLocation('balcony', ''), '阳台箱');
+check('预填的位置认得回来', C.resolve(C.presetLocation('balcony', '')), 'balcony');
+check('跨区预填·冷冻', C.presetLocation('fridge', 'freeze'), '冰箱冷冻');
+check('跨区预填·冷藏', C.presetLocation('fridge', 'chill'), '冰箱冷藏');
+check('跨区预填认回冰箱', C.resolve(C.presetLocation('fridge', 'freeze')), 'fridge');
+
+// 跨区搬完，物品要出现在目标区，而不是留在 fallback 区
+var moved = C.groupByContainer([
+  { id: 'k', name: '青菜', quantity: 1, location: C.presetLocation('fridge', 'freeze'), status: 'fresh', daysLeft: 3 }
+]).wall[0];
+check('预填冷冻就进冷冻区', zoneOf(moved, 'freeze').tiles.map(function (t) { return t.id; }), ['k']);
+
+C.resetDefs();
+check('重置回内置', C.source(), 'builtin');
+check('内置仍认得柜子名', C.resolve('储物柜'), 'cabinet');
 
 console.log(failures === 0 ? '\nALL PASS' : '\n' + failures + ' 项失败');
 process.exit(failures === 0 ? 0 : 1);
