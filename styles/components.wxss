@@ -178,6 +178,57 @@
 }
 
 /* ============================================================
+ * 分段控件：同一份数据的两种看法（容器 / 清单）
+ *
+ * 用法：
+ *   <view class="ui-segment-wrap">
+ *     <view class="ui-segment">
+ *       <text class="ui-segment__item {{mode === 'containers' ? 'is-on' : ''}}"
+ *             data-mode="containers" bindtap="onSwitchMode">容器</text>
+ *       …
+ *     </view>
+ *   </view>
+ *
+ * 底座凹陷、选中项凸起——和全站「凹陷是容器、凸起是卡片」的语义一致。
+ * ============================================================ */
+.ui-segment-wrap {
+  flex: none;
+  padding: 0 var(--page-x) var(--sp-1);
+}
+
+.ui-segment {
+  display: flex;
+  padding: 6rpx;
+  border-radius: var(--r-pill);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+}
+
+.ui-segment__item {
+  flex: 1;
+  height: 64rpx;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  line-height: 64rpx;
+  text-align: center;
+  color: var(--text-3);
+  transition: color var(--dur-fast) ease-out, box-shadow var(--dur-fast) ease-out,
+              background var(--dur-fast) ease-out;
+}
+
+.ui-segment__item.is-on {
+  font-weight: 600;
+  color: var(--text-1);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.ui-segment__item:active {
+  opacity: 0.7;
+}
+
+/* ============================================================
  * 卡片 / 列表 / 分割
  * ============================================================ */
 .ui-card {
@@ -543,4 +594,34 @@
   font-size: var(--fs-tiny);
   font-weight: 600;
   color: var(--warning);
+}
+
+/* ============================================================
+ * 搜索框：凹陷输入槽 + 右侧清空
+ *
+ * 用法：
+ *   <view class="ui-search">
+ *     <input class="ui-input ui-search__input" … />
+ *     <text wx:if="{{keyword}}" class="ui-search__clear" bindtap="onClearSearch">清空</text>
+ *   </view>
+ * ============================================================ */
+.ui-search {
+  position: relative;
+  margin-top: var(--sp-2);
+}
+
+.ui-search__input {
+  padding-right: 110rpx;
+}
+
+.ui-search__clear {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  height: var(--hit);
+  padding: 0 var(--sp-3);
+  font-size: var(--fs-caption);
+  color: var(--text-3);
 }

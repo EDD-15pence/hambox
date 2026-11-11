@@ -371,3 +371,26 @@
 .fallback__eg:active {
   box-shadow: var(--shadow-raised-press);
 }
+
+/* ---------- 从柜子进来的位置预填提示 ---------- */
+.preset-tip {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6rpx var(--sp-2);
+  margin-bottom: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--primary-weak);
+}
+
+.preset-tip__text {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.preset-tip__hint {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}

@@ -125,70 +125,7 @@
   color: var(--text-3);
 }
 
-/* ---------- 按容器看：比快速记录矮一档，别抢主入口的视觉 ---------- */
-.wall-entry {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  margin-top: var(--sp-2);
-  padding: var(--sp-2) var(--sp-3);
-  border-radius: var(--r-md);
-  background: var(--bg-raised);
-  box-shadow: var(--shadow-raised);
-  transition: box-shadow var(--dur-fast) ease-out;
-}
-
-.wall-entry__text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.wall-entry__title {
-  font-size: var(--fs-caption);
-  font-weight: 600;
-  color: var(--text-1);
-}
-
-.wall-entry__desc {
-  margin-top: 2rpx;
-  font-size: var(--fs-tiny);
-  color: var(--text-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.wall-entry__arrow {
-  flex: none;
-  font-size: 32rpx;
-  line-height: 1;
-  color: var(--text-3);
-}
-
 /* ---------- 搜索 ---------- */
-.search-wrap {
-  position: relative;
-  margin-top: var(--sp-2);
-}
-
-.search-input {
-  padding-right: 110rpx;
-}
-
-.search-clear {
-  position: absolute;
-  top: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  height: var(--hit);
-  padding: 0 var(--sp-3);
-  font-size: var(--fs-caption);
-  color: var(--text-3);
-}
-
 /* ---------- 分类胶囊 ---------- */
 .chips {
   margin-top: var(--sp-2);
@@ -369,19 +306,51 @@
   text-overflow: ellipsis;
 }
 
-.item__qty {
+/* 数量就地加减：按钮视觉小、热区够，连点不容易点偏 */
+.qty {
   flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.qty__btn {
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  line-height: 52rpx;
+  text-align: center;
+  color: var(--text-2);
+  background: var(--bg-page);
+  box-shadow: var(--shadow-raised);
+}
+
+.qty__btn:active {
+  box-shadow: var(--shadow-raised-press);
+}
+
+.qty__val {
+  min-width: 62rpx;
   font-size: var(--fs-tiny);
+  text-align: center;
   color: var(--text-3);
 }
 
-.item__arrow {
-  flex: none;
-  font-size: 32rpx;
-  line-height: 1;
-  color: var(--text-3);
-  opacity: 0.7;
+.qty__val.is-empty {
+  opacity: 0.75;
 }
+
+/* 用完了的行退到背景里，但还留在列表里，方便再点 + 恢复 */
+.item.is-empty {
+  opacity: 0.62;
+}
+
+.item.is-empty .item__name {
+  color: var(--text-3);
+}
+
 
 .bottom-spacer {
   height: 200rpx;

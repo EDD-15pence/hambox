@@ -1,6 +1,7 @@
 const nav = require('../../utils/nav');
 const theme = require('../../utils/theme');
 const api = require('../../utils/api');
+const storageView = require('../../utils/storage-view');
 
 /** 角标不用每次都拉：一分钟内的切页面/返回都复用上次结果 */
 const BADGE_TTL = 60 * 1000;
@@ -127,8 +128,10 @@ Page({
     const key = e.currentTarget.dataset.tool;
     const tool = TOOLS.find((t) => t.key === key);
     if (!tool) return;
+    // 智能仓储有「容器 / 清单」两种模式，进上次停留的那一种
+    const url = key === 'storage' ? storageView.entryUrl() : tool.path;
     wx.navigateTo({
-      url: tool.path,
+      url,
       fail: (err) => {
         console.error('导航失败:', err);
         wx.showToast({ title: '打开工具失败，请重试', icon: 'none' });

@@ -113,5 +113,33 @@ var allPlaced = C.groupByContainer([
 ]);
 check('全归位时无未归位盒', allPlaced.wall.map(function (c) { return c.id; }), ['fridge']);
 
+// ---------- 搜索命中（S-04） ----------
+var searchWall = C.groupByContainer([
+  { id: 'a', name: '可乐', quantity: 2, unit: '瓶', location: '冰箱冷藏', status: 'fresh', daysLeft: 90 },
+  { id: 'b', name: '年糕', quantity: 1, unit: '袋', location: '冰箱冷藏', status: 'warning', daysLeft: 3 },
+  { id: 'c', name: '布洛芬', quantity: 1, unit: '盒', location: '药箱', status: null, daysLeft: null }
+]).wall;
+
+var hit = C.applyKeyword(searchWall, '可乐');
+check('只留命中的柜子', hit.wall.map(function (c) { return c.id; }), ['fridge']);
+check('命中数', hit.hitTotal, 1);
+check('柜上标命中件数', hit.wall[0].hitCount, 1);
+check('命中的块亮着', hit.wall[0].zones[0].shelves[0].items.filter(function (t) { return t.hit; }).map(function (t) { return t.id; }), ['a']);
+check('同柜其他块变暗', hit.wall[0].zones[0].shelves[0].items.filter(function (t) { return t.dim; }).map(function (t) { return t.id; }), ['b']);
+check('柜门预览换成命中的 emoji', hit.wall[0].preview.length, 1);
+
+// 按位置也能搜到：问「冰箱里有什么」
+var byLoc = C.applyKeyword(searchWall, '冰箱');
+check('按位置命中两件', byLoc.hitTotal, 2);
+check('按位置只留冰箱', byLoc.wall.map(function (c) { return c.id; }), ['fridge']);
+
+// 空关键词不能改动任何东西，否则清空搜索后墙上会少东西
+var blank = C.applyKeyword(searchWall, '   ');
+check('空关键词原样返回', blank.wall === searchWall, true);
+check('空关键词无命中数', blank.hitTotal, 0);
+
+// 搜不到时墙是空的，页面据此显示「没找到」
+check('搜不到返回空墙', C.applyKeyword(searchWall, '西瓜').wall.length, 0);
+
 console.log(failures === 0 ? '\nALL PASS' : '\n' + failures + ' 项失败');
 process.exit(failures === 0 ? 0 : 1);

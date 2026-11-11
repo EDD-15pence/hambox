@@ -12,6 +12,14 @@
     </view>
   </view>
 
+  <!-- 容器 / 清单：同一份数据的两种看法，切换不堆页面栈 -->
+  <view class="ui-segment-wrap">
+    <view class="ui-segment">
+      <text class="ui-segment__item" data-mode="containers" bindtap="onSwitchMode">容器</text>
+      <text class="ui-segment__item is-on" data-mode="list" bindtap="onSwitchMode">清单</text>
+    </view>
+  </view>
+
   <scroll-view class="page-scroll" scroll-y>
     <view class="page-body">
     <!-- 首屏加载：骨架屏占位，避免空列表闪一下「还没有物品」 -->
@@ -79,25 +87,16 @@
       <text class="quick-entry__arrow">›</text>
     </view>
 
-    <!-- 按容器看：同一份数据的另一种视图 -->
-    <view class="wall-entry is-pressable" bindtap="onOpenContainers" hover-class="is-pressed">
-      <view class="wall-entry__text">
-        <text class="wall-entry__title">按容器看 · {{containerCount}} 个地方</text>
-        <text class="wall-entry__desc">{{containerHint}}</text>
-      </view>
-      <text class="wall-entry__arrow">›</text>
-    </view>
-
     <!-- 搜索框：展开时出现，凹陷 -->
-    <view wx:if="{{showSearch}}" class="search-wrap">
-      <input class="ui-input search-input"
+    <view wx:if="{{showSearch}}" class="ui-search">
+      <input class="ui-input ui-search__input"
         placeholder="搜名称 / 位置 / 备注"
         placeholder-class="ui-placeholder"
         value="{{keyword}}"
         bindinput="onSearchInput"
         confirm-type="search"
         focus="{{showSearch}}" />
-      <text wx:if="{{keyword}}" class="search-clear" bindtap="onClearSearch">清空</text>
+      <text wx:if="{{keyword}}" class="ui-search__clear" bindtap="onClearSearch">清空</text>
     </view>
 
     <!-- 分类：胶囊，选中态按下去（凹陷） -->
@@ -132,7 +131,7 @@
     <view class="items">
       <view
         wx:for="{{displayItems}}" wx:key="id"
-        class="item"
+        class="item {{item.quantity === 0 ? 'is-empty' : ''}}"
         bindtap="onTapItem" data-id="{{item.id}}"
         bindlongpress="onLongPressItem" data-id="{{item.id}}" data-name="{{item.name}}"
         hover-class="item--pressed" hover-stay-time="60">
@@ -157,11 +156,24 @@
               <text wx:else>其他</text>
               <text wx:if="{{item.location}}"> · {{item.location}}</text>
             </text>
-            <text class="item__qty num">×{{item.quantity}}{{item.unit}}</text>
+            <!-- 数量就地加减：吃掉了、买多了不用点进详情 -->
+            <view class="qty" catchtap="stopPropagation">
+              <text
+                class="qty__btn"
+                data-id="{{item.id}}"
+                data-delta="-1"
+                catchtap="onQtyChange">−</text>
+              <text wx:if="{{item.quantity > 0}}" class="qty__val num">{{item.quantity}}{{item.unit}}</text>
+              <text wx:else class="qty__val is-empty">用完了</text>
+              <text
+                class="qty__btn"
+                data-id="{{item.id}}"
+                data-delta="1"
+                catchtap="onQtyChange">＋</text>
+            </view>
           </view>
         </view>
 
-        <text class="item__arrow">›</text>
       </view>
 
       <!-- 空状态 -->

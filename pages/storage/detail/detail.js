@@ -16,6 +16,12 @@ Page({
     daysNum: '',
     daysPrefix: '',
     hasDays: false,
+    // 保质期进度条：只有同时有生产日期和过期日才算得出比例
+    progress: { show: false, percent: 0, text: '' },
+    // 备注就地编辑
+    noteEditing: false,
+    noteDraft: '',
+    savingNote: false,
     // 三态：加载中 / 连不上后端 / 正常
     loading: true,
     retrying: false,
@@ -101,8 +107,42 @@ Page({
       categoryIcon: cat ? cat.icon : '📦',
       daysNum: daysNum,
       daysPrefix: daysPrefix,
-      hasDays: hasDays
+      hasDays: hasDays,
+      progress: this.buildProgress(item)
     });
+  },
+
+  /**
+   * 保质期进度。
+   * 「还剩 30 天」和「90 天里已过 60 天」是两回事，进度条补的是后半句。
+   * 只有过期日、没有生产日期时算不出比例，宁可不显示也不猜。
+   */
+  buildProgress: function (item) {
+    if (!item.produceDate || !item.expireDate) {
+      return { show: false, percent: 0, text: '' };
+    }
+    var day = 86400000;
+    var start = new Date(item.produceDate + 'T00:00:00');
+    var end = new Date(item.expireDate + 'T00:00:00');
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return { show: false, percent: 0, text: '' };
+    }
+
+    var total = Math.round((end - start) / day);
+    if (total <= 0) return { show: false, percent: 0, text: '' };
+
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var used = Math.round((today - start) / day);
+    if (used < 0) used = 0;
+
+    var percent = Math.round(Math.max(0, Math.min(1, used / total)) * 100);
+    var usedText = used > total ? total : used;
+    return {
+      show: true,
+      percent: percent,
+      text: '保质期 ' + total + ' 天，已过 ' + usedText + ' 天'
+    };
   },
 
   formatTimestamp: function (isoStr) {
@@ -122,6 +162,63 @@ Page({
     if (src) {
       wx.previewImage({ urls: [src], current: src });
     }
+  },
+
+  /** 名称一键复制：常用在多设备之间对账、发给家人让帮忙找 */
+  onCopyName: function () {
+    var name = this.data.item.name;
+    if (!name) return;
+    wx.setClipboardData({
+      data: name,
+      success: function () {
+        wx.showToast({ title: '名称已复制', icon: 'none' });
+      }
+    });
+  },
+
+  // ==============================
+  // 备注就地编辑
+  // ==============================
+  onEditNote: function () {
+    this.setData({
+      noteEditing: true,
+      noteDraft: this.data.item.note || ''
+    });
+  },
+
+  onNoteInput: function (e) {
+    this.setData({ noteDraft: e.detail.value });
+  },
+
+  onCancelNote: function () {
+    this.setData({ noteEditing: false, noteDraft: '' });
+  },
+
+  /** 只改备注，走 PUT 全量提交（其它字段原样带回，不会被覆盖成空） */
+  onSaveNote: function () {
+    var self = this;
+    if (this.data.savingNote) return;
+    var note = (this.data.noteDraft || '').trim();
+    if (note === (this.data.item.note || '')) {
+      this.setData({ noteEditing: false });
+      return;
+    }
+
+    this.setData({ savingNote: true });
+    api.updateItem(this.data.item.id, Object.assign({}, this.data.item, { note: note }))
+      .then(function (fresh) {
+        self.setData({
+          savingNote: false,
+          noteEditing: false,
+          'item.note': note,
+          'item.updatedAt_display': self.formatTimestamp(fresh.updatedAt)
+        });
+        wx.showToast({ title: note ? '备注已保存' : '备注已清空', icon: 'success' });
+      })
+      .catch(function (err) {
+        self.setData({ savingNote: false });
+        wx.showToast({ title: (err && err.message) || '保存失败', icon: 'none', duration: 2400 });
+      });
   },
 
   onEdit: function () {

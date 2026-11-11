@@ -302,6 +302,7 @@
 }
 
 .cab__name {
+  flex: 1;
   min-width: 0;
   font-size: var(--fs-body);
   font-weight: 600;
@@ -309,6 +310,19 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 搜索命中数：贴在柜名后面，比件数更显眼 */
+.cab__hit {
+  flex: none;
+  margin-left: 6rpx;
+  padding: 2rpx 10rpx;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-tiny);
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--primary);
+  background: var(--primary-weak);
 }
 
 .cab__count {
@@ -786,9 +800,28 @@
 }
 
 .zone__flag {
-  margin-left: auto;
   font-size: var(--fs-tiny);
   font-weight: 600;
+}
+
+/* 分区右侧的「＋」：往这一区加东西，预填区名（冷冻 / 冷藏） */
+.zone__add {
+  flex: none;
+  margin-left: auto;
+  min-width: 56rpx;
+  height: 44rpx;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  line-height: 44rpx;
+  text-align: center;
+  color: var(--primary);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.zone__add:active {
+  box-shadow: var(--shadow-raised-press);
 }
 
 .zone__flag.is-danger {
@@ -991,4 +1024,19 @@
 
 .bottom-spacer {
   height: calc(var(--sp-6) + env(safe-area-inset-bottom));
+}
+
+/* ---------- 容器内「＋ 记一件」 ---------- */
+.inside-add {
+  margin-top: var(--sp-3);
+}
+
+/* ---------- 搜索结果：命中的亮着，同柜其他变暗 ---------- */
+.thing.is-hit {
+  background: var(--primary-weak);
+  box-shadow: 0 0 0 2rpx var(--primary);
+}
+
+.thing.is-dim {
+  opacity: 0.30;
 }

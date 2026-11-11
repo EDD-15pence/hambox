@@ -206,10 +206,12 @@ function toViewItem(row) {
 /** 页面物品 -> 服务端请求体 */
 function toPayload(item) {
   var quantity = Number(item.quantity);
+  // 空着或填了负数按 1 件；0 要留着 —— 那是「用完了」的标记
+  if (isNaN(quantity) || quantity < 0) quantity = 1;
   return {
     name: (item.name || '').trim(),
     category_id: item.category || 'other',
-    quantity: isNaN(quantity) || quantity <= 0 ? 1 : quantity,
+    quantity: quantity,
     unit: item.unit || '个',
     location: item.location || '',
     produce_date: item.produceDate || null,

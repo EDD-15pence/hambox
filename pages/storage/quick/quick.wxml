@@ -43,9 +43,15 @@
       <button class="ui-btn is-block is-primary input-card__btn" bindtap="onParseTap" disabled="{{!raw}}">解析这句话</button>
     </view>
 
+    <!-- 从柜子里点「＋」进来：先说明会放到哪儿，免得记完找不到东西 -->
+    <view wx:if="{{presetLocation}}" class="preset-tip">
+      <text class="preset-tip__text">放到 · {{presetLocation}}</text>
+      <text class="preset-tip__hint">说了别的位置，就以你说的为准</text>
+    </view>
+
     <view wx:if="{{savedCount > 0}}" class="saved">
       <text class="saved__text">今天已记 {{savedCount}} 条</text>
-      <text class="saved__hint">接着记下一条就行，不用返回</text>
+      <text class="saved__hint">{{presetLocation ? '记完自动回到柜子' : '接着记下一条就行，不用返回'}}</text>
     </view>
 
     <!-- 解析结果 -->

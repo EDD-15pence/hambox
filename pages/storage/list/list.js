@@ -4,7 +4,7 @@
  */
 var api = require('../../../utils/api');
 var storageUtils = require('../../../utils/storage-utils');
-var containers = require('../../../utils/containers');
+var storageView = require('../../../utils/storage-view');
 var nav = require('../../../utils/nav');
 var theme = require('../../../utils/theme');
 
@@ -26,9 +26,6 @@ Page({
     retrying: false,
     loadError: '',
     baseUrl: '',
-    // 「按容器看」入口的副标题：冰箱 3 · 药箱 1 · 储物柜 2
-    containerHint: '',
-    containerCount: 0,
     banner: { show: false, expiredCount: 0, warningCount: 0 },
     // 顶部三个统计块
     stats: { expired: 0, warning: 0, fresh: 0, none: 0, total: 0 },
@@ -51,6 +48,16 @@ Page({
       navRight: nav.SAFE_RIGHT,
       baseUrl: api.getBaseUrl()
     });
+    // 从容器模式切过来时，把上次的搜索词 / 分类 / 状态筛选接着用
+    var saved = storageView.loadListState();
+    if (saved) {
+      this.setData({
+        keyword: saved.keyword,
+        selectedCategory: saved.selectedCategory,
+        statusFilter: saved.statusFilter,
+        showSearch: saved.showSearch || !!saved.keyword
+      });
+    }
     // 首次拉取交给 onShow：onLoad 之后必然触发一次，避免进页面连发两轮请求
   },
 
@@ -125,13 +132,12 @@ Page({
       stats[key]++;
     });
 
-    // 容器入口只报"有东西的容器"前三名，多了这行字会挤成一团
-    var grouped = containers.groupByContainer(items);
-    var named = grouped.wall.filter(function (c) { return c.id !== 'unplaced'; });
-    var containerHint = named.slice(0, 3).map(function (c) {
-      return c.name + ' ' + c.count;
-    }).join(' · ');
-    if (!containerHint) containerHint = '冰箱、药箱、储物柜…按地方看东西';
+    // 上次选中的分类可能已经被删了，退回「全部」，否则会一直筛出一片空
+    var selected = this.data.selectedCategory;
+    var catStillThere = false;
+    for (var i = 0; i < tabs.length; i++) {
+      if (tabs[i].id === selected) { catStillThere = true; break; }
+    }
 
     this.setData({
       items: items,
@@ -142,8 +148,7 @@ Page({
       banner: storageUtils.getStatusBanner(items),
       stats: stats,
       sortBy: sortBy,
-      containerHint: containerHint,
-      containerCount: named.length
+      selectedCategory: catStillThere ? selected : 'all'
     });
     this.applyFilters();
   },
@@ -247,16 +252,73 @@ Page({
     });
   },
 
-  /** 按容器看：同一份数据的另一种视图，回答"冰箱里还有什么" */
-  onOpenContainers: function () {
-    wx.navigateTo({
-      url: '/pages/storage/containers/containers'
-    });
+  /**
+   * 容器 / 清单切换
+   *
+   * redirectTo 替换当前页，来回切不会堆页面栈，返回键一下就回首页。
+   * 切走前把搜索词 / 分类 / 状态筛选存下，切回来接着用。
+   */
+  onSwitchMode: function (e) {
+    var mode = e.currentTarget.dataset.mode;
+    if (!mode || mode === 'list') return;
+    storageView.saveListState(this.data);
+    storageView.setMode('containers');
+    wx.redirectTo({ url: storageView.urlForMode('containers') });
   },
 
   /** 语音面板保存成功：重新拉一遍，让新物品立刻出现在列表里 */
   onVoiceSaved: function () {
     this.loadAll();
+  },
+
+  // ==============================
+  // 数量就地加减（B-05）
+  // ==============================
+  /**
+   * 点 − / ＋ 直接改数量，不用点进详情。
+   *
+   * 先改本地再发请求（乐观更新）：一次点击要立刻有反馈，
+   * 等接口回来才变的话，连点两下会像卡住。失败再把数字改回去。
+   */
+  onQtyChange: function (e) {
+    var id = e.currentTarget.dataset.id;
+    var delta = Number(e.currentTarget.dataset.delta);
+    if (!id || !delta) return;
+
+    var item = null;
+    for (var i = 0; i < this.data.items.length; i++) {
+      if (String(this.data.items[i].id) === String(id)) { item = this.data.items[i]; break; }
+    }
+    if (!item) return;
+
+    var current = Number(item.quantity) || 0;
+    var next;
+    // 半袋年糕这种小数：减到头直接归零，别减出 0.5-1=-0.5
+    if (delta < 0) next = current <= 1 ? 0 : current - 1;
+    else next = current + 1;
+    if (next === current) return;
+
+    var self = this;
+    this.patchQuantity(id, next);
+
+    api.updateItem(id, Object.assign({}, item, { quantity: next }))
+      .then(function (fresh) {
+        self.patchQuantity(id, fresh.quantity, fresh);
+      })
+      .catch(function (err) {
+        self.patchQuantity(id, current);
+        wx.showToast({ title: (err && err.message) || '改数量失败', icon: 'none', duration: 2200 });
+      });
+  },
+
+  /** 只改这一条的数量并重排，不整页重拉 */
+  patchQuantity: function (id, quantity, fresh) {
+    var items = this.data.items.map(function (it) {
+      if (String(it.id) !== String(id)) return it;
+      return Object.assign({}, fresh || it, { quantity: quantity });
+    });
+    this.setData({ items: items });
+    this.applyFilters();
   },
 
   // ==============================

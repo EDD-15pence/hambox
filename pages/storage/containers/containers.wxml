@@ -5,8 +5,16 @@
       <text class="app-nav__title">{{view === 'inside' ? active.name : '家里的收纳'}}</text>
     </view>
     <view class="app-nav__actions">
-      <text wx:if="{{view === 'wall'}}" class="nav-text-btn" bindtap="onGoList">清单</text>
+      <text class="nav-text-btn {{showSearch ? 'is-on' : ''}}" bindtap="onToggleSearch">搜索</text>
       <text class="nav-text-btn" bindtap="onToggleTheme">{{isDark ? '日间' : '夜间'}}</text>
+    </view>
+  </view>
+
+  <!-- 容器 / 清单：同一份数据的两种看法，切换不堆页面栈 -->
+  <view class="ui-segment-wrap">
+    <view class="ui-segment">
+      <text class="ui-segment__item is-on" data-mode="containers" bindtap="onSwitchMode">容器</text>
+      <text class="ui-segment__item" data-mode="list" bindtap="onSwitchMode">清单</text>
     </view>
   </view>
 
@@ -36,10 +44,29 @@
       </view>
 
       <view class="summary">
-        <text class="summary__num num">{{total}}</text>
-        <text class="summary__label">件东西，分在 {{wall.length}} 个地方</text>
-        <text wx:if="{{expired > 0}}" class="summary__flag is-danger">过期 {{expired}}</text>
-        <text wx:if="{{warning > 0}}" class="summary__flag is-warning">临期 {{warning}}</text>
+        <block wx:if="{{keyword}}">
+          <text class="summary__num num">{{hitTotal}}</text>
+          <text class="summary__label">件命中，在 {{wall.length}} 个地方</text>
+        </block>
+        <block wx:else>
+          <text class="summary__num num">{{total}}</text>
+          <text class="summary__label">件东西，分在 {{wall.length}} 个地方</text>
+          <text wx:if="{{expired > 0}}" class="summary__flag is-danger">过期 {{expired}}</text>
+          <text wx:if="{{warning > 0}}" class="summary__flag is-warning">临期 {{warning}}</text>
+        </block>
+      </view>
+
+      <!-- 搜名字 / 位置：命中的柜子会留在墙上，柜子里那几件亮着 -->
+      <view wx:if="{{showSearch}}" class="ui-search">
+        <input
+          class="ui-input ui-search__input"
+          placeholder="搜名称 / 位置，比如 可乐"
+          placeholder-class="ui-placeholder"
+          value="{{keyword}}"
+          bindinput="onSearchInput"
+          confirm-type="search"
+          focus="{{showSearch}}" />
+        <text wx:if="{{keyword}}" class="ui-search__clear" bindtap="onClearSearch">清空</text>
       </view>
 
       <view class="wall">
@@ -110,6 +137,7 @@
           <view class="cab__info">
             <view class="cab__line">
               <text class="cab__name">{{item.name}}</text>
+              <text wx:if="{{item.hitCount}}" class="cab__hit">{{item.hitCount}} 命中</text>
               <text class="cab__count num">{{item.count}}</text>
             </view>
             <view class="cab__foot">
@@ -123,7 +151,14 @@
         </view>
       </view>
 
-      <view class="wall-empty" wx:if="{{!wall.length}}">
+      <!-- 搜不到 / 真的一件都没有，是两件事，别用同一句话糊过去 -->
+      <view class="wall-empty" wx:if="{{!wall.length && keyword}}">
+        <text class="wall-empty__text">没找到「{{keyword}}」</text>
+        <text class="wall-empty__desc">换个词试试，或者清空看看全部</text>
+        <button class="ui-btn is-block wall-empty__btn" bindtap="onClearSearch">清空搜索</button>
+      </view>
+
+      <view class="wall-empty" wx:elif="{{!wall.length}}">
         <text class="wall-empty__text">收纳里还是空的</text>
         <text class="wall-empty__desc">记一件东西时写上「放冰箱」，它就会出现在这里</text>
         <button class="ui-btn is-primary is-block wall-empty__btn" bindtap="onGoQuick">记一件</button>
@@ -151,13 +186,18 @@
             <text class="zone__count num">{{zone.count}} 件</text>
             <text wx:if="{{zone.expired > 0}}" class="zone__flag is-danger">{{zone.expired}} 过期</text>
             <text wx:elif="{{zone.warning > 0}}" class="zone__flag is-warning">{{zone.warning}} 临期</text>
+            <text
+              class="zone__add"
+              data-container="{{active.id}}"
+              data-zone="{{zone.key}}"
+              catchtap="onAddHere">＋</text>
           </view>
 
           <view class="shelf" wx:for="{{zone.shelves}}" wx:for-item="shelf" wx:key="k">
             <view class="shelf__tier shelf__tier--{{active.cols}}">
               <view
                 wx:for="{{shelf.items}}" wx:for-item="t" wx:key="id"
-                class="thing {{t.cls}}"
+                class="thing {{t.cls}} {{t.hit ? 'is-hit' : ''}} {{t.dim ? 'is-dim' : ''}}"
                 data-id="{{t.id}}"
                 bindtap="onTapTile"
                 hover-class="thing--pressed"
@@ -182,6 +222,13 @@
       <view class="inside-hint">
         <text class="inside-hint__text">点一样东西看详情。图案左上角的小点：橙色快到期、红色已过期。</text>
       </view>
+
+      <!-- 直接放进这个柜子：预填 location，保存后回到这里看到新块 -->
+      <button
+        class="ui-btn is-primary is-block inside-add"
+        data-container="{{active.id}}"
+        data-zone=""
+        bindtap="onAddHere">＋ 记一件放这里</button>
     </block>
     </block>
 

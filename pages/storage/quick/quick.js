@@ -13,6 +13,7 @@ var nav = require('../../../utils/nav');
 var speech = require('../../../utils/speech');
 var lexicon = require('../../../utils/lexicon');
 var voiceLog = require('../../../utils/voice-log');
+var containers = require('../../../utils/containers');
 
 var EMPTY_DRAFT = {
   name: '',
@@ -79,19 +80,31 @@ Page({
     voiceAvailable: false,
     inputFocus: true,
     // 语音识别后按历史词库纠正过的用词，给个轻提示，避免用户觉得「我明明没说错」
-    fixNote: ''
+    fixNote: '',
+    // 从容器页进来时预填的位置（冰箱冷藏 / 药箱…），空串表示从别处进来的
+    presetLocation: ''
   },
 
-  onLoad: function () {
+  onLoad: function (query) {
     var todayText = storageUtils.todayDate();
     var voiceAvailable = speech.isAvailable();
+    // 从某个容器点「＋ 记一件」进来：位置预填成那个容器（冰箱冷藏 / 药箱…）
+    var presetLocation = '';
+    if (query && query.container) {
+      presetLocation = containers.presetLocation(query.container, query.zone || '');
+    }
+    this._presetLocation = presetLocation;
+    this._fromContainer = !!presetLocation;
+
     this.setData({
       isDark: theme.getTheme(),
       statusBarHeight: nav.STATUS_BAR_HEIGHT,
       navRight: nav.SAFE_RIGHT,
       todayText: todayText,
       voiceAvailable: voiceAvailable,
-      savedCount: todayCount()
+      savedCount: todayCount(),
+      presetLocation: presetLocation,
+      'draft.location': presetLocation
     });
     if (voiceAvailable) this.setupSpeech();
     this.loadCategories();
@@ -274,12 +287,14 @@ Page({
       return;
     }
     var result = quickParse.parseQuickInput(raw, { today: this.data.todayText });
+    // 口语里说了位置就听话里的，没说才用从容器带过来的预填值
+    var location = result.location || this._presetLocation || '';
     // 留住"解析成了什么"，保存时和用户改后的值对比，写进识别日志
     this._parsedSnapshot = {
       name: result.name,
       quantity: result.quantity,
       unit: result.unit,
-      location: result.location,
+      location: location,
       expireDate: result.expireDate,
       category: result.categoryId
     };
@@ -288,7 +303,7 @@ Page({
       category: result.categoryId,
       quantity: result.quantity,
       unit: result.unit || '个',
-      location: result.location,
+      location: location,
       produceDate: result.produceDate,
       expireDate: result.expireDate,
       shelfLifeMonths: result.shelfLifeMonths || '',
@@ -466,7 +481,8 @@ Page({
           saving: false,
           savedCount: bumpTodayCount(),
           raw: '',
-          draft: Object.assign({}, EMPTY_DRAFT),
+          // 从容器进来的预填位置保留：连着记的第二条还是放同一个柜子
+          draft: Object.assign({}, EMPTY_DRAFT, { location: self._presetLocation || '' }),
           categoryIndex: 0,
           unitIndex: 0,
           missing: [],
@@ -478,6 +494,14 @@ Page({
           fixNote: ''
         });
         wx.showToast({ title: '已记录', icon: 'success', duration: 800 });
+        // 从柜子里点进来的：记完就回去，一眼看到新块落在哪儿
+        if (self._fromContainer) {
+          setTimeout(function () {
+            wx.navigateBack({
+              fail: function () { wx.redirectTo({ url: '/pages/storage/containers/containers' }); }
+            });
+          }, 700);
+        }
       })
       .catch(function (err) {
         wx.hideLoading();

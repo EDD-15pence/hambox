@@ -59,6 +59,20 @@
   margin: var(--sp-3) 4rpx 0;
 }
 
+/* 复制名称：小字按钮，视觉弱但热区够 */
+.headline__copy {
+  flex: none;
+  padding: 4rpx 12rpx;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+  background: var(--bg-sunken);
+}
+
+.headline__copy:active {
+  opacity: 0.6;
+}
+
 .headline__name {
   flex: 1;
   min-width: 0;
@@ -140,10 +154,50 @@
 }
 
 .note__text {
+  display: block;
   font-size: var(--fs-body);
   line-height: 1.6;
   color: var(--text-2);
   word-break: break-all;
+}
+
+.note__text.is-empty {
+  color: var(--text-3);
+}
+
+.note__edit {
+  display: block;
+  margin-top: var(--sp-1);
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.note__input {
+  width: 100%;
+  min-height: 120rpx;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  color: var(--text-1);
+}
+
+.note__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+}
+
+.note__act {
+  font-size: var(--fs-caption);
+  color: var(--text-3);
+}
+
+.note__act.is-primary {
+  font-weight: 600;
+  color: var(--primary);
 }
 
 /* ---------- 操作 ---------- */
@@ -185,4 +239,51 @@
   height: 84rpx;
   margin-top: var(--sp-2);
   border-radius: var(--r-sm);
+}
+
+/* ---------- 保质期进度 ---------- */
+.progress {
+  margin: var(--sp-2) 4rpx 0;
+}
+
+.progress__track {
+  height: 16rpx;
+  border-radius: var(--r-pill);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+  overflow: hidden;
+}
+
+.progress__fill {
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: var(--primary);
+  transition: width var(--dur-base) ease-out;
+}
+
+/* 颜色跟着状态走：快到期变橙、过期变红，扫一眼就知道紧不紧张 */
+.progress--warning .progress__fill {
+  background: var(--warning);
+}
+
+.progress--expired .progress__fill {
+  background: var(--danger);
+}
+
+.progress__legend {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 8rpx;
+}
+
+.progress__text {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.progress__pct {
+  font-size: var(--fs-tiny);
+  font-weight: 600;
+  color: var(--text-2);
 }

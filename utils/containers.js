@@ -330,12 +330,98 @@ function statusClass(status) {
   return '';
 }
 
+/**
+ * 在某个容器里「记一件」时，location 该预填什么
+ *
+ * 取容器自己的归位关键字（keys[0]）：它一定能被 resolve() 认回来，
+ * 所以存完确实会落在这个容器里，不会因为预填了一个认不出的名字跑进「未归位」。
+ * 分区容器（目前只有冰箱）拼上区名：「冰箱」+「冷冻」= 冰箱冷冻。
+ *
+ * @param {string} containerId 容器 id
+ * @param {string} zoneKey 分区 key，可不传（不传就落到 fallback 区）
+ * @returns {string} 预填位置，未归位返回空串
+ */
+function presetLocation(containerId, zoneKey) {
+  var c = getContainer(containerId);
+  if (!c || c.id === UNPLACED.id) return '';
+  var base = (c.keys && c.keys[0]) || c.name || '';
+  if (!c.zones || !c.zones.length) return base;
+
+  var zone = null;
+  for (var i = 0; i < c.zones.length; i++) {
+    if (c.zones[i].key === zoneKey) { zone = c.zones[i]; break; }
+  }
+  if (!zone) return base;
+  var zoneWord = (zone.match && zone.match.length)
+    ? zone.match[0]
+    : (zone.name || '').replace(/室$/, '');
+  return zoneWord ? base + zoneWord : base;
+}
+
+/**
+ * 关键词命中标记（S-04）
+ *
+ * 搜索时**不删掉整个柜子**：命中的柜子留在墙上，柜内命中的那块亮着、
+ * 其余变暗。这样既知道东西在哪，也还看得见那个柜子里另外装了什么 ——
+ * 只留命中项的话，冰箱看起来就只剩一罐可乐，失去了「在冰箱里」的空间感。
+ *
+ * 命中范围是「名称 + 位置」，和列表页搜索保持一致。
+ *
+ * @param {Array} wall groupByContainer 产出的容器墙
+ * @param {string} keyword 关键词，空串则原样返回
+ * @returns {{ wall: Array, hitTotal: number }}
+ */
+function applyKeyword(wall, keyword) {
+  var kw = (keyword || '').trim().toLowerCase();
+  if (!kw) return { wall: wall, hitTotal: 0 };
+
+  var hitTotal = 0;
+  var out = [];
+
+  wall.forEach(function (card) {
+    var hits = 0;
+
+    var zones = card.zones.map(function (zone) {
+      var shelves = zone.shelves.map(function (shelf) {
+        var items = shelf.items.map(function (t) {
+          var hit = ((t.name || '') + ' ' + (t.location || '')).toLowerCase().indexOf(kw) !== -1;
+          if (hit) hits++;
+          return Object.assign({}, t, { hit: hit, dim: !hit });
+        });
+        return { k: shelf.k, items: items };
+      });
+      return Object.assign({}, zone, { shelves: shelves });
+    });
+
+    if (!hits) return;
+    hitTotal += hits;
+
+    // 柜门上露的 emoji 也换成命中的那几件，一眼看出是哪一罐
+    var hitTiles = [];
+    zones.forEach(function (z) {
+      z.shelves.forEach(function (s) {
+        s.items.forEach(function (t) { if (t.hit) hitTiles.push(t); });
+      });
+    });
+
+    out.push(Object.assign({}, card, {
+      zones: zones,
+      hitCount: hits,
+      preview: hitTiles.slice(0, 3).map(function (t, i) { return { k: i, e: t.emoji }; })
+    }));
+  });
+
+  return { wall: out, hitTotal: hitTotal };
+}
+
 module.exports = {
   CONTAINERS: CONTAINERS,
   UNPLACED: UNPLACED,
   getContainer: getContainer,
   resolve: resolve,
+  presetLocation: presetLocation,
   toTile: toTile,
   groupByContainer: groupByContainer,
+  applyKeyword: applyKeyword,
   statusClass: statusClass
 };

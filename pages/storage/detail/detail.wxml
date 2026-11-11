@@ -40,6 +40,7 @@
     <view class="headline">
       <text class="headline__name">{{item.name}}</text>
       <text wx:if="{{item.status}}" class="ui-badge is-{{item.status === 'expired' ? 'expired' : (item.status === 'warning' ? 'warning' : 'fresh')}}">{{statusText}}</text>
+      <text class="headline__copy" catchtap="onCopyName">复制</text>
     </view>
 
     <!-- 倒计时：整页唯一的视觉焦点，放在凹槽里 -->
@@ -50,6 +51,17 @@
         <text class="countdown__unit">天</text>
       </block>
       <text wx:else class="countdown__none">未设置保质期</text>
+    </view>
+
+    <!-- 保质期进度：知道「还剩 30 天」和「总共 90 天里已过 60 天」是两回事 -->
+    <view wx:if="{{progress.show}}" class="progress progress--{{item.status}}">
+      <view class="progress__track">
+        <view class="progress__fill" style="width:{{progress.percent}}%"></view>
+      </view>
+      <view class="progress__legend">
+        <text class="progress__text">{{progress.text}}</text>
+        <text class="progress__pct num">{{progress.percent}}%</text>
+      </view>
     </view>
 
     <text class="ui-section-title">基本信息</text>
@@ -80,12 +92,30 @@
       </view>
     </view>
 
-    <block wx:if="{{item.note}}">
-      <text class="ui-section-title">备注</text>
-      <view class="note">
-        <text class="note__text">{{item.note}}</text>
+    <!-- 备注：点一下就改，不用绕进编辑页（编辑页要重新填整张表） -->
+    <text class="ui-section-title">备注</text>
+    <view class="note">
+      <textarea
+        wx:if="{{noteEditing}}"
+        class="ui-textarea note__input"
+        value="{{noteDraft}}"
+        placeholder="写点什么，比如谁买的、在冰箱第几层"
+        placeholder-class="ui-placeholder"
+        maxlength="200"
+        auto-height
+        focus="{{noteEditing}}"
+        bindinput="onNoteInput" />
+      <text
+        wx:else
+        class="note__text {{item.note ? '' : 'is-empty'}}"
+        bindtap="onEditNote">{{item.note || '点一下添加备注'}}</text>
+
+      <view wx:if="{{noteEditing}}" class="note__actions">
+        <text class="note__act" bindtap="onCancelNote">取消</text>
+        <text class="note__act is-primary" bindtap="onSaveNote">{{savingNote ? '保存中…' : '保存'}}</text>
       </view>
-    </block>
+      <text wx:elif="{{item.note}}" class="note__edit" catchtap="onEditNote">改</text>
+    </view>
 
     <text class="ui-section-title">记录</text>
     <view class="rows">
