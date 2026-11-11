@@ -30,8 +30,8 @@ var CATEGORY_KEYWORDS = [
   ['cosmetic', ['化妆', '口红', '面膜', '乳液', '面霜', '香水', '防晒', '粉底', '精华', '卸妆']],
   ['seasoning', ['酱油', '生抽', '老抽', '蚝油', '醋', '盐', '调料', '胡椒', '味精', '料酒', '豆瓣', '香油', '花椒', '八角']],
   ['daily', ['纸巾', '洗衣', '洗发', '沐浴', '牙膏', '牙刷', '垃圾袋', '洗洁精', '肥皂', '卫生纸', '湿巾', '洗手液', '沐浴露']],
-  ['beverage', ['可乐', '牛奶', '酸奶', '矿泉水', '纯净水', '饮料', '果汁', '奶茶', '咖啡', '啤酒', '红酒', '白酒', '豆奶', '汽水', '苏打水', '气泡水', '茶']],
-  ['food', ['薯片', '面包', '火腿', '鸡蛋', '饼干', '巧克力', '糖', '水果', '苹果', '香蕉', '泡面', '方便面', '零食', '肉', '米', '面']]
+  ['beverage', ['可乐', '牛奶', '酸奶', '矿泉水', '纯净水', '饮料', '果汁', '奶茶', '咖啡', '啤酒', '红酒', '白酒', '豆奶', '汽水', '苏打水', '气泡水', '茶叶', '红茶', '绿茶', '花茶', '茶水']],
+  ['food', ['薯片', '面包', '火腿', '鸡蛋', '饼干', '巧克力', '糖', '水果', '苹果', '香蕉', '泡面', '方便面', '零食', '肉', '米', '面', '年糕', '粽子', '月饼', '饺子', '包子', '馒头', '馄饨', '豆腐', '香肠', '腊肉', '坚果', '瓜子', '蜂蜜', '罐头', '果酱', '黄油', '芝士', '蛋糕', '燕麦', '挂面', '粉条']]
 ];
 
 /** 无明确单位时按分类给个默认单位 */
@@ -65,7 +65,9 @@ function normalize(text) {
     return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
   });
   s = s.replace(/\u3000/g, ' ');
-  s = s.replace(/[，、；;]/g, ' ');
+  // 半角逗号必须一起处理：语音插件转写常输出 "年糕半袋,在冰箱冷藏"，漏了它
+  // 逗号会一直残留到位置字段里（"冰箱冷藏 ,过期"）。句点不动，怕打断 1.5 这种小数
+  s = s.replace(/[，、；;,]/g, ' ');
   s = s.replace(/\s+/g, ' ');
   return s.trim();
 }
@@ -91,7 +93,7 @@ function stripFillers(text) {
   s = s.replace(/(那个|这个|然后|就是说|就是|还有|另外)/g, ' ');
 
   // 3. 句首的动作前缀，循环剥（"帮我记一下"要连剥两层）
-  var PREFIX = /^(啊|哦|噢|呀|帮我|给我|麻烦|我想|我要|记一下|记录一下|记一笔|添加一下|添加|新增|嗯|呃|唉|诶|欸|好的|好)+/;
+  var PREFIX = /^(啊|哦|噢|呀|帮我|给我|麻烦|我想|我要|提醒我|提醒|记一下|记录一下|记一笔|添加一下|添加|新增|嗯|呃|唉|诶|欸|好的|好)+/;
   var prev;
   do {
     prev = s.trim();
@@ -337,10 +339,12 @@ function escapeRegExp(s) {
 /** 数量 + 单位；'12瓶'、'三袋'、'一瓶' 都能认 */
 function extractQuantity(rest) {
   var unitAlt = UNITS.slice().sort(function (a, b) { return b.length - a.length; }).map(escapeRegExp).join('|');
-  var re = new RegExp('([0-9]+(?:\\.[0-9]+)?|[零〇一二两三四五六七八九十]+)\\s*(' + unitAlt + ')', 'g');
+  // 「半」也是数量：口语里「半袋年糕」「半瓶可乐」很常见，漏了它数量会退回默认 1，
+  // 而且「半袋」整个残留进名称
+  var re = new RegExp('(半|[0-9]+(?:\\.[0-9]+)?|[零〇一二两三四五六七八九十]+)\\s*(' + unitAlt + ')', 'g');
   var m;
   while ((m = re.exec(rest)) !== null) {
-    var num = toNumber(m[1]);
+    var num = m[1] === '半' ? 0.5 : toNumber(m[1]);
     var unit = m[2];
     if (isNaN(num)) {
       re.lastIndex = m.index + m[0].length;
@@ -360,17 +364,43 @@ function extractQuantity(rest) {
   return { quantity: null, unit: '', rest: rest };
 }
 
+/**
+ * 位置只属于「那一小段」，不能一路吃到句尾。
+ *   "年糕半袋 在冰箱冷藏 过期" 不截断会得到 location = "冰箱冷藏 过期"
+ * 截断点有两类：标点，以及明显不属于位置的词（过期 / 到期 / 吃完 …）。
+ */
+function trimLocationTail(text) {
+  var s = String(text || '');
+  // 「放在了冷藏室」的「放/放在」被关键词吃掉后，还会剩个「了」
+  s = s.replace(/^(了|的|着|到|进|入|于)\s*/, '');
+  s = s.replace(/[。！!？?，,；;：:、].*$/, ' ').trim();
+  // 「冰箱冷藏的牛奶」：「的」后面已经不是位置了，再吃进去就会把物品名吞掉
+  s = s.replace(/的.*$/, ' ').trim();
+  s = s.replace(/(过期|到期|保质|有效期|开封|吃完|用完|喝完|要用|要吃).*$/, ' ').trim();
+  return s;
+}
+
+/**
+ * 只把「位置那一段」从 rest 里切走，而不是一路切到句尾。
+ * 「冰箱冷藏的牛奶快过期了」若整段切掉，牛奶就跟着位置一起没了。
+ */
+function cutLocation(rest, tail, from) {
+  if (!tail) return rest;
+  var at = rest.indexOf(tail, from || 0);
+  if (at < 0) return rest;
+  return (rest.slice(0, at) + ' ' + rest.slice(at + tail.length)).replace(/\s+/g, ' ').trim();
+}
+
 /** 存放位置：'放/放在/存入' 之后的一段；没有关键词就扫位置词表 */
 function extractLocation(rest) {
   var KW = /(放在|放到|放进|放入|存入|收纳在|收纳于|存放于|收在|置于|搁在|放|存)\s*/;
   var kw = KW.exec(rest);
   if (kw) {
-    var tail = rest.slice(kw.index + kw[0].length).trim();
-    tail = tail.replace(/[。！!，,.]$/, '').trim();
+    var tail = trimLocationTail(rest.slice(kw.index + kw[0].length));
     if (tail) {
       return {
         location: tail,
-        rest: cut(rest, kw.index, rest.length - kw.index).trim()
+        rest: cutLocation(rest, tail, kw.index)
       };
     }
   }
@@ -400,12 +430,12 @@ function extractLocation(rest) {
   }
 
   var span = merged[merged.length - 1];
-  var tailText = rest.slice(span.start).replace(/[。！!，,.]$/, '').trim();
+  var tailText = trimLocationTail(rest.slice(span.start));
   if (!tailText) return { location: '', rest: rest };
 
   return {
     location: tailText,
-    rest: cut(rest, span.start, rest.length - span.start).trim()
+    rest: cutLocation(rest, tailText, span.start)
   };
 }
 
@@ -425,6 +455,8 @@ function cleanupName(rest) {
   s = s.replace(/\s*[的了和与及]$/, '');
   // 数字被吃掉后剩下的孤立量词：「一瓶牛奶」丢了「一」会剩「瓶牛奶」
   s = s.replace(/^(瓶|袋|盒|包|个|罐|支|条|块|桶|提|箱|斤|片|粒|颗|升|毫升|克|公斤)\s*/, '');
+  // 位置词被切走后常留个孤零零的介词：「年糕半袋 在」→「年糕」（半袋已被数量吃走）
+  s = s.replace(/\s*(在|于|放|存|搁)$/, '');
   return s.trim();
 }
 
@@ -473,7 +505,10 @@ function parseQuickInput(text, opts) {
   rest = loc.rest;
 
   var name = cleanupName(rest);
-  var categoryId = guessCategory(raw);
+  // 先按名称判分类，名称没命中再用整句兜底：整句里已经有位置等噪声，
+  // 例如「客厅茶几」会让「薯片」被误判成饮品（『茶』命中）
+  var categoryId = guessCategory(name);
+  if (categoryId === 'other') categoryId = guessCategory(raw);
   var categoryName = CATEGORY_NAMES[categoryId] || CATEGORY_NAMES.other;
 
   var quantity = qty.quantity == null ? 1 : qty.quantity;

@@ -179,5 +179,29 @@ r = parse('那个那个 就是 可乐 还有两个月过期');
 check('重复口头禅名称', r.name, '可乐');
 check('重复口头禅保质期', r.shelfLifeMonths, 2);
 
+// 27. 真实翻车句复现：「年糕半袋，在冰箱冷藏7天，过期」
+//     语音插件输出的是半角逗号，name 曾变成「年糕半袋 在」、location 变成「冰箱冷藏 ,过期」
+r = parse('年糕半袋，在冰箱冷藏7天，过期');
+check('半角逗号·名称', r.name, '年糕');
+check('半角逗号·分类', r.categoryId, 'food');
+check('半袋=0.5', r.quantity, 0.5);
+check('半袋·单位', r.unit, '袋');
+check('半角逗号·位置', r.location, '冰箱冷藏');
+
+// 28. 「半」在任何单位前都是 0.5
+r = parse('半瓶可乐放在了冷藏室');
+check('半瓶·数量', r.quantity, 0.5);
+check('放在了·位置不吃「了」', r.location, '冷藏室');
+
+// 29. 位置只切自己那一段：「的」后面是物品名，不能被位置吞掉
+r = parse('提醒我冰箱冷藏的牛奶快过期了');
+check('定语位置·名称', r.name, '牛奶');
+check('定语位置·位置', r.location, '冰箱冷藏');
+
+// 30. 分类按名称判，位置里的「茶几」不能把薯片判成饮品
+r = parse('三袋薯片 保质期半年 放在客厅茶几');
+check('茶几不误判·分类', r.categoryId, 'food');
+check('茶几·位置', r.location, '客厅茶几');
+
 console.log(failures === 0 ? '\nALL PASS' : '\n' + failures + ' 项失败');
 process.exit(failures === 0 ? 0 : 1);
