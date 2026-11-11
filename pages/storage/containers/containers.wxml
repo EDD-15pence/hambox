@@ -2,10 +2,10 @@
   <view class="app-nav" style="padding-top:{{statusBarHeight}}px">
     <view class="nav-left">
       <text class="nav-back-icon" bindtap="onBack">‹</text>
-      <text class="app-nav__title">{{view === 'inside' ? active.name : '按容器看'}}</text>
+      <text class="app-nav__title">{{view === 'inside' ? active.name : '家里的收纳'}}</text>
     </view>
     <view class="app-nav__actions">
-      <text wx:if="{{view === 'wall'}}" class="nav-text-btn" bindtap="onGoList">物品列表</text>
+      <text wx:if="{{view === 'wall'}}" class="nav-text-btn" bindtap="onGoList">清单</text>
       <text class="nav-text-btn" bindtap="onToggleTheme">{{isDark ? '日间' : '夜间'}}</text>
     </view>
   </view>
@@ -28,7 +28,7 @@
       bind:retry="onRetry" />
 
     <block wx:else>
-    <!-- ============ 容器墙 ============ -->
+    <!-- ==================== 容器墙 ==================== -->
     <block wx:if="{{view === 'wall'}}">
       <view wx:if="{{loadError}}" class="ui-notice" bindtap="onRetry">
         <text class="ui-notice__text">这次没刷新成功 · {{loadError}}</text>
@@ -38,65 +38,149 @@
       <view class="summary">
         <text class="summary__num num">{{total}}</text>
         <text class="summary__label">件东西，分在 {{wall.length}} 个地方</text>
-        <text wx:if="{{expired > 0}}" class="summary__flag is-danger">已过期 {{expired}}</text>
+        <text wx:if="{{expired > 0}}" class="summary__flag is-danger">过期 {{expired}}</text>
         <text wx:if="{{warning > 0}}" class="summary__flag is-warning">临期 {{warning}}</text>
       </view>
 
       <view class="wall">
         <view
           wx:for="{{wall}}" wx:key="id"
-          class="wall-card"
+          class="cab"
           data-id="{{item.id}}"
           bindtap="onOpenContainer"
-          hover-class="wall-card--pressed"
+          hover-class="cab--pressed"
           hover-stay-time="60">
-          <view class="wall-card__head">
-            <view class="wall-card__icon"><text>{{item.icon}}</text></view>
-            <text class="wall-card__name">{{item.name}}</text>
+
+          <!-- 物件本身：不同的收纳画不同的样子 -->
+          <view class="cab__stage">
+            <!-- 冰箱：上冷冻下冷藏的双门 -->
+            <view wx:if="{{item.skin === 'fridge'}}" class="obj obj--fridge">
+              <view class="fridge__door fridge__door--freezer"></view>
+              <view class="fridge__door fridge__door--chill">
+                <view class="fridge__drawer"></view>
+              </view>
+              <view class="fridge__handle"></view>
+              <view class="fridge__led"></view>
+            </view>
+
+            <!-- 对开柜 / 玻璃门柜 -->
+            <view wx:elif="{{item.skin === 'door2' || item.skin === 'glass'}}" class="obj obj--{{item.skin}}">
+              <!-- 玻璃门柜：先铺一层淡淡的 emoji，再盖上透光的门 -->
+              <view wx:if="{{item.skin === 'glass'}}" class="glass__inside">
+                <text class="glass__ghost" wx:for="{{item.preview}}" wx:for-item="pe" wx:key="k">{{pe.e}}</text>
+              </view>
+              <view class="cab2__panel cab2__panel--l">
+                <view class="cab2__knob"></view>
+              </view>
+              <view class="cab2__panel cab2__panel--r">
+                <view class="cab2__knob"></view>
+              </view>
+              <view wx:if="{{item.skin === 'glass'}}" class="glass__shine"></view>
+            </view>
+
+            <!-- 药箱 -->
+            <view wx:elif="{{item.skin === 'medical'}}" class="obj obj--medical">
+              <view class="medical__handle"></view>
+              <view class="medical__lid"></view>
+              <view class="medical__cross">
+                <view class="cross__h"></view>
+                <view class="cross__v"></view>
+              </view>
+            </view>
+
+            <!-- 开放置物架 -->
+            <view wx:elif="{{item.skin === 'rack'}}" class="obj obj--rack">
+              <view class="rack__post rack__post--l"></view>
+              <view class="rack__post rack__post--r"></view>
+              <view class="rack__board rack__board--1"></view>
+              <view class="rack__board rack__board--2"></view>
+              <view class="rack__board rack__board--3"></view>
+            </view>
+
+            <!-- 纸箱（未归位） -->
+            <view wx:else class="obj obj--carton">
+              <view class="carton__flap"></view>
+              <view class="carton__tape"></view>
+              <view class="carton__seam"></view>
+            </view>
+
+            <view class="cab__ground"></view>
           </view>
-          <text class="wall-card__desc">{{item.desc}}</text>
-          <view class="wall-card__foot">
-            <text class="wall-card__count num">{{item.count}} 件</text>
-            <text wx:if="{{item.expired > 0}}" class="ui-badge is-expired">{{item.expired}} 过期</text>
-            <text wx:elif="{{item.warning > 0}}" class="ui-badge is-warning">{{item.warning}} 临期</text>
+
+          <view class="cab__info">
+            <view class="cab__line">
+              <text class="cab__name">{{item.name}}</text>
+              <text class="cab__count num">{{item.count}}</text>
+            </view>
+            <view class="cab__foot">
+              <view class="cab__preview">
+                <text class="cab__emoji" wx:for="{{item.preview}}" wx:for-item="pe" wx:key="k">{{pe.e}}</text>
+              </view>
+              <text wx:if="{{item.expired > 0}}" class="cab__flag is-danger">{{item.expired}} 过期</text>
+              <text wx:elif="{{item.warning > 0}}" class="cab__flag is-warning">{{item.warning}} 临期</text>
+            </view>
           </view>
         </view>
       </view>
 
       <view class="wall-empty" wx:if="{{!wall.length}}">
-        <text class="wall-empty__text">还没有东西可看</text>
+        <text class="wall-empty__text">收纳里还是空的</text>
+        <text class="wall-empty__desc">记一件东西时写上「放冰箱」，它就会出现在这里</text>
+        <button class="ui-btn is-primary is-block wall-empty__btn" bindtap="onGoQuick">记一件</button>
       </view>
     </block>
 
-    <!-- ============ 容器内部 ============ -->
+    <!-- ==================== 容器内部 ==================== -->
     <block wx:else>
-      <view class="inside-head">
-        <text class="inside-head__desc">{{active.desc}} · {{active.count}} 件</text>
-        <view class="inside-head__flags">
+      <view class="inside-bar">
+        <text class="inside-bar__desc">{{active.desc}}</text>
+        <view class="inside-bar__flags">
           <text wx:if="{{active.expired > 0}}" class="ui-badge is-expired">已过期 {{active.expired}}</text>
           <text wx:if="{{active.warning > 0}}" class="ui-badge is-warning">临期 {{active.warning}}</text>
           <text wx:if="{{!active.expired && !active.warning}}" class="ui-badge is-fresh">都还新鲜</text>
         </view>
       </view>
 
-      <!-- 网格：列数由容器定，块自动排布，不落库、不用摆 -->
-      <view class="grid grid--{{active.cols}}">
-        <view
-          wx:for="{{active.tiles}}" wx:key="id"
-          class="tile {{item.cls}}"
-          data-id="{{item.id}}"
-          bindtap="onTapTile"
-          hover-class="tile--pressed"
-          hover-stay-time="60">
-          <image wx:if="{{item.imageSrc}}" class="tile__image" src="{{item.imageSrc}}" mode="aspectFill" />
-          <text wx:else class="tile__initial">{{item.initial}}</text>
-          <text wx:if="{{item.qtyText}}" class="tile__qty num">{{item.qtyText}}</text>
-          <text class="tile__name">{{item.name}}</text>
+      <!-- 内胆：冰箱冷光、木柜暖色，隔板一层层往上垒 -->
+      <view class="cavity cavity--{{active.skin}}">
+        <view wx:if="{{active.skin === 'fridge'}}" class="cavity__lamp"></view>
+
+        <view class="zone" wx:for="{{active.zones}}" wx:for-item="zone" wx:key="key">
+          <view wx:if="{{zone.name}}" class="zone__bar">
+            <text class="zone__name">{{zone.name}}</text>
+            <text class="zone__count num">{{zone.count}} 件</text>
+            <text wx:if="{{zone.expired > 0}}" class="zone__flag is-danger">{{zone.expired}} 过期</text>
+            <text wx:elif="{{zone.warning > 0}}" class="zone__flag is-warning">{{zone.warning}} 临期</text>
+          </view>
+
+          <view class="shelf" wx:for="{{zone.shelves}}" wx:for-item="shelf" wx:key="k">
+            <view class="shelf__tier shelf__tier--{{active.cols}}">
+              <view
+                wx:for="{{shelf.items}}" wx:for-item="t" wx:key="id"
+                class="thing {{t.cls}}"
+                data-id="{{t.id}}"
+                bindtap="onTapTile"
+                hover-class="thing--pressed"
+                hover-stay-time="60">
+                <!-- 角标和状态点贴在图案上，不能贴着格子边，否则会飘在半空 -->
+                <view class="thing__pic">
+                  <image wx:if="{{t.imageSrc}}" class="thing__img" src="{{t.imageSrc}}" mode="aspectFill" />
+                  <text wx:else class="thing__emoji">{{t.emoji}}</text>
+                  <text wx:if="{{t.qtyText}}" class="thing__qty num">{{t.qtyText}}</text>
+                  <view wx:if="{{t.dot}}" class="thing__dot {{t.cls}}"></view>
+                </view>
+                <text class="thing__name">{{t.name}}</text>
+              </view>
+            </view>
+            <view class="shelf__board"></view>
+          </view>
         </view>
+
+        <view class="cavity__floor"></view>
       </view>
 
       <view class="inside-hint">
-        <text class="inside-hint__text">块描边就是保质期状态：橙色临期、红色已过期。点一块看详情。</text>
+        <text class="inside-hint__text">点一样东西看详情。图案左上角的小点：橙色快到期、红色已过期。</text>
       </view>
     </block>
     </block>

@@ -26,7 +26,8 @@ const TOOLS = [
     icon: '📦',
     name: '智能仓储',
     desc: '管住家里的保质期',
-    path: '/pages/storage/list/list',
+    // 默认落到「家里的收纳」：先看见冰箱柜子，点开才是东西，比先看一列名单直观
+    path: '/pages/storage/containers/containers',
   },
   {
     key: 'quick',

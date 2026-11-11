@@ -116,6 +116,10 @@ Page({
     wx.navigateTo({ url: '/pages/storage/list/list' });
   },
 
+  onGoQuick: function () {
+    wx.navigateTo({ url: '/pages/storage/quick/quick' });
+  },
+
   onToggleTheme: function () {
     this.setData({ isDark: theme.toggleTheme() });
   }

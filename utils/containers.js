@@ -1,8 +1,9 @@
 /**
  * 智能仓储 · 容器可视化（S-01）
  *
- * 只借《背包乱斗》的观感：容器是个可见的框，物品是框里一块块积木。
- * 不借玩法 —— 不拼形状、不设容量、不强制摆格子，全部自动排布。
+ * 思路：把家里的收纳空间当成一个个「看得见的东西」——冰箱就是冰箱的样子，
+ * 点开它，里面一层层隔板上摆着东西（emoji 或照片）。不做背包格子、不设容量，
+ * 全部自动排布：东西多就多摊一层，少就一层空着。
  *
  * 关键取舍（见 AGENTS.md §12.2）：**不建容器表、不加接口、不改 items 表**。
  * 容器只是「同一份物品数据的另一种视图」，靠 location 文本归位；
@@ -11,12 +12,14 @@
  * 为什么不用 utils/lexicon.js 的位置词频当清单：那是快速记录的纠错词库，
  * 会随口语漂移，不是权威容器列表。
  */
+var itemEmoji = require('./item-emoji');
 
 /** 未归位兜底容器：任何 location 都归得进去，保证「一件都不丢」 */
 var UNPLACED = {
   id: 'unplaced',
   name: '未归位',
   icon: '📦',
+  skin: 'carton',
   desc: '没写位置或认不出位置的东西',
   cols: 4,
   keys: []
@@ -25,24 +28,31 @@ var UNPLACED = {
 /**
  * 容器清单（固定几个，先不做自定义，避免又多一套维护界面）
  *
- * - `keys` 是归位关键字，匹配 location 里的子串；
- * - 匹配时按关键字**长度降序**，所以「冷冻室」不会被「冰箱」抢先；
- * - `cols` 只影响容器内网格列数：冰箱 / 零食柜这种小件多的用 4 列，
- *   药箱 / 厨房这种包装大的用 3 列，块更宽、字更好读。
+ * - `keys` 是归位关键字，匹配 location 里的子串，**最长优先**；
+ * - `skin` 决定墙上画成什么样：fridge 双门冰箱 / door2 对开柜 /
+ *   glass 玻璃门柜 / medical 药箱 / rack 开放置物架 / carton 纸箱；
+ * - `cols` 是容器内部每层摆几个，也影响每层高度；
+ * - `zones` 只有冰箱有：冷冻室、冷藏室分开画，别把雪糕和青菜混在一层。
  */
 var CONTAINERS = [
   {
     id: 'fridge',
     name: '冰箱',
     icon: '❄️',
+    skin: 'fridge',
     desc: '冷藏 + 冷冻都算',
     cols: 4,
-    keys: ['冰箱', '冷藏', '冷冻', '冰柜', '保鲜']
+    keys: ['冰箱', '冷藏', '冷冻', '冰柜', '保鲜'],
+    zones: [
+      { key: 'freeze', name: '冷冻室', match: ['冷冻', '冰柜', '雪糕', '冰淇淋', '速冻', '棒冰'] },
+      { key: 'chill', name: '冷藏室', match: [] }
+    ]
   },
   {
     id: 'kitchen',
     name: '厨房柜',
     icon: '🧂',
+    skin: 'door2',
     desc: '橱柜 / 灶台 / 调料',
     cols: 3,
     keys: ['厨房', '橱柜', '灶台', '调料', '碗柜']
@@ -51,6 +61,7 @@ var CONTAINERS = [
     id: 'snack',
     name: '零食柜',
     icon: '🍪',
+    skin: 'glass',
     desc: '零食 / 茶几 / 电视柜',
     cols: 4,
     keys: ['零食', '茶几', '电视柜', '边几']
@@ -59,6 +70,7 @@ var CONTAINERS = [
     id: 'medicine',
     name: '药箱',
     icon: '💊',
+    skin: 'medical',
     desc: '药箱 / 药柜',
     cols: 3,
     keys: ['药箱', '药柜', '药品', '急救']
@@ -67,6 +79,7 @@ var CONTAINERS = [
     id: 'cabinet',
     name: '储物柜',
     icon: '🗄️',
+    skin: 'door2',
     desc: '储物柜 / 收纳箱',
     cols: 3,
     keys: ['储物柜', '储物间', '收纳', '柜子', '抽屉']
@@ -75,6 +88,7 @@ var CONTAINERS = [
     id: 'bath',
     name: '卫浴阳台',
     icon: '🧴',
+    skin: 'rack',
     desc: '卫生间 / 洗手台 / 阳台',
     cols: 3,
     keys: ['卫生间', '浴室', '洗手台', '洗漱', '阳台', '洗衣']
@@ -83,6 +97,7 @@ var CONTAINERS = [
     id: 'bedroom',
     name: '卧室',
     icon: '🛏️',
+    skin: 'door2',
     desc: '床头 / 衣柜',
     cols: 3,
     keys: ['卧室', '床头', '衣柜']
@@ -123,22 +138,25 @@ function resolve(location) {
   return UNPLACED.id;
 }
 
-/** 一件物品的块要显示什么：首字、状态、数量角标文案 */
+/** 一件物品在格子里要显示什么：emoji、名称、状态、数量角标 */
 function toTile(item) {
   var name = (item.name || '').trim();
   var status = item.status || '';
   return {
     id: item.id,
     name: name,
-    initial: name ? name.charAt(0) : '?',
+    // 有照片用照片，没有就用 emoji —— emoji 靠名称猜，猜不出按分类兜底
+    emoji: itemEmoji.emojiFor(name, item.category),
     imageSrc: item.imageSrc || '',
     quantity: item.quantity,
     unit: item.unit || '',
-    // 数量为 1 时不显示角标，角标只用来提示"还有几个"
+    // 数量为 1 时不显示角标，角标只用来提示「还有几个」
     qtyText: item.quantity > 1 ? '×' + item.quantity : '',
     status: status,
-    // 模板里不写三元：描边类名在这里定好
+    // 模板里不写三元：状态类名在这里定好
     cls: statusClass(status),
+    // 临期/过期在格子上打一个小圆点，比给整块描边更像「贴了标签」
+    dot: status === 'warning' || status === 'expired',
     daysLeft: item.daysLeft === null || item.daysLeft === undefined ? null : item.daysLeft,
     location: item.location || ''
   };
@@ -199,19 +217,90 @@ function countStatus(items, status) {
 }
 
 function buildCard(container, items) {
-  var tiles = items.map(toTile);
+  var cols = container.cols || 4;
+  var tiles = sortTiles(items.map(toTile));
+
   return {
     id: container.id,
     name: container.name,
     icon: container.icon,
+    skin: container.skin || 'door2',
     desc: container.desc,
-    cols: container.cols,
+    cols: cols,
     count: items.length,
     warning: countStatus(items, 'warning'),
     expired: countStatus(items, 'expired'),
-    // 容器里先摆"要过期的"，一眼看到的是最该处理的
-    tiles: sortTiles(tiles)
+    // 墙上那张卡片露几个 emoji，隔着柜门也能看出里面大概有什么
+    // 带 k 是为了 wx:key —— emoji 会重复（两瓶可乐），不能拿 emoji 当 key
+    preview: tiles.slice(0, 3).map(function (t, i) { return { k: i, e: t.emoji }; }),
+    // 容器里先摆「要过期的」，一眼看到的是最该处理的
+    tiles: tiles,
+    zones: buildZones(container, tiles, cols)
   };
+}
+
+/**
+ * 分区 + 分层。
+ *
+ * 冰箱有冷冻室/冷藏室两个区（`match` 匹配 location），其他容器只有一个区，
+ * 区名留空、不画区标题。区内每 `cols` 件一层，层就是冰箱里那块玻璃隔板。
+ */
+function buildZones(container, tiles, cols) {
+  var defs = container.zones && container.zones.length
+    ? container.zones
+    : [{ key: 'main', name: '', match: [] }];
+
+  var groups = defs.map(function (def) {
+    return { def: def, items: [] };
+  });
+  var fallback = groups[groups.length - 1];
+
+  if (groups.length === 1) {
+    fallback.items = tiles;
+  } else {
+    tiles.forEach(function (tile) {
+      var hit = null;
+      for (var i = 0; i < defs.length; i++) {
+        if (matchesAny(tile.location, defs[i].match)) { hit = i; break; }
+      }
+      // 认不出子区域的，默认进最后一个区（冰箱就是冷藏室）
+      groups[hit === null ? groups.length - 1 : hit].items.push(tile);
+    });
+  }
+
+  var zones = [];
+  groups.forEach(function (g) {
+    // 空的区不画：冰箱里没有冻货，就不该出现一块空隔板
+    if (!g.items.length) return;
+    zones.push({
+      key: g.def.key,
+      name: g.def.name,
+      count: g.items.length,
+      warning: countStatus(g.items, 'warning'),
+      expired: countStatus(g.items, 'expired'),
+      tiles: g.items,
+      shelves: chunk(g.items, cols)
+    });
+  });
+  return zones;
+}
+
+function matchesAny(text, keys) {
+  if (!keys || !keys.length) return false;
+  for (var i = 0; i < keys.length; i++) {
+    if (text && text.indexOf(keys[i]) !== -1) return true;
+  }
+  return false;
+}
+
+/** 按每层容量切段，每层带个序号（wx:key 用） */
+function chunk(list, size) {
+  var out = [];
+  var step = size > 0 ? size : 4;
+  for (var i = 0; i < list.length; i += step) {
+    out.push({ k: out.length, items: list.slice(i, i + step) });
+  }
+  return out;
 }
 
 function sortTiles(tiles) {
@@ -234,7 +323,7 @@ function rank(tile) {
   return 3;
 }
 
-/** 状态 -> 块描边用的类名，避免模板里连写三元 */
+/** 状态 -> 类名，避免模板里连写三元 */
 function statusClass(status) {
   if (status === 'expired') return 'is-expired';
   if (status === 'warning') return 'is-warning';

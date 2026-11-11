@@ -69,16 +69,43 @@ check('未归位件数', unplaced.count, 1);
 
 // ---------- 块 ----------
 var tile = C.toTile({ name: '牛奶', quantity: 2, unit: '瓶', status: 'warning', daysLeft: 3, imageSrc: '' });
-check('首字', tile.initial, '牛奶'.charAt(0));
+check('块有 emoji', tile.emoji, '🥛');
 check('数量角标', tile.qtyText, '×2');
-check('描边类名', tile.cls, 'is-warning');
+check('状态类名', tile.cls, 'is-warning');
+check('临期有状态点', tile.dot, true);
 
 check('单件不出角标', C.toTile({ name: '可乐', quantity: 1 }).qtyText, '');
-check('过期描边', C.toTile({ name: '酸奶', quantity: 1, status: 'expired' }).cls, 'is-expired');
-check('正常无描边', C.toTile({ name: '可乐', quantity: 1, status: 'fresh' }).cls, '');
+check('过期类名', C.toTile({ name: '酸奶', quantity: 1, status: 'expired' }).cls, 'is-expired');
+check('正常无状态点', C.toTile({ name: '可乐', quantity: 1, status: 'fresh' }).dot, false);
 
-// 名称缺失也不能把渲染搞崩
-check('空名称兜底首字', C.toTile({ quantity: 1 }).initial, '?');
+// 名称缺失也不能把渲染搞崩，emoji 按分类兜底
+check('空名称兜底 emoji', C.toTile({ quantity: 1 }).emoji, '📦');
+check('空名称按分类兜底', C.toTile({ quantity: 1, category: 'medicine' }).emoji, '💊');
+
+// ---------- 分层 / 分区 ----------
+check('冰箱一层放得下 3 件', fridge.zones[0].shelves.length, 1);
+check('只有一层时不出现冷冻区', fridge.zones.map(function (z) { return z.name; }), ['冷藏室']);
+
+var twin = C.groupByContainer([
+  { id: 'a', name: '速冻水饺', quantity: 1, unit: '袋', location: '冰箱冷冻室', status: 'fresh', daysLeft: 90 },
+  { id: 'b', name: '牛奶', quantity: 1, unit: '盒', location: '冰箱冷藏', status: 'fresh', daysLeft: 5 },
+  { id: 'c', name: '雪糕', quantity: 1, unit: '支', location: '冰箱', status: 'fresh', daysLeft: 200 }
+]).wall[0];
+check('冰箱分冷冻/冷藏两区', twin.zones.map(function (z) { return z.name; }), ['冷冻室', '冷藏室']);
+check('冷冻区只收速冻', twin.zones[0].count, 1);
+check('认不出子区域进冷藏', twin.zones[1].tiles.map(function (t) { return t.id; }), ['b', 'c']);
+
+// 超过一层要摊到下一层
+var many = C.groupByContainer([1, 2, 3, 4, 5, 6].map(function (n) {
+  return { id: 'x' + n, name: '可乐' + n, quantity: 1, unit: '瓶', location: '冰箱', status: 'fresh', daysLeft: 9 };
+})).wall[0];
+check('6 件摊成两层', many.zones[0].shelves.map(function (s) { return s.items.length; }), [4, 2]);
+
+var medicine = C.groupByContainer([
+  { id: 'm', name: '布洛芬', quantity: 1, unit: '盒', location: '药箱', status: null, daysLeft: null }
+]).wall[0];
+check('非冰箱容器只有一个区', medicine.zones.length, 1);
+check('单区不显示区名', medicine.zones[0].name, '');
 
 // 全部归好位时不该出现空空的「未归位」盒子
 var allPlaced = C.groupByContainer([

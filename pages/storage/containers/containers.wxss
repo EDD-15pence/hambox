@@ -1,15 +1,194 @@
 /* ============================================================
- * 智能仓储 · 容器墙 / 容器内部
- * 只写本页差异；颜色、阴影、间距全部来自 styles/*
+ * 智能仓储 · 家里的收纳（S-02 / S-03）
+ *
+ * 这一页的画法和其他页不一样：不画卡片，画「东西」。
+ * 冰箱、柜子、药箱、纸箱全部用渐变 + 圆角 + 阴影拼出来，
+ * 不引一张图片 —— 包体不涨、深色模式能整体调暗、也不会糊。
+ *
+ * 立体感靠三件事：外投影（离地）、inset 顶部高光（受光面）、
+ * 地面椭圆（物体真的站在那儿）。
+ *
+ * 颜色规则：本页要的是「材质」而不是语义色（金属 / 木纹 / 白塑料 /
+ * 牛皮纸），tokens 里没有也不该有。所以材质色全部收在下面两个
+ * 变量块里（浅色一份、深色一份），规则里只写 var(--mat-xxx)，不写字面值。
+ * 这样深色模式不用把每条规则抄一遍，改颜色也只改一处。
  * ============================================================ */
 
 .container {
+  /* ---- 冰箱：不锈钢框 + 白门 ---- */
+  --mat-fridge-frame: linear-gradient(180deg, #C5D0E0 0%, #A9B6C9 100%);
+  --sh-fridge: 0 12rpx 20rpx rgba(64, 84, 116, 0.30), inset 0 2rpx 0 rgba(255, 255, 255, 0.92);
+  --mat-fridge-door: linear-gradient(150deg, #FDFEFF 0%, #EFF3F9 42%, #D9E1ED 100%);
+  --ln-fridge-door: inset 0 1rpx 0 #FFFFFF, inset 0 -3rpx 7rpx rgba(138, 155, 182, 0.22);
+  --ln-fridge-drawer: inset 0 2rpx 0 rgba(140, 158, 186, 0.42);
+  --mat-handle: linear-gradient(90deg, #8B98AC 0%, #D6DEE9 65%, #A9B5C7 100%);
+  --mat-led: #4FD07A;
+  --sh-led: 0 0 8rpx 2rpx rgba(79, 208, 122, 0.75);
+
+  /* ---- 木柜 ---- */
+  --mat-wood-frame: linear-gradient(180deg, #C09A6E 0%, #A07E54 100%);
+  --sh-wood: 0 12rpx 20rpx rgba(92, 68, 40, 0.28), inset 0 2rpx 0 rgba(255, 255, 255, 0.55);
+  --mat-wood-door: linear-gradient(150deg, #F1DEC2 0%, #E3C9A4 48%, #CDAC80 100%);
+  --ln-wood-door: inset 0 1rpx 0 rgba(255, 255, 255, 0.95), inset 0 -4rpx 9rpx rgba(122, 92, 56, 0.24);
+  --mat-knob: linear-gradient(90deg, #7A5A38 0%, #B78F60 100%);
+
+  /* ---- 玻璃门 ---- */
+  --mat-glass-frame: linear-gradient(180deg, #B08A5F 0%, #8E6C46 100%);
+  --mat-glass-door: linear-gradient(150deg, rgba(238, 248, 255, 0.42) 0%, rgba(176, 200, 226, 0.26) 100%);
+  --ln-glass-door: inset 0 1rpx 0 rgba(255, 255, 255, 0.90), inset 0 0 0 2rpx rgba(255, 255, 255, 0.35);
+  --mat-shine: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.10));
+
+  /* ---- 药箱 ---- */
+  --mat-medical: linear-gradient(160deg, #FFFFFF 0%, #EDF2F8 45%, #D6DEEA 100%);
+  --sh-medical: 0 12rpx 20rpx rgba(64, 84, 116, 0.24), inset 0 2rpx 0 #FFFFFF;
+  --mat-medical-lid: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(230, 237, 246, 0.62));
+  --ln-medical-lid: 0 2rpx 5rpx rgba(120, 140, 170, 0.20);
+  --mat-handle-out: #C0C9D7;
+  --mat-cross: #D6423A;
+
+  /* ---- 置物架 ---- */
+  --mat-post: linear-gradient(90deg, #96A3B6 0%, #CED7E3 100%);
+  --sh-post: 0 6rpx 12rpx rgba(64, 84, 116, 0.18);
+  --mat-board: linear-gradient(180deg, #EBF1F9 0%, #B7C5D8 100%);
+  --sh-board: 0 4rpx 7rpx rgba(64, 84, 116, 0.20);
+
+  /* ---- 纸箱 ---- */
+  --mat-carton: linear-gradient(160deg, #E4C9A4 0%, #D0AF83 55%, #B8926A 100%);
+  --mat-carton-flap: linear-gradient(180deg, #EFDAC0 0%, #DCC099 100%);
+  --mat-tape: rgba(255, 255, 255, 0.34);
+  --mat-carton-seam: rgba(140, 105, 66, 0.28);
+  --sh-carton: 0 12rpx 20rpx rgba(92, 68, 40, 0.24), inset 0 2rpx 0 rgba(255, 255, 255, 0.50);
+  --ln-carton-flap: 0 2rpx 4rpx rgba(120, 90, 55, 0.20);
+
+  /* ---- 内胆（打开后的内部） ---- */
+  --cavity-fridge: radial-gradient(120% 48% at 50% 0%, rgba(255, 255, 255, 0.80), rgba(255, 255, 255, 0) 66%),
+                   linear-gradient(180deg, #DCECFC 0%, #C1D7EF 55%, #AAC5E4 100%);
+  --cavity-wood: linear-gradient(180deg, #E4D0B2 0%, #CDB48D 100%);
+  --cavity-glass: linear-gradient(180deg, #E4EFFB 0%, #C4D6EB 100%);
+  --cavity-medical: linear-gradient(180deg, #F2F7FC 0%, #D3DEEA 100%);
+  --cavity-rack: linear-gradient(180deg, #E8EEF6 0%, #D0D9E6 100%);
+  --cavity-carton: linear-gradient(180deg, #E0CAA8 0%, #C9AE84 100%);
+  --mat-cavity-frame: rgba(150, 170, 196, 0.62);
+  --sh-cavity-cool: inset 0 0 0 2rpx rgba(255, 255, 255, 0.75),
+                    inset 0 10rpx 26rpx rgba(108, 140, 184, 0.28),
+                    0 10rpx 24rpx rgba(64, 84, 116, 0.14);
+  --sh-cavity-warm: inset 0 10rpx 26rpx rgba(122, 92, 56, 0.28),
+                    0 10rpx 24rpx rgba(92, 68, 40, 0.14);
+  --sh-cavity-soft: inset 0 10rpx 26rpx rgba(108, 140, 184, 0.20),
+                    0 10rpx 24rpx rgba(64, 84, 116, 0.12);
+  --mat-lamp: #FFFFFF;
+  --sh-lamp: 0 0 26rpx 10rpx rgba(255, 255, 255, 0.90);
+  --mat-cavity-floor: rgba(108, 140, 184, 0.20);
+  --mat-cavity-floor-warm: rgba(122, 92, 56, 0.22);
+
+  /* ---- 隔板（玻璃 / 木质） ---- */
+  --mat-shelf-board: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%,
+                     rgba(196, 219, 243, 0.94) 40%, rgba(132, 165, 203, 0.92) 100%);
+  --sh-shelf-board: 0 5rpx 12rpx rgba(72, 102, 144, 0.34);
+  --mat-shelf-board-warm: linear-gradient(180deg, rgba(255, 250, 242, 0.96) 0%,
+                     rgba(214, 186, 148, 0.94) 40%, rgba(166, 132, 92, 0.92) 100%);
+  --sh-shelf-board-warm: 0 5rpx 12rpx rgba(108, 78, 46, 0.32);
+
+  /* ---- 地面 / 小件 ---- */
+  --mat-ground: rgba(104, 124, 154, 0.26);
+  --mat-chip: rgba(255, 255, 255, 0.92);
+  --sh-chip: 0 2rpx 5rpx rgba(88, 118, 158, 0.22);
+  --mat-chip-text: #3D4759;
+  --mat-dot-ring: rgba(255, 255, 255, 0.85);
+  --dot-warning: #E89100;
+  --dot-expired: #D6423A;
+  --mat-pressed: rgba(255, 255, 255, 0.55);
+
   display: flex;
   flex-direction: column;
   height: 100vh;
   box-sizing: border-box;
   background: var(--bg-page);
   color: var(--text-1);
+}
+
+/* 深色：白家电不能还是白的，否则像一块发光的板子。
+ * 统一压成「被灯照着的深色金属」，高光减弱、投影加重。 */
+.container.dark .cavity--door2,
+.container.dark .cavity--carton {
+  --mat-cavity-frame: rgba(255, 255, 255, 0.10);
+}
+
+.container.dark {
+  --mat-fridge-frame: linear-gradient(180deg, #4A5464 0%, #333C4A 100%);
+  --sh-fridge: 0 12rpx 22rpx rgba(0, 0, 0, 0.45), inset 0 2rpx 0 rgba(255, 255, 255, 0.12);
+  --mat-fridge-door: linear-gradient(150deg, #5C6678 0%, #48515F 42%, #3A424F 100%);
+  --ln-fridge-door: inset 0 1rpx 0 rgba(255, 255, 255, 0.16), inset 0 -3rpx 7rpx rgba(0, 0, 0, 0.32);
+  --ln-fridge-drawer: inset 0 2rpx 0 rgba(255, 255, 255, 0.14);
+  --mat-handle: linear-gradient(90deg, #6B7688 0%, #A9B4C4 60%, #7B8698 100%);
+  --mat-led: #4FD07A;
+  --sh-led: 0 0 8rpx 2rpx rgba(79, 208, 122, 0.55);
+
+  --mat-wood-frame: linear-gradient(180deg, #4C3F2E 0%, #3A3024 100%);
+  --sh-wood: 0 12rpx 22rpx rgba(0, 0, 0, 0.45), inset 0 2rpx 0 rgba(255, 255, 255, 0.10);
+  --mat-wood-door: linear-gradient(150deg, #6E5940 0%, #584734 48%, #453828 100%);
+  --ln-wood-door: inset 0 1rpx 0 rgba(255, 255, 255, 0.12), inset 0 -4rpx 9rpx rgba(0, 0, 0, 0.32);
+  --mat-knob: linear-gradient(90deg, #8E6E4A 0%, #C2A078 100%);
+
+  --mat-glass-frame: linear-gradient(180deg, #41341F 0%, #2E2517 100%);
+  --mat-glass-door: linear-gradient(150deg, rgba(120, 158, 196, 0.42) 0%, rgba(58, 76, 96, 0.42) 100%);
+  --ln-glass-door: inset 0 1rpx 0 rgba(255, 255, 255, 0.18), inset 0 0 0 2rpx rgba(255, 255, 255, 0.10);
+  --mat-shine: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.02));
+
+  --mat-medical: linear-gradient(160deg, #4E5768 0%, #333A46 100%);
+  --sh-medical: 0 12rpx 22rpx rgba(0, 0, 0, 0.45), inset 0 2rpx 0 rgba(255, 255, 255, 0.12);
+  --mat-medical-lid: linear-gradient(180deg, rgba(122, 134, 154, 0.85), rgba(70, 78, 92, 0.55));
+  --ln-medical-lid: 0 2rpx 5rpx rgba(0, 0, 0, 0.32);
+  --mat-handle-out: #6B7688;
+  --mat-cross: #E2564D;
+
+  --mat-post: linear-gradient(90deg, #4A5364 0%, #6B7688 100%);
+  --sh-post: 0 6rpx 12rpx rgba(0, 0, 0, 0.38);
+  --mat-board: linear-gradient(180deg, #626D80 0%, #454E5D 100%);
+  --sh-board: 0 4rpx 7rpx rgba(0, 0, 0, 0.42);
+
+  --mat-carton: linear-gradient(160deg, #6A5842 0%, #4C3F2F 100%);
+  --mat-carton-flap: linear-gradient(180deg, #7A654C 0%, #5A4A37 100%);
+  --mat-tape: rgba(255, 255, 255, 0.14);
+  --mat-carton-seam: rgba(0, 0, 0, 0.28);
+  --sh-carton: 0 12rpx 22rpx rgba(0, 0, 0, 0.45), inset 0 2rpx 0 rgba(255, 255, 255, 0.10);
+  --ln-carton-flap: 0 2rpx 4rpx rgba(0, 0, 0, 0.28);
+
+  --cavity-fridge: radial-gradient(120% 55% at 50% 0%, rgba(150, 190, 235, 0.28), rgba(0, 0, 0, 0) 72%),
+                   linear-gradient(180deg, #2F3B4C 0%, #232D3B 100%);
+  --cavity-wood: linear-gradient(180deg, #4A3D2D 0%, #362D22 100%);
+  --cavity-glass: linear-gradient(180deg, #33404F 0%, #26303D 100%);
+  --cavity-medical: linear-gradient(180deg, #313843 0%, #262C36 100%);
+  --cavity-rack: linear-gradient(180deg, #313843 0%, #262C36 100%);
+  --cavity-carton: linear-gradient(180deg, #4E4130 0%, #382F23 100%);
+  --mat-cavity-frame: rgba(255, 255, 255, 0.10);
+  --sh-cavity-cool: inset 0 0 0 2rpx rgba(255, 255, 255, 0.10),
+                    inset 0 10rpx 26rpx rgba(0, 0, 0, 0.45),
+                    0 10rpx 24rpx rgba(0, 0, 0, 0.38);
+  --sh-cavity-warm: inset 0 10rpx 26rpx rgba(0, 0, 0, 0.45),
+                    0 10rpx 24rpx rgba(0, 0, 0, 0.38);
+  --sh-cavity-soft: inset 0 10rpx 26rpx rgba(0, 0, 0, 0.45),
+                    0 10rpx 24rpx rgba(0, 0, 0, 0.38);
+  --mat-lamp: #C9E0FA;
+  --sh-lamp: 0 0 26rpx 10rpx rgba(180, 215, 255, 0.35);
+  --mat-cavity-floor: rgba(255, 255, 255, 0.08);
+  --mat-cavity-floor-warm: rgba(255, 255, 255, 0.08);
+
+  --mat-shelf-board: linear-gradient(180deg, rgba(214, 231, 250, 0.34) 0%,
+                     rgba(150, 176, 208, 0.22) 45%, rgba(0, 0, 0, 0.34) 100%);
+  --sh-shelf-board: 0 3rpx 8rpx rgba(0, 0, 0, 0.45);
+  --mat-shelf-board-warm: linear-gradient(180deg, rgba(236, 214, 184, 0.30) 0%,
+                     rgba(178, 146, 108, 0.20) 45%, rgba(0, 0, 0, 0.34) 100%);
+  --sh-shelf-board-warm: 0 3rpx 8rpx rgba(0, 0, 0, 0.45);
+
+  --mat-ground: rgba(0, 0, 0, 0.42);
+  --mat-chip: rgba(24, 30, 40, 0.82);
+  --sh-chip: none;
+  --mat-chip-text: #E6EAF0;
+  --mat-dot-ring: rgba(255, 255, 255, 0.55);
+  --dot-warning: #FF9F0A;
+  --dot-expired: #FF453A;
+  --mat-pressed: rgba(255, 255, 255, 0.10);
 }
 
 .page-scroll {
@@ -66,7 +245,9 @@
   background: var(--warning-weak);
 }
 
-/* ---------- 容器墙 ---------- */
+/* ============================================================
+ * 容器墙：两个一行，每个是一件「立在那儿的东西」
+ * ============================================================ */
 .wall {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -74,192 +255,687 @@
   margin-top: var(--sp-3);
 }
 
-.wall-card {
+.cab {
   display: flex;
   flex-direction: column;
-  padding: var(--sp-3);
+  padding: var(--sp-2);
   border-radius: var(--r-lg);
   background: var(--bg-raised);
   box-shadow: var(--shadow-raised);
   transition: box-shadow var(--dur-fast) ease-out;
 }
 
-.wall-card--pressed {
+.cab--pressed {
   box-shadow: var(--shadow-raised-press);
 }
 
-.wall-card__head {
+/* 舞台：物件贴着地面站着，顶上留出冰箱的高度 */
+.cab__stage {
+  position: relative;
   display: flex;
-  align-items: center;
-}
-
-.wall-card__icon {
-  display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  width: 56rpx;
-  height: 56rpx;
-  margin-right: var(--sp-1);
-  border-radius: var(--r-sm);
-  background: var(--bg-sunken);
-  box-shadow: var(--shadow-sunken-sm);
-  font-size: 30rpx;
-  line-height: 1;
+  height: 240rpx;
+  padding-bottom: 14rpx;
 }
 
-.wall-card__name {
-  flex: 1;
+/* 地面阴影：椭圆半透明，比整块 box-shadow 更像「站在地上」 */
+.cab__ground {
+  position: absolute;
+  z-index: 0;
+  right: 24%;
+  bottom: 2rpx;
+  left: 24%;
+  height: 16rpx;
+  border-radius: 50%;
+  background: var(--mat-ground);
+}
+
+.cab__info {
+  margin-top: var(--sp-2);
+}
+
+.cab__line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.cab__name {
   min-width: 0;
   font-size: var(--fs-body);
   font-weight: 600;
   color: var(--text-1);
-}
-
-.wall-card__desc {
-  margin-top: 6rpx;
-  font-size: var(--fs-tiny);
-  line-height: 1.4;
-  color: var(--text-3);
-}
-
-.wall-card__foot {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  margin-top: var(--sp-2);
-}
-
-.wall-card__count {
-  font-size: var(--fs-caption);
-  font-weight: 600;
-  color: var(--text-2);
-}
-
-.wall-empty {
-  padding: 120rpx 0;
-  text-align: center;
-}
-
-.wall-empty__text {
-  font-size: var(--fs-body);
-  color: var(--text-3);
-}
-
-/* ---------- 容器内部 ---------- */
-.inside-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--sp-1) 0 var(--sp-2);
-}
-
-.inside-head__desc {
-  font-size: var(--fs-caption);
-  color: var(--text-3);
-}
-
-.inside-head__flags {
-  display: flex;
-  gap: 8rpx;
-}
-
-/* 块：网格自动排布，统一尺寸 —— 整齐比花哨重要，格子也不会因为数量变化而错位 */
-.grid {
-  display: grid;
-  gap: var(--sp-2);
-}
-
-.grid--3 {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-.grid--4 {
-  grid-template-columns: repeat(4, 1fr);
-}
-
-.tile {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  overflow: hidden;
-  border-radius: var(--r-md);
-  background: var(--bg-raised);
-  box-shadow: var(--shadow-raised);
-  transition: box-shadow var(--dur-fast) ease-out;
-}
-
-.grid--3 .tile {
-  height: 200rpx;
-}
-
-.grid--4 .tile {
-  height: 168rpx;
-}
-
-/* 描边走 inset：不占布局，加不加都不会让格子错位 */
-.tile.is-warning {
-  box-shadow: inset 0 0 0 3rpx var(--warning), var(--shadow-raised);
-}
-
-.tile.is-expired {
-  box-shadow: inset 0 0 0 3rpx var(--danger), var(--shadow-raised);
-}
-
-.tile--pressed {
-  box-shadow: var(--shadow-raised-press);
-}
-
-.tile__image {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.tile__initial {
-  font-size: 52rpx;
-  font-weight: 600;
-  line-height: 1;
-  color: var(--text-2);
-  opacity: 0.85;
-}
-
-/* 名称贴底，用一条渐变盖住图片下沿，避免白字压白图看不清 */
-.tile__name {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 20rpx 8rpx 8rpx;
-  font-size: var(--fs-tiny);
-  line-height: 1.3;
-  text-align: center;
-  color: var(--text-2);
-  background: linear-gradient(transparent, var(--bg-raised) 55%);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.tile__qty {
-  position: absolute;
-  top: 8rpx;
-  right: 8rpx;
-  min-width: 32rpx;
-  height: 32rpx;
-  padding: 0 8rpx;
-  box-sizing: border-box;
+.cab__count {
+  flex: none;
+  margin-left: 6rpx;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.cab__foot {
+  display: flex;
+  align-items: center;
+  margin-top: 4rpx;
+}
+
+.cab__preview {
+  display: flex;
+  align-items: center;
+}
+
+.cab__emoji {
+  margin-right: 3rpx;
+  font-size: 24rpx;
+  line-height: 1;
+  opacity: 0.85;
+}
+
+.cab__flag {
+  margin-left: auto;
+  padding: 2rpx 10rpx;
   border-radius: var(--r-pill);
-  background: var(--bg-sunken);
-  box-shadow: var(--shadow-sunken-sm);
   font-size: var(--fs-tiny);
   font-weight: 600;
-  line-height: 32rpx;
-  text-align: center;
+}
+
+.cab__flag.is-danger {
+  color: var(--danger);
+  background: var(--danger-weak);
+}
+
+.cab__flag.is-warning {
+  color: var(--warning);
+  background: var(--warning-weak);
+}
+
+/* ============================================================
+ * 物件：冰箱
+ * 外层是深一点的门框，里面两扇门一上一下，
+ * 中间靠 margin 露出的底衬当成门缝。
+ * ============================================================ */
+.obj {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+}
+
+.obj--fridge {
+  width: 152rpx;
+  height: 232rpx;
+  padding: 5rpx;
+  border-radius: 16rpx;
+  background: var(--mat-fridge-frame);
+  box-shadow: var(--sh-fridge);
+}
+
+.fridge__door {
+  position: relative;
+  border-radius: 11rpx;
+  background: var(--mat-fridge-door);
+  box-shadow: var(--ln-fridge-door);
+}
+
+.fridge__door--freezer {
+  height: 32%;
+}
+
+.fridge__door--chill {
+  height: calc(68% - 4rpx);
+  margin-top: 4rpx;
+  box-shadow: var(--ln-fridge-door), inset 0 4rpx 8rpx rgba(120, 138, 168, 0.30);
+}
+
+/* 冷藏门上的果蔬抽屉缝 */
+.fridge__drawer {
+  position: absolute;
+  right: 10rpx;
+  bottom: 10rpx;
+  left: 10rpx;
+  height: 52rpx;
+  border-radius: 7rpx;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(214, 224, 238, 0.35));
+  box-shadow: var(--ln-fridge-drawer);
+}
+
+/* 竖把手：贴在冷藏门左侧，金属条 + 一点投影 */
+.fridge__handle {
+  position: absolute;
+  top: 104rpx;
+  left: 14rpx;
+  width: 11rpx;
+  height: 72rpx;
+  border-radius: 6rpx;
+  background: var(--mat-handle);
+  box-shadow: 0 2rpx 4rpx rgba(58, 74, 100, 0.42);
+}
+
+/* 右上角电源灯 */
+.fridge__led {
+  position: absolute;
+  top: 14rpx;
+  right: 12rpx;
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background: var(--mat-led);
+  box-shadow: var(--sh-led);
+}
+
+/* ============================================================
+ * 物件：对开柜 / 玻璃门柜
+ * ============================================================ */
+.obj--door2,
+.obj--glass {
+  display: flex;
+  gap: 4rpx;
+  width: 186rpx;
+  height: 204rpx;
+  padding: 6rpx;
+  border-radius: 14rpx;
+  background: var(--mat-wood-frame);
+  box-shadow: var(--sh-wood);
+}
+
+.obj--glass {
+  background: var(--mat-glass-frame);
+}
+
+.cab2__panel {
+  position: relative;
+  flex: 1;
+  border-radius: 9rpx;
+  background: var(--mat-wood-door);
+  box-shadow: var(--ln-wood-door);
+}
+
+.obj--glass .cab2__panel {
+  background: var(--mat-glass-door);
+  box-shadow: var(--ln-glass-door);
+}
+
+/* 门把手：靠中缝那一侧，短竖条 */
+.cab2__knob {
+  position: absolute;
+  top: 44%;
+  width: 8rpx;
+  height: 46rpx;
+  border-radius: 4rpx;
+  background: var(--mat-knob);
+  box-shadow: 0 1rpx 2rpx rgba(70, 50, 28, 0.35);
+}
+
+.cab2__panel--l .cab2__knob {
+  right: 15rpx;
+}
+
+.cab2__panel--r .cab2__knob {
+  left: 15rpx;
+}
+
+/* 玻璃反光：一条斜向亮带，说明这是透的 */
+/* 隔着玻璃门能看到里面大概有什么：几枚淡淡的 emoji */
+.glass__inside {
+  position: absolute;
+  top: 12rpx;
+  right: 12rpx;
+  bottom: 12rpx;
+  left: 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+}
+
+.glass__ghost {
+  font-size: 44rpx;
+  line-height: 1;
+  opacity: 0.55;
+}
+
+.glass__shine {
+  position: absolute;
+  top: 8rpx;
+  bottom: 8rpx;
+  left: 34rpx;
+  width: 26rpx;
+  transform: skewX(-14deg);
+  border-radius: 6rpx;
+  background: var(--mat-shine);
+}
+
+/* ============================================================
+ * 物件：药箱（白塑料 + 红十字 + 提手）
+ * ============================================================ */
+.obj--medical {
+  width: 196rpx;
+  height: 140rpx;
+  border-radius: 20rpx;
+  background: var(--mat-medical);
+  box-shadow: var(--sh-medical);
+}
+
+/* 提手是拱形：只画上三边，底部不封口 */
+.medical__handle {
+  position: absolute;
+  top: -20rpx;
+  left: 50%;
+  width: 64rpx;
+  height: 26rpx;
+  margin-left: -32rpx;
+  box-sizing: border-box;
+  border: 7rpx solid var(--mat-handle-out);
+  border-bottom: none;
+  border-radius: 16rpx 16rpx 0 0;
+}
+
+.medical__lid {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 36rpx;
+  border-radius: 20rpx 20rpx 0 0;
+  background: var(--mat-medical-lid);
+  box-shadow: var(--ln-medical-lid);
+}
+
+.medical__cross {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 62rpx;
+  height: 62rpx;
+  margin: -25rpx 0 0 -31rpx;
+}
+
+.cross__h {
+  position: absolute;
+  top: 24rpx;
+  left: 0;
+  width: 62rpx;
+  height: 14rpx;
+  border-radius: 3rpx;
+  background: var(--mat-cross);
+}
+
+.cross__v {
+  position: absolute;
+  top: 0;
+  left: 24rpx;
+  width: 14rpx;
+  height: 62rpx;
+  border-radius: 3rpx;
+  background: var(--mat-cross);
+}
+
+/* ============================================================
+ * 物件：开放置物架（两侧立柱 + 三块板）
+ * ============================================================ */
+.obj--rack {
+  width: 190rpx;
+  height: 158rpx;
+}
+
+.rack__post {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 11rpx;
+  border-radius: 4rpx;
+  background: var(--mat-post);
+  box-shadow: var(--sh-post);
+}
+
+.rack__post--l {
+  left: 0;
+}
+
+.rack__post--r {
+  right: 0;
+}
+
+.rack__board {
+  position: absolute;
+  right: 9rpx;
+  left: 9rpx;
+  height: 13rpx;
+  border-radius: 4rpx;
+  background: var(--mat-board);
+  box-shadow: var(--sh-board);
+}
+
+.rack__board--1 {
+  top: 0;
+}
+
+.rack__board--2 {
+  top: 46%;
+}
+
+.rack__board--3 {
+  bottom: 0;
+}
+
+/* ============================================================
+ * 物件：纸箱（未归位）
+ * ============================================================ */
+.obj--carton {
+  width: 186rpx;
+  height: 158rpx;
+  border-radius: 8rpx;
+  background: var(--mat-carton);
+  box-shadow: var(--sh-carton);
+}
+
+.carton__flap {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 26rpx;
+  border-radius: 8rpx 8rpx 0 0;
+  background: var(--mat-carton-flap);
+  box-shadow: var(--ln-carton-flap);
+}
+
+.carton__tape {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 24rpx;
+  margin-left: -12rpx;
+  background: var(--mat-tape);
+}
+
+.carton__seam {
+  position: absolute;
+  top: 26rpx;
+  right: 0;
+  left: 0;
+  height: 3rpx;
+  background: var(--mat-carton-seam);
+}
+
+/* ============================================================
+ * 容器内部：内胆 + 一层层隔板
+ * ============================================================ */
+.inside-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-2) 0;
+}
+
+.inside-bar__desc {
+  font-size: var(--fs-caption);
+  color: var(--text-3);
+}
+
+.inside-bar__flags {
+  display: flex;
+  gap: 8rpx;
+}
+
+.cavity {
+  position: relative;
+  box-sizing: border-box;
+  margin: 0 9rpx;
+  padding: 14rpx 8rpx 8rpx;
+  border: 9rpx solid var(--mat-cavity-frame);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  /* 从柜子墙点进来时轻微「打开」一下，别硬切 */
+  animation: cavity-open var(--dur-base) ease-out;
+}
+
+@keyframes cavity-open {
+  from {
+    opacity: 0;
+    transform: translateY(-10rpx) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.cavity--fridge {
+  background: var(--cavity-fridge);
+  box-shadow: var(--sh-cavity-cool);
+}
+
+.cavity--door2 {
+  --mat-cavity-frame: rgba(146, 108, 68, 0.55);
+  background: var(--cavity-wood);
+  box-shadow: var(--sh-cavity-warm);
+}
+
+.cavity--glass {
+  background: var(--cavity-glass);
+  box-shadow: var(--sh-cavity-soft);
+}
+
+.cavity--medical {
+  background: var(--cavity-medical);
+  box-shadow: var(--sh-cavity-soft);
+}
+
+.cavity--rack {
+  background: var(--cavity-rack);
+  box-shadow: var(--sh-cavity-soft);
+}
+
+.cavity--carton {
+  --mat-cavity-frame: rgba(146, 108, 68, 0.55);
+  background: var(--cavity-carton);
+  box-shadow: var(--sh-cavity-warm);
+}
+
+/* 冰箱顶灯 */
+.cavity__lamp {
+  position: absolute;
+  top: 8rpx;
+  left: 50%;
+  width: 62%;
+  height: 8rpx;
+  margin-left: -31%;
+  border-radius: var(--r-pill);
+  background: var(--mat-lamp);
+  box-shadow: var(--sh-lamp);
+}
+
+.cavity__floor {
+  height: 8rpx;
+  margin-top: 6rpx;
+  border-radius: var(--r-pill);
+  background: var(--mat-cavity-floor);
+}
+
+.cavity--door2 .cavity__floor,
+.cavity--carton .cavity__floor {
+  background: var(--mat-cavity-floor-warm);
+}
+
+/* 分区标题（只有冰箱有冷冻/冷藏两段） */
+.zone__bar {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 6rpx 8rpx 0;
+}
+
+.zone__name {
+  font-size: var(--fs-tiny);
+  font-weight: 600;
+  letter-spacing: 1rpx;
+  color: var(--text-3);
+}
+
+.zone__count {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+  opacity: 0.72;
+}
+
+.zone__flag {
+  margin-left: auto;
+  font-size: var(--fs-tiny);
+  font-weight: 600;
+}
+
+.zone__flag.is-danger {
+  color: var(--danger);
+}
+
+.zone__flag.is-warning {
+  color: var(--warning);
+}
+
+.zone + .zone {
+  margin-top: var(--sp-2);
+}
+
+/* 一层：格子 + 下面那块隔板 */
+.shelf {
+  margin-top: 8rpx;
+}
+
+.shelf__tier {
+  display: grid;
+  gap: 6rpx;
+  padding: 10rpx 6rpx 8rpx;
+}
+
+.shelf__tier--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.shelf__tier--4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.shelf__board {
+  height: 14rpx;
+  border-radius: 0 0 6rpx 6rpx;
+  background: var(--mat-shelf-board);
+  box-shadow: var(--sh-shelf-board);
+}
+
+.cavity--door2 .shelf__board,
+.cavity--carton .shelf__board {
+  background: var(--mat-shelf-board-warm);
+  box-shadow: var(--sh-shelf-board-warm);
+}
+
+/* 格子里的一件东西：emoji 坐着，名字在下，状态点贴左上 */
+.thing {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 130rpx;
+  border-radius: var(--r-sm);
+  transition: background var(--dur-fast) ease-out;
+}
+
+/* 图案自己的方框：角标和状态点相对它定位，才不会被拉到格子四角 */
+.thing__pic {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100rpx;
+  height: 100rpx;
+}
+
+.thing--pressed {
+  background: var(--mat-pressed);
+}
+
+.thing__emoji {
+  font-size: 70rpx;
+  line-height: 1;
+}
+
+.shelf__tier--3 .thing__emoji {
+  font-size: 82rpx;
+}
+
+.thing__img {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: var(--r-sm);
+}
+
+.shelf__tier--3 .thing__img {
+  width: 100rpx;
+  height: 100rpx;
+}
+
+.thing__name {
+  max-width: 100%;
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  line-height: 1.2;
   color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.thing.is-warning .thing__name {
+  color: var(--warning);
+}
+
+.thing.is-expired .thing__name {
+  color: var(--danger);
+}
+
+/* 数量角标：贴在右上，超过 1 才出现 */
+.thing__qty {
+  position: absolute;
+  top: -2rpx;
+  right: -12rpx;
+  min-width: 30rpx;
+  height: 30rpx;
+  padding: 0 6rpx;
+  box-sizing: border-box;
+  border-radius: var(--r-pill);
+  background: var(--mat-chip);
+  box-shadow: var(--sh-chip);
+  font-size: 18rpx;
+  font-weight: 600;
+  line-height: 30rpx;
+  text-align: center;
+  color: var(--mat-chip-text);
+}
+
+/* 状态点：橙色临期、红色过期，白圈保证深色内胆上也看得见 */
+.thing__dot {
+  position: absolute;
+  top: 2rpx;
+  left: 2rpx;
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3rpx var(--mat-dot-ring);
+}
+
+.thing__dot.is-warning {
+  background: var(--dot-warning);
+}
+
+.thing__dot.is-expired {
+  background: var(--dot-expired);
 }
 
 .inside-hint {
@@ -276,6 +952,30 @@
   color: var(--text-3);
 }
 
+/* ---------- 空态 ---------- */
+.wall-empty {
+  padding: 100rpx 0 40rpx;
+  text-align: center;
+}
+
+.wall-empty__text {
+  display: block;
+  font-size: var(--fs-body);
+  color: var(--text-2);
+}
+
+.wall-empty__desc {
+  display: block;
+  margin-top: 8rpx;
+  font-size: var(--fs-tiny);
+  line-height: 1.5;
+  color: var(--text-3);
+}
+
+.wall-empty__btn {
+  margin-top: var(--sp-4);
+}
+
 /* ---------- 骨架 ---------- */
 .wall-skeleton {
   display: grid;
@@ -285,7 +985,7 @@
 }
 
 .wall-skeleton__card {
-  height: 200rpx;
+  height: 336rpx;
   border-radius: var(--r-lg);
 }
 
