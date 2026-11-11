@@ -358,7 +358,10 @@ Page({
     var ed = this.data.itemEditor;
     if (!ed) return;
     var delta = Number(e.currentTarget.dataset.delta) || 0;
-    this._setItemQty((Number(ed.quantity) || 0) + delta);
+    // 输入框里刚打了数还没失焦就点 +/-：以框里的值为基准，别拿旧数量算
+    var typed = String(ed.quantityText === undefined ? '' : ed.quantityText).trim();
+    var base = typed === '' || isNaN(Number(typed)) ? (Number(ed.quantity) || 0) : Number(typed);
+    this._setItemQty(base + delta);
   },
 
   onItemQtyInput: function (e) {
