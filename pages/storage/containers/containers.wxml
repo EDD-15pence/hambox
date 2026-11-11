@@ -430,4 +430,45 @@
       </view>
     </view>
   </view>
+
+  <!-- ==================== 物品快捷面板（S-11） ==================== -->
+  <view wx:if="{{itemEditor}}" class="sheet-mask" bindtap="onCloseItemEditor">
+    <view class="sheet" catchtap="noop">
+      <view class="sheet__head sheet__head--item">
+        <view class="item-head">
+          <view class="item-head__pic">
+            <image wx:if="{{itemEditor.imageSrc}}" class="item-head__img" src="{{itemEditor.imageSrc}}" mode="aspectFill" />
+            <text wx:else class="item-head__emoji">{{itemEditor.emoji}}</text>
+          </view>
+          <view class="item-head__text">
+            <text class="item-head__name">{{itemEditor.name}}</text>
+            <text class="item-head__where">{{itemEditor.location}}</text>
+          </view>
+        </view>
+        <text class="sheet__close" catchtap="onGoItemDetail">看详情 ›</text>
+      </view>
+
+      <view class="sheet__body">
+        <view class="field">
+          <text class="field__label">还有多少（{{itemEditor.unit}}）</text>
+          <view class="step">
+            <text class="step__btn" data-delta="-1" catchtap="onItemQtyStep">−</text>
+            <input
+              class="step__num item-qty__input"
+              type="digit"
+              value="{{itemEditor.quantityText}}"
+              bindinput="onItemQtyInput"
+              bindblur="onItemQtyBlur" />
+            <text class="step__btn" data-delta="1" catchtap="onItemQtyStep">＋</text>
+          </view>
+          <text class="field__hint">改完自动保存，不用点确定。减到 0 也不会自动删掉。</text>
+        </view>
+      </view>
+
+      <view class="sheet__foot">
+        <button class="ui-btn sheet__del" catchtap="onItemUsedUp">用完了</button>
+        <button class="ui-btn is-primary sheet__ok" catchtap="onGoItemEdit">编辑全部字段</button>
+      </view>
+    </view>
+  </view>
 </view>

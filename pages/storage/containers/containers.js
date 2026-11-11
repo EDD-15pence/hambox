@@ -4,7 +4,8 @@
  * 一个页面三种状态：
  * - `wall`   容器墙，看家里有几个地方、各装了多少；
  * - `inside` 打开某个容器，一层层隔板上摆着东西；
- * - 两个浮层：容器编辑面板（名称/外观/层数/关键字）、在途录入。
+ * - 三个浮层：容器编辑面板（名称/外观/层数/关键字）、在途录入、
+ *   物品快捷面板（数量 +/- / 用完了 / 编辑全部字段，S-11）。
  *
  * 数据来自三处，一次并发拉：
  * - `GET /api/containers` 容器定义（含拖拽位次 slots），覆盖本地兜底常量；
@@ -93,6 +94,8 @@ Page({
     pickingName: '',
     // 容器编辑面板：null 表示关着
     editor: null,
+    // 物品快捷面板：点积木块弹出，就地改数量（S-11）
+    itemEditor: null,
     skins: SKINS,
     icons: ICONS,
     // 拖拽进行中（用来关滚动 + 画跟随块）
@@ -302,13 +305,139 @@ Page({
     });
   },
 
+  /** 点积木块：先给一张能改数量的小面板，详情/全字段编辑从面板里进（S-11） */
   onTapTile: function (e) {
-    // 拖拽刚结束的那一下不要跳详情
+    // 拖拽刚结束的那一下不要弹面板
     if (this._justDragged) return;
-    var id = e.currentTarget.dataset.id;
-    wx.navigateTo({
-      url: '/pages/storage/detail/detail?id=' + encodeURIComponent(id)
+    this.openItemEditor(e.currentTarget.dataset.id);
+  },
+
+  // ==============================
+  // 物品快捷面板（S-11）：数量就地改，改完即落库
+  // ==============================
+
+  openItemEditor: function (id) {
+    var item = this.itemById(id);
+    if (!item) return;
+    this._itemSnapshot = Object.assign({}, item);
+    this.setData({
+      editor: null,
+      itemEditor: {
+        id: item.id,
+        name: item.name,
+        emoji: itemEmoji.emojiFor(item.name, item.category),
+        imageSrc: item.imageSrc || '',
+        quantity: item.quantity,
+        quantityText: String(item.quantity),
+        unit: item.unit || '个',
+        location: item.location || '没写位置'
+      }
     });
+  },
+
+  onCloseItemEditor: function () {
+    this.setData({ itemEditor: null });
+  },
+
+  /** 数量只走这一处：界面立刻变，再串行 PUT，最后一次点的值必定最后落库 */
+  _setItemQty: function (next) {
+    var ed = this.data.itemEditor;
+    if (!ed) return;
+    var item = this.itemById(ed.id);
+    if (!item) return;
+    var qty = Number(next);
+    if (isNaN(qty) || qty < 0) qty = 0;
+    qty = Math.round(qty * 10) / 10;
+    item.quantity = qty;
+    this.setData({ 'itemEditor.quantity': qty, 'itemEditor.quantityText': String(qty) });
+    this.render();
+    this._saveItemQty(ed.id, Object.assign({}, item));
+  },
+
+  onItemQtyStep: function (e) {
+    var ed = this.data.itemEditor;
+    if (!ed) return;
+    var delta = Number(e.currentTarget.dataset.delta) || 0;
+    this._setItemQty((Number(ed.quantity) || 0) + delta);
+  },
+
+  onItemQtyInput: function (e) {
+    // 输入中允许「」「1.」这类中间态，不落库；失焦时才归一
+    this.setData({ 'itemEditor.quantityText': e.detail.value });
+  },
+
+  onItemQtyBlur: function (e) {
+    var raw = String((e.detail && e.detail.value) || '').trim();
+    if (raw === '' || isNaN(Number(raw))) {
+      var old = this.data.itemEditor ? this.data.itemEditor.quantity : 1;
+      this.setData({ 'itemEditor.quantityText': String(old) });
+      return;
+    }
+    this._setItemQty(Number(raw));
+  },
+
+  /**
+   * 串行提交：连点 +/- 会发多条 PUT，但后一条一定排在前一条之后，
+   * 最终库里是最后一次点出来的数量。任何一条失败就回滚到打开面板时的快照。
+   */
+  _saveItemQty: function (id, payload) {
+    var self = this;
+    this._qtyChain = (this._qtyChain || Promise.resolve())
+      .then(function () { return api.updateItem(id, payload); })
+      .catch(function (err) {
+        var snap = self._itemSnapshot;
+        if (!snap || String(snap.id) !== String(id)) return;
+        self._items = (self._items || []).map(function (it) {
+          return String(it.id) === String(id) ? snap : it;
+        });
+        if (self.data.itemEditor && String(self.data.itemEditor.id) === String(id)) {
+          self.setData({
+            'itemEditor.quantity': snap.quantity,
+            'itemEditor.quantityText': String(snap.quantity)
+          });
+        }
+        self.render();
+        wx.showToast({ title: (err && err.message) || '数量没存上', icon: 'none' });
+      });
+  },
+
+  onItemUsedUp: function () {
+    var self = this;
+    var ed = this.data.itemEditor;
+    if (!ed) return;
+    wx.showModal({
+      title: '用完了？',
+      content: '「' + ed.name + '」会从库存里删掉',
+      confirmText: '删掉',
+      success: function (res) {
+        if (!res.confirm) return;
+        api.deleteItem(ed.id).then(function () {
+          self._items = (self._items || []).filter(function (it) {
+            return String(it.id) !== String(ed.id);
+          });
+          self.setData({ itemEditor: null });
+          self._itemSnapshot = null;
+          self.render();
+          wx.showToast({ title: '已删掉', icon: 'none' });
+        }).catch(function (err) {
+          wx.showToast({ title: (err && err.message) || '没删掉', icon: 'none' });
+        });
+      }
+    });
+  },
+
+  onGoItemDetail: function () {
+    var ed = this.data.itemEditor;
+    if (!ed) return;
+    this.setData({ itemEditor: null });
+    wx.navigateTo({ url: '/pages/storage/detail/detail?id=' + encodeURIComponent(ed.id) });
+  },
+
+  onGoItemEdit: function () {
+    var ed = this.data.itemEditor;
+    if (!ed) return;
+    this.setData({ itemEditor: null });
+    wx.navigateTo({ url: '/pages/storage/edit/edit?id=' + encodeURIComponent(ed.id) });
   },
 
   // ==============================
