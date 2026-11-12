@@ -48,7 +48,14 @@
           <text wx:if="{{item.who}}" class="ans__who">{{item.who}}</text>
         </view>
         <text class="ans__answer">{{item.answer}}</text>
-        <text class="ans__hint">点一下复制 · 长按可改</text>
+        <view class="ans__foot">
+          <text class="ans__hint">点一下复制 · 长按可改</text>
+          <text
+            wx:if="{{item.sourceEntryId}}"
+            class="ans__from"
+            data-id="{{item.sourceEntryId}}"
+            catchtap="onOpenSource">来自记录 ›</text>
+        </view>
       </view>
     </block>
   </view>

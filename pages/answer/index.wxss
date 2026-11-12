@@ -103,11 +103,23 @@
   word-break: break-word;
 }
 
-.ans__hint {
-  display: block;
+.ans__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
   margin-top: var(--sp-2);
+}
+
+.ans__hint {
   font-size: var(--fs-tiny);
   color: var(--text-3);
+}
+
+.ans__from {
+  flex: none;
+  font-size: var(--fs-tiny);
+  color: var(--primary);
 }
 
 .ans-retry {

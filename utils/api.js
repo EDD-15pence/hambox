@@ -553,6 +553,11 @@ function listEntriesByDate(date) {
   });
 }
 
+/** 单条：答案页「来自记录」回跳要先拿到它属于哪天 */
+function getEntry(id) {
+  return request('/api/entries/' + encodeURIComponent(id)).then(toViewEntry);
+}
+
 function createEntry(entry) {
   return request('/api/entries', 'POST', {
     entry_date: entry.entryDate,
@@ -572,6 +577,7 @@ function updateEntry(id, patch) {
   if (patch.content !== undefined) body.content = patch.content;
   if (patch.entryDate !== undefined) body.entry_date = patch.entryDate;
   if (patch.type !== undefined) body.type = patch.type;
+  if (patch.meta !== undefined) body.meta = patch.meta;
   if (patch.imageUrl !== undefined) body.image_url = patch.imageUrl;
   return request('/api/entries/' + encodeURIComponent(id), 'PATCH', body).then(toViewEntry);
 }
@@ -668,6 +674,7 @@ module.exports = {
   restoreFeedbacks: restoreFeedbacks,
   listEntriesByMonth: listEntriesByMonth,
   listEntriesByDate: listEntriesByDate,
+  getEntry: getEntry,
   createEntry: createEntry,
   updateEntry: updateEntry,
   deleteEntry: deleteEntry,

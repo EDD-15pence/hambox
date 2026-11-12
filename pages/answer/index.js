@@ -93,6 +93,26 @@ Page({
     wx.setClipboardData({ data: text });
   },
 
+  /** 回跳到这条答案的来源记录（R-05）。记录被删了就说明白，别跳进空页面 */
+  onOpenSource: function (e) {
+    var id = e.currentTarget.dataset.id;
+    if (!id) return;
+    wx.showLoading({ title: '打开中', mask: true });
+    api.getEntry(id)
+      .then(function (entry) {
+        wx.hideLoading();
+        if (!entry || !entry.entryDate) {
+          wx.showToast({ title: '这条记录找不到了', icon: 'none' });
+          return;
+        }
+        wx.navigateTo({ url: '/pages/record/day?date=' + entry.entryDate });
+      })
+      .catch(function () {
+        wx.hideLoading();
+        wx.showToast({ title: '这条记录已经删了', icon: 'none' });
+      });
+  },
+
   /** 长按 = 改 / 删 */
   onEditAnswer: function (e) {
     var id = e.currentTarget.dataset.id;

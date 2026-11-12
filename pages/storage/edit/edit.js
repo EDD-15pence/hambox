@@ -5,6 +5,7 @@ var api = require('../../../utils/api');
 var storageUtils = require('../../../utils/storage-utils');
 var nav = require('../../../utils/nav');
 var theme = require('../../../utils/theme');
+var image = require('../../../utils/image');
 
 Page({
   data: {
@@ -234,31 +235,26 @@ Page({
     var self = this;
     if (this.data.uploading) return;
 
-    wx.chooseImage({
-      count: 1,
-      sizeType: ['compressed'],
-      sourceType: ['album', 'camera'],
-      success: function (res) {
-        var filePath = res.tempFilePaths[0];
-        if (!filePath) return;
+    // 先压到 500KB 以内再传：手机原图动辄 3MB，局域网传一张要好几秒
+    image.pickAndCompress()
+      .then(function (picked) {
         self.setData({ uploading: true });
         wx.showLoading({ title: '上传中', mask: true });
-        api.uploadImage(filePath)
-          .then(function (url) {
-            wx.hideLoading();
-            self.setData({
-              uploading: false,
-              'item.image': url,
-              'item.imageSrc': api.getBaseUrl() + url
-            });
-          })
-          .catch(function (err) {
-            wx.hideLoading();
-            self.setData({ uploading: false });
-            wx.showToast({ title: err.message, icon: 'none' });
-          });
-      }
-    });
+        return api.uploadImage(picked.path);
+      })
+      .then(function (url) {
+        wx.hideLoading();
+        self.setData({
+          uploading: false,
+          'item.image': url,
+          'item.imageSrc': api.getBaseUrl() + url
+        });
+      })
+      .catch(function (err) {
+        wx.hideLoading();
+        self.setData({ uploading: false });
+        wx.showToast({ title: (err && err.message) || '没选到图片', icon: 'none' });
+      });
   },
 
   // ==============================
