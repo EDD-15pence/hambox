@@ -514,6 +514,128 @@ function restoreFeedbacks(ids) {
   return request('/api/feedbacks/restore-batch', 'POST', { ids: ids || [] });
 }
 
+// ==============================
+// 记录（R-01）
+// ==============================
+
+function toViewEntry(row) {
+  return {
+    id: row.id,
+    entryDate: row.entry_date || '',
+    type: row.type || 'day',
+    title: row.title || '',
+    comment: row.comment || '',
+    content: row.content || '',
+    meta: row.meta || '',
+    imageUrl: row.image_url || '',
+    createdAt: normalizeTimestamp(row.created_at)
+  };
+}
+
+/** 日历按月拉：返回的 days 已按天聚合好（后端算的，前端直接用） */
+function listEntriesByMonth(month) {
+  return request('/api/entries?month=' + encodeURIComponent(month || '')).then(function (data) {
+    return {
+      items: (data.items || []).map(toViewEntry),
+      total: data.total || 0,
+      days: data.days || []
+    };
+  });
+}
+
+/** 当天详情：这一天全部条目，按写入时间升序 */
+function listEntriesByDate(date) {
+  return request('/api/entries?date=' + encodeURIComponent(date || '')).then(function (data) {
+    return {
+      items: (data.items || []).map(toViewEntry),
+      total: data.total || 0
+    };
+  });
+}
+
+function createEntry(entry) {
+  return request('/api/entries', 'POST', {
+    entry_date: entry.entryDate,
+    type: entry.type || 'day',
+    title: (entry.title || '').trim(),
+    comment: (entry.comment || '').trim(),
+    content: (entry.content || '').trim(),
+    meta: entry.meta || '',
+    image_url: entry.imageUrl || ''
+  }).then(toViewEntry);
+}
+
+function updateEntry(id, patch) {
+  var body = {};
+  if (patch.title !== undefined) body.title = patch.title;
+  if (patch.comment !== undefined) body.comment = patch.comment;
+  if (patch.content !== undefined) body.content = patch.content;
+  if (patch.entryDate !== undefined) body.entry_date = patch.entryDate;
+  if (patch.type !== undefined) body.type = patch.type;
+  if (patch.imageUrl !== undefined) body.image_url = patch.imageUrl;
+  return request('/api/entries/' + encodeURIComponent(id), 'PATCH', body).then(toViewEntry);
+}
+
+function deleteEntry(id) {
+  return request('/api/entries/' + encodeURIComponent(id), 'DELETE');
+}
+
+// ==============================
+// 版本答案（R-01）
+// ==============================
+
+function toViewAnswer(row) {
+  return {
+    id: row.id,
+    keyword: row.keyword || '',
+    answer: row.answer || '',
+    who: row.who || '',
+    verdict: row.verdict || '',
+    star: row.star || 0,
+    sourceEntryId: row.source_entry_id || null,
+    imageUrl: row.image_url || '',
+    updatedAt: normalizeTimestamp(row.updated_at)
+  };
+}
+
+function listAnswers(q) {
+  return request('/api/answers?q=' + encodeURIComponent(q || '')).then(function (data) {
+    return {
+      items: (data.items || []).map(toViewAnswer),
+      total: data.total || 0
+    };
+  });
+}
+
+/** 同关键词覆盖更新，`created` 告诉调用方是新增还是更新 */
+function createAnswer(answer) {
+  return request('/api/answers', 'POST', {
+    keyword: (answer.keyword || '').trim(),
+    answer: (answer.answer || '').trim(),
+    who: (answer.who || '').trim(),
+    verdict: (answer.verdict || '').trim(),
+    star: answer.star || 0,
+    source_entry_id: answer.sourceEntryId || null,
+    image_url: answer.imageUrl || ''
+  }).then(function (data) {
+    return { item: toViewAnswer(data.item), created: !!data.created };
+  });
+}
+
+function updateAnswer(id, patch) {
+  var body = {};
+  if (patch.keyword !== undefined) body.keyword = patch.keyword;
+  if (patch.answer !== undefined) body.answer = patch.answer;
+  if (patch.who !== undefined) body.who = patch.who;
+  if (patch.verdict !== undefined) body.verdict = patch.verdict;
+  if (patch.star !== undefined) body.star = patch.star;
+  return request('/api/answers/' + encodeURIComponent(id), 'PATCH', body).then(toViewAnswer);
+}
+
+function deleteAnswer(id) {
+  return request('/api/answers/' + encodeURIComponent(id), 'DELETE');
+}
+
 module.exports = {
   getBaseUrl: env.getBaseUrl,
   probe: probe,
@@ -543,5 +665,14 @@ module.exports = {
   createFeedback: createFeedback,
   listFeedbacks: listFeedbacks,
   deleteFeedbacks: deleteFeedbacks,
-  restoreFeedbacks: restoreFeedbacks
+  restoreFeedbacks: restoreFeedbacks,
+  listEntriesByMonth: listEntriesByMonth,
+  listEntriesByDate: listEntriesByDate,
+  createEntry: createEntry,
+  updateEntry: updateEntry,
+  deleteEntry: deleteEntry,
+  listAnswers: listAnswers,
+  createAnswer: createAnswer,
+  updateAnswer: updateAnswer,
+  deleteAnswer: deleteAnswer
 };

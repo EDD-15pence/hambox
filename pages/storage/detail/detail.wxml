@@ -138,5 +138,5 @@
     </block>
     </view>
   </scroll-view>
-  <feedback-fab />
+  <feedback-fab spacer="{{false}}" />
 </view>

@@ -1,5 +1,6 @@
 {
   "navigationBarTitleText": "智能仓储",
+  "enablePullDownRefresh": true,
   "usingComponents": {
     "voice-add": "/components/voice-add/voice-add",
     "conn-error": "/components/conn-error/conn-error",

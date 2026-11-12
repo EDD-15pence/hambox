@@ -45,6 +45,26 @@ Component({
     side: {
       type: String,
       value: 'right'
+    },
+
+    /* 暂时藏起来（容器页拖拽时传 true）：拖拽中底部会浮出「换柜子」条，
+       两个都靠底部会挤在一起，而且拖拽时本来也点不到反馈 */
+    hidden: {
+      type: Boolean,
+      value: false
+    },
+
+    /*
+     * 底部留白开关，默认开。气泡是 fixed，页面滚到底时最后的内容会钻到它
+     * 底下——可点元素被盖住就会点错。这里补一块等高占位（160rpx：气泡 72 +
+     * 底距 24 + 余量），让内容滚不到气泡范围内。
+     *
+     * 已经有足够底部留白的页面（首页 140rpx / 清单 200rpx / 反馈列表 180rpx /
+     * 容器页自己的 bottom-spacer）传 false，免得白加一截空白。
+     */
+    spacer: {
+      type: Boolean,
+      value: true
     }
   },
 

@@ -1022,8 +1022,10 @@
   border-radius: var(--r-lg);
 }
 
+/* 底部留白：柜内视图末尾有「＋ 记一件放这里」，气泡 fixed 占 24~96rpx，
+   加上「换柜子」条也可能浮上来，留到 180rpx 才两头都不挡 */
 .bottom-spacer {
-  height: calc(var(--sp-6) + env(safe-area-inset-bottom));
+  height: calc(180rpx + env(safe-area-inset-bottom));
 }
 
 /* ---------- 容器内「＋ 记一件」 ---------- */
@@ -1142,6 +1144,15 @@
   margin-left: auto;
   font-size: var(--fs-tiny);
   color: var(--text-3);
+}
+
+/* 多选入口：只在超过 1 件时才出现，1 件没什么可批量的 */
+.pending__multi {
+  margin-left: var(--sp-2);
+  padding: 0 var(--sp-1);
+  font-size: var(--fs-caption);
+  color: var(--primary);
+  font-weight: 600;
 }
 
 .pending__list {
@@ -1273,6 +1284,99 @@
   border-radius: var(--r-md);
   background: var(--primary-weak);
   box-shadow: 0 0 0 3rpx var(--primary);
+}
+
+/* ---------------- 在途多选（T-03b） ---------------- */
+
+/* 勾选圈钉在块的左上角，不挤动 emoji 与数量的位置 */
+.pchip__check {
+  position: absolute;
+  z-index: 2;
+  top: 6rpx;
+  left: 6rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 34rpx;
+  height: 34rpx;
+  border: 2rpx solid var(--border);
+  border-radius: 50%;
+  background: var(--bg-raised);
+}
+
+.pchip.is-checked {
+  box-shadow: 0 0 0 3rpx var(--primary);
+}
+
+.pchip.is-checked .pchip__check {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.pchip__tick {
+  font-size: 20rpx;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--on-primary);
+}
+
+/* 多选态底部条：抬到反馈气泡上方（气泡 bottom 24~96rpx），两个都能点 */
+.pending-bar {
+  position: fixed;
+  z-index: 840;
+  left: var(--page-x);
+  right: var(--page-x);
+  bottom: calc(112rpx + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  box-sizing: border-box;
+  height: 96rpx;
+  padding: 0 var(--sp-2) 0 var(--sp-3);
+  border-radius: var(--r-pill);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-float);
+}
+
+.pending-bar__count {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--fs-caption);
+  color: var(--text-2);
+}
+
+.pending-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.pending-bar__cancel {
+  padding: 0 var(--sp-2);
+  height: 64rpx;
+  line-height: 64rpx;
+  font-size: var(--fs-caption);
+  color: var(--text-3);
+}
+
+.pending-bar__ok {
+  padding: 0 var(--sp-3);
+  height: 64rpx;
+  line-height: 64rpx;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--on-primary);
+  background: var(--primary);
+}
+
+.pending-bar__ok.is-off {
+  opacity: 0.45;
 }
 
 /* ---------------- 换柜子条 ---------------- */

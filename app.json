@@ -12,17 +12,22 @@
   "pages/prompt/index/index",
   "pages/prompt/detail/index",
   "pages/flight/flight",
-  "pages/feedback/list"
+  "pages/feedback/list",
+  "pages/record/calendar",
+  "pages/record/day",
+  "pages/answer/index"
   ],
   "window": {
     "navigationStyle": "custom",
     "navigationBarTitleText": "汉堡盒",
-    "navigationBarBackgroundColor": "#ffffff",
-    "navigationBarTextStyle": "black",
-    "backgroundTextStyle": "light",
-    "backgroundColor": "#E8ECF2",
+    "navigationBarBackgroundColor": "@navBgColor",
+    "navigationBarTextStyle": "@navTxtStyle",
+    "backgroundTextStyle": "@bgTxtStyle",
+    "backgroundColor": "@bgColor",
     "enableShareAppMessage": true
   },
+  "darkmode": true,
+  "themeLocation": "theme.json",
   "plugins": {
     "WechatSI": {
       "version": "0.3.5",

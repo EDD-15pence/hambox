@@ -208,8 +208,9 @@
   margin-top: var(--sp-6);
 }
 
+/* 底部留白：气泡 fixed 占 24~96rpx，留到 148rpx 才不会盖住最后一行 */
 .bottom-spacer {
-  height: calc(var(--sp-6) + env(safe-area-inset-bottom));
+  height: calc(148rpx + env(safe-area-inset-bottom));
 }
 
 /* ---------- 加载骨架 ---------- */

@@ -165,5 +165,5 @@
     <view class="bottom-spacer"></view>
     </view>
   </scroll-view>
-  <feedback-fab />
+  <feedback-fab spacer="{{false}}" />
 </view>

@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "记录",
+  "usingComponents": {
+    "feedback-fab": "/components/feedback-fab/feedback-fab"
+  }
+}

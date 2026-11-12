@@ -1,0 +1,159 @@
+/* ============================================================
+ * 记录 · 当天详情（R-02）
+ * ============================================================ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: var(--bg-page);
+  color: var(--text-1);
+}
+
+.app-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.page-body {
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--sp-2) var(--page-x) 0;
+}
+
+/* ---------------- 一句话录入 ---------------- */
+
+.composer {
+  padding: var(--sp-3);
+  border-radius: var(--r-lg);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.composer__input {
+  width: 100%;
+  min-height: 88rpx;
+  font-size: var(--fs-body);
+  line-height: 1.55;
+  color: var(--text-1);
+}
+
+.composer__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.composer__hint {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.composer__ok {
+  flex: none;
+  min-width: 140rpx;
+  height: 68rpx;
+  line-height: 68rpx;
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-caption);
+}
+
+/* ---------------- 条目 ---------------- */
+
+.entry {
+  margin-top: var(--sp-2);
+}
+
+.entry__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.entry__title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-1);
+  word-break: break-word;
+}
+
+.entry__clock {
+  flex: none;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.entry__comment {
+  display: block;
+  margin-top: 6rpx;
+  font-size: var(--fs-caption);
+  line-height: 1.55;
+  color: var(--text-2);
+  word-break: break-word;
+}
+
+.entry__content {
+  display: block;
+  margin-top: var(--sp-1);
+  padding-top: var(--sp-1);
+  border-top: 1rpx solid var(--divider);
+  font-size: var(--fs-caption);
+  line-height: 1.6;
+  color: var(--text-3);
+  word-break: break-word;
+}
+
+.day-retry {
+  margin-top: var(--sp-3);
+}
+
+/* ---------------- 编辑面板 ---------------- */
+
+.day-sheet {
+  max-height: 82vh;
+}
+
+.day-sheet__label {
+  display: block;
+  margin: var(--sp-2) 0 6rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.day-sheet__area {
+  width: 100%;
+  min-height: 140rpx;
+  box-sizing: border-box;
+}
+
+.day-sheet__foot {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.day-sheet__del {
+  flex: 0 0 200rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: var(--r-md);
+  color: var(--danger);
+  background: var(--danger-weak);
+}
+
+.day-sheet__ok {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: var(--r-md);
+}

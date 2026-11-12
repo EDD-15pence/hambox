@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "当天记录",
+  "usingComponents": {
+    "feedback-fab": "/components/feedback-fab/feedback-fab"
+  }
+}

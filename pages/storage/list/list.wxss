@@ -6,18 +6,23 @@
 .container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  /* 改成 page 滚动才能触发下拉刷新（B-03）：高度由内容决定，不再锁死 100vh */
+  min-height: 100vh;
   box-sizing: border-box;
   background: var(--bg-page);
   color: var(--text-1);
 }
 
-/* scroll-view 只负责滚动，不带任何横向 padding：
-   它在部分机型上会把 padding 算到 100% 之外，导致内容右移、右侧被裁。
-   页面边距一律交给内部 .page-body。 */
+/* 自绘导航在 page 滚动下必须粘住，否则滑两屏就找不到返回键 */
+.app-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+/* 页面边距一律交给内部 .page-body，这里只负责横向占满。
+   B-03 之后不再是 scroll-view：高度由内容撑开，页面整体滚动（下拉刷新才生效） */
 .page-scroll {
-  flex: 1;
-  min-height: 0;
   width: 100%;
 }
 

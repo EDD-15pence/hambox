@@ -5,7 +5,7 @@
 -->
 <view class="fb-root">
   <view
-    wx:if="{{!visible}}"
+    wx:if="{{!visible && !hidden}}"
     class="fb-fab fb-fab--{{side}}"
     style="bottom: calc({{offset + 24}}rpx + env(safe-area-inset-bottom))"
     bindtap="onOpen"
@@ -71,4 +71,7 @@
       <text class="fb-hint">长按右下角气泡可以回看提过的反馈</text>
     </view>
   </view>
+
+  <!-- 页面底部留白：气泡是 fixed，不占位，内容滚到底会钻到它底下 -->
+  <view wx:if="{{spacer}}" class="fb-spacer"></view>
 </view>

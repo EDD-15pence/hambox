@@ -1,0 +1,112 @@
+<view class="container {{isDark ? 'dark' : ''}}">
+  <view class="app-nav" style="padding-top:{{statusBarHeight}}px;padding-right:{{navRight}}px">
+    <view class="nav-left">
+      <text class="nav-back-icon" bindtap="onBack">‹</text>
+      <text class="app-nav__title">{{dateLabel || '记录'}}</text>
+    </view>
+    <view class="app-nav__actions">
+      <text class="nav-text-btn" bindtap="onRetry">刷新</text>
+    </view>
+  </view>
+
+  <view class="page-body">
+    <!-- 一句话录入：写完点「记下」，括号里的自动变评价 -->
+    <view class="composer">
+      <textarea
+        class="composer__input"
+        value="{{draft}}"
+        placeholder="肉肉大米（虽然很饱 但是都是米饭）"
+        placeholder-class="ui-placeholder"
+        auto-height
+        maxlength="500"
+        cursor-spacing="24"
+        focus="{{focusDraft}}"
+        bindinput="onDraftInput" />
+      <view class="composer__foot">
+        <text class="composer__hint">括号里那句算评价，可以不写</text>
+        <button
+          class="ui-btn is-primary composer__ok"
+          loading="{{saving}}"
+          disabled="{{saving}}"
+          bindtap="onSaveDraft">记下</button>
+      </view>
+    </view>
+
+    <view wx:if="{{error}}" class="ui-empty">
+      <text class="ui-empty__title">没拉到这一天的记录</text>
+      <text class="ui-empty__hint">{{error}}</text>
+      <button class="ui-btn is-block day-retry" bindtap="onRetry">重试</button>
+    </view>
+
+    <block wx:if="{{!error}}">
+      <view wx:if="{{!loading && !items.length}}" class="ui-empty">
+        <text class="ui-empty__title">这天还空着</text>
+        <text class="ui-empty__hint">上面写一行就记下了，比如「寿司郎（还不错）」</text>
+      </view>
+
+      <view
+        wx:for="{{items}}"
+        wx:key="id"
+        class="ui-card entry"
+        data-id="{{item.id}}"
+        bindtap="onOpenItem">
+        <view class="entry__head">
+          <text class="entry__title">{{item.title}}</text>
+          <text class="entry__clock num">{{item.clock}}</text>
+        </view>
+        <text wx:if="{{item.comment}}" class="entry__comment">{{item.comment}}</text>
+        <text wx:if="{{item.content}}" class="entry__content">{{item.content}}</text>
+      </view>
+    </block>
+  </view>
+
+  <!-- 编辑面板 -->
+  <view wx:if="{{editing}}" class="ui-mask" bindtap="onCloseEdit">
+    <view class="ui-sheet day-sheet" catchtap="onNoop">
+      <view class="ui-sheet__header">
+        <text class="ui-sheet__title">改这条</text>
+        <text class="nav-text-btn" bindtap="onCloseEdit">关闭</text>
+      </view>
+
+      <text class="day-sheet__label">标题</text>
+      <input
+        class="ui-input"
+        value="{{editing.title}}"
+        data-field="title"
+        maxlength="200"
+        bindinput="onEditField" />
+
+      <text class="day-sheet__label">评价</text>
+      <input
+        class="ui-input"
+        value="{{editing.comment}}"
+        placeholder="好吃 / 不会再去"
+        placeholder-class="ui-placeholder"
+        data-field="comment"
+        maxlength="500"
+        bindinput="onEditField" />
+
+      <text class="day-sheet__label">正文（可不填）</text>
+      <textarea
+        class="ui-input day-sheet__area"
+        value="{{editing.content}}"
+        placeholder="想多写几句就写在这儿"
+        placeholder-class="ui-placeholder"
+        data-field="content"
+        maxlength="2000"
+        cursor-spacing="24"
+        bindinput="onEditField" />
+
+      <view class="day-sheet__foot">
+        <button class="ui-btn day-sheet__del" bindtap="onDeleteEntry">删掉</button>
+        <button
+          class="ui-btn is-primary day-sheet__ok"
+          loading="{{saving}}"
+          disabled="{{saving}}"
+          bindtap="onSaveEdit">保存</button>
+      </view>
+    </view>
+  </view>
+
+  <feedback-fab />
+</view>

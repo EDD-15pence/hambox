@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "版本答案",
+  "usingComponents": {
+    "feedback-fab": "/components/feedback-fab/feedback-fab"
+  }
+}

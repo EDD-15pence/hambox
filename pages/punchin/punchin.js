@@ -1,4 +1,5 @@
 const nav = require('../../utils/nav');
+const theme = require('../../utils/theme');
 
 Page({
   data: {
@@ -36,8 +37,9 @@ Page({
   },
 
   loadSettings() {
-    const isDark = wx.getStorageSync('darkMode') || false;
-    this.setData({ isDark });
+    // 主题统一走 utils/theme.js（A-09）：这里以前直接读 storage 的 darkMode，
+    // 与「手动仅本次、重进跟系统」的口径冲突
+    this.setData({ isDark: theme.getTheme() });
   },
 
   updateNowTime() {
@@ -438,9 +440,8 @@ Page({
   },
 
   onToggleTheme() {
-    const isDark = !this.data.isDark;
-    wx.setStorageSync('darkMode', isDark);
-    this.setData({ isDark });
+    // 只改本次会话的内存值，不落盘（重进会回到跟随系统）
+    this.setData({ isDark: theme.toggleTheme() });
   },
 
   // 阻止事件冒泡

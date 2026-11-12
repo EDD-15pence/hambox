@@ -85,5 +85,5 @@
     <view class="fb-bar__undo" bindtap="onUndo">撤销 · {{undoSeconds}}s</view>
   </view>
 
-  <feedback-fab />
+  <feedback-fab spacer="{{false}}" />
 </view>

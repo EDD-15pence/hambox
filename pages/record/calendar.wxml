@@ -1,0 +1,52 @@
+<view class="container {{isDark ? 'dark' : ''}}">
+  <view class="app-nav" style="padding-top:{{statusBarHeight}}px;padding-right:{{navRight}}px">
+    <view class="nav-left">
+      <text class="nav-back-icon" bindtap="onBack">‹</text>
+      <text class="app-nav__title">记录</text>
+    </view>
+    <view class="app-nav__actions">
+      <text class="nav-text-btn" bindtap="onGoAnswer">版本答案</text>
+    </view>
+  </view>
+
+  <view class="cal-head">
+    <text class="cal-nav" bindtap="onPrevMonth">‹</text>
+    <text class="cal-month">{{monthLabel}}</text>
+    <text class="cal-nav" bindtap="onNextMonth">›</text>
+  </view>
+
+  <view class="cal-week">
+    <text wx:for="{{weekLabels}}" wx:key="*this" class="cal-week__item">{{item}}</text>
+  </view>
+
+  <view class="cal-grid">
+    <view
+      wx:for="{{cells}}"
+      wx:key="key"
+      class="cal-cell {{item.inMonth ? '' : 'is-out'}} {{item.isToday ? 'is-today' : ''}} {{item.count ? 'has-entry' : ''}}"
+      data-date="{{item.date}}"
+      bindtap="onPickDay">
+      <text class="cal-day num">{{item.day}}</text>
+      <view wx:if="{{item.count}}" class="cal-dot {{item.count > 1 ? 'is-many' : ''}}"></view>
+    </view>
+  </view>
+
+  <view class="cal-summary">
+    <block wx:if="{{error}}">
+      <text class="cal-summary__text">没拉到记录：{{error}}</text>
+      <text class="cal-summary__retry" bindtap="onRetry">重试</text>
+    </block>
+    <block wx:elif="{{loading}}">
+      <text class="cal-summary__text">正在加载…</text>
+    </block>
+    <block wx:else>
+      <text class="cal-summary__text">{{total ? '这个月记了 ' + total + ' 条' : '这个月还空着'}}</text>
+    </block>
+  </view>
+
+  <view class="cal-tip">
+    <text class="cal-tip__text">点任意一天进去记：一行写「吃了什么（评价）」，比如「肉肉大米（虽然很饱 但是都是米饭）」。有记录的日子带小圆点。</text>
+  </view>
+
+  <feedback-fab spacer="{{false}}" />
+</view>

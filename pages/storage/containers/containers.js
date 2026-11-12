@@ -121,9 +121,13 @@ Page({
     pendingCount: 0,
     pendingName: '',
     showPendingAdd: false,
-    // 挑选态：非空表示「这件在途要放哪儿」，此时点柜子即归位
+    // 在途多选（T-03b）：一次买五样，不用拖五次
+    pendingSelect: false,
+    pendingChecked: {},
+    pendingCheckedCount: 0,
+    // 挑选态：非空数组表示「这些在途要放哪儿」，此时点柜子即归位
     picking: null,
-    pickingName: '',
+    pickingText: '',
     // 容器编辑面板：null 表示关着
     editor: null,
     // 物品快捷面板：点积木块弹出，就地改数量（S-11）
@@ -183,6 +187,7 @@ Page({
         self._slots = collectSlots(defs);
 
         self.setData({ loading: false, retrying: false, loadError: '' });
+        self.resetPendingSelect();
         self.render();
       })
       .catch(function (err) {
@@ -293,15 +298,21 @@ Page({
 
   onOpenContainer: function (e) {
     var id = e.currentTarget.dataset.id;
-    // 挑选态：点哪个柜子就把这件在途放进去
-    if (this.data.picking) {
+    // 挑选态：点哪个柜子就把这些在途放进去（单件 / 批量走同一条路）
+    if (this.data.picking && this.data.picking.length) {
       if (id === containers.UNPLACED.id) {
         wx.showToast({ title: '挑一个具体的柜子', icon: 'none' });
         return;
       }
-      var pendingId = this.data.picking;
-      this.setData({ picking: null, pickingName: '' });
-      this.placePending(pendingId, id, '');
+      var ids = this.data.picking;
+      this.setData({
+        picking: null,
+        pickingText: '',
+        pendingSelect: false,
+        pendingChecked: {},
+        pendingCheckedCount: 0
+      });
+      this.placePendings(ids, id);
       return;
     }
     // 整理态点卡片是「编辑这个容器」，不是进去
@@ -322,6 +333,11 @@ Page({
     if (this.data.drag || this.data.pdrag) return;
     if (this.data.picking) {
       this.onCancelPicking();
+      return;
+    }
+    // 多选态下先退出多选，别一路返回把页面关掉
+    if (this.data.pendingSelect) {
+      this.onCancelPendingSelect();
       return;
     }
     if (this.data.organizing) {
@@ -689,35 +705,123 @@ Page({
   },
 
   /**
-   * 到了，放起来。
+   * 点一个在途块：平时 = 进入挑选态（单件）；多选态 = 勾上/取消。
    *
-   * 点一下不是弹 ActionSheet —— 微信的 ActionSheet 最多 6 项，容器一多就不够用。
-   * 改成「进入挑选态」：墙上的柜子全部可点（空柜子也画出来），点哪个放哪个。
+   * 拖拽仍走长按，两者不冲突；多选态下长按直接忽略（见 onPendingLongPress）。
    */
-  onPlacePending: function (e) {
+  onPendingTap: function (e) {
     // 刚拖完的那一下不要顺手进入挑选态
     if (this._justDragged) return;
-    var id = e.currentTarget.dataset.id;
-    this.setData({ picking: id, pickingName: e.currentTarget.dataset.name || '' });
+    var ds = e.currentTarget.dataset;
+
+    if (!this.data.pendingSelect) {
+      this.setData({
+        picking: [ds.id],
+        pickingText: '把「' + (ds.name || '这件') + '」放进哪个柜子？'
+      });
+      this.render();
+      return;
+    }
+
+    var id = String(ds.id);
+    var checked = Object.assign({}, this.data.pendingChecked);
+    if (checked[id]) delete checked[id];
+    else checked[id] = true;
+    this.setData({
+      pendingChecked: checked,
+      pendingCheckedCount: Object.keys(checked).length
+    });
+  },
+
+  /** 进/出多选态。进来时先清空勾选，避免上次的选择带到这一轮。 */
+  onTogglePendingSelect: function () {
+    var next = !this.data.pendingSelect;
+    this.setData({
+      pendingSelect: next,
+      pendingChecked: {},
+      pendingCheckedCount: 0
+    });
+    this.render();
+  },
+
+  onCancelPendingSelect: function () {
+    this.resetPendingSelect();
+    this.render();
+  },
+
+  resetPendingSelect: function () {
+    this.setData({
+      pendingSelect: false,
+      pendingChecked: {},
+      pendingCheckedCount: 0
+    });
+  },
+
+  /** 勾好了 → 进挑选态，接下来点哪个柜子就全部放进哪个柜子。 */
+  onPlaceChecked: function () {
+    var checked = this.data.pendingChecked;
+    var ids = Object.keys(checked).filter(function (key) {
+      return checked[key];
+    });
+    if (!ids.length) {
+      wx.showToast({ title: '先勾几件', icon: 'none' });
+      return;
+    }
+    // 数据绑定里的 id 是数字，勾选表的 key 是字符串，这里还原回数字
+    ids = ids.map(function (key) {
+      return Number(key);
+    });
+    this.setData({
+      picking: ids,
+      pickingText: '把 ' + ids.length + ' 件放进哪个柜子？'
+    });
     this.render();
   },
 
   onCancelPicking: function () {
-    this.setData({ picking: null, pickingName: '' });
+    this.setData({ picking: null, pickingText: '' });
     this.render();
   },
 
-  placePending: function (pendingId, containerId, zoneKey) {
+  /**
+   * 一批在途放进同一个柜子。
+   *
+   * 串行而不是 Promise.all：后端一件一个事务，并发写同一张 SQLite 大概率
+   * 撞 `database is locked`。一件失败也不中断整批，最后统一报失败数。
+   */
+  placePendings: function (ids, containerId) {
     var self = this;
-    wx.showLoading({ title: '放进去了', mask: true });
-    api.placePending(pendingId, containerId, zoneKey).then(function () {
-      wx.hideLoading();
-      self.loadAll();
-      wx.showToast({ title: '已放进柜子', icon: 'none' });
-    }).catch(function (err) {
-      wx.hideLoading();
-      wx.showToast({ title: (err && err.message) || '放进去失败', icon: 'none' });
-    });
+    var queue = (ids || []).slice();
+    var failed = 0;
+    var total = queue.length;
+    wx.showLoading({ title: total > 1 ? '正在放进柜子' : '放进去了', mask: true });
+
+    function step() {
+      if (!queue.length) {
+        wx.hideLoading();
+        self.loadAll();
+        if (failed) {
+          wx.showToast({ title: failed + ' 件没放进去', icon: 'none' });
+        } else {
+          wx.showToast({ title: total > 1 ? '都放好了' : '已放进柜子', icon: 'none' });
+        }
+        return;
+      }
+      var pendingId = queue.shift();
+      api.placePending(pendingId, containerId, '')
+        .then(step)
+        .catch(function () {
+          failed += 1;
+          step();
+        });
+    }
+
+    step();
+  },
+
+  /** 单件入口（拖拽落点用），内部走同一条批量路径 */
+  placePending: function (pendingId, containerId, zoneKey) {
+    this.placePendings([pendingId], containerId);
   },
 
   // ==============================
@@ -1111,6 +1215,8 @@ Page({
   },
 
   onPendingLongPress: function (e) {
+    // 多选态下长按没意义，交给点击去勾选
+    if (this.data.pendingSelect) return;
     var ds = e.currentTarget.dataset;
     var touch = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
     var self = this;

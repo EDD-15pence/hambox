@@ -328,8 +328,7 @@ Page({
   // 主题
   // ==============================
   onToggleTheme: function () {
-    var isDark = !this.data.isDark;
-    wx.setStorageSync('darkMode', isDark);
-    this.setData({ isDark: isDark });
+    // 只改本次会话的内存值，不落盘（A-09 收口：以前这里直接写 storage）
+    this.setData({ isDark: theme.toggleTheme() });
   }
 });

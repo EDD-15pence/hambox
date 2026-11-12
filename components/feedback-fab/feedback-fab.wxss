@@ -25,6 +25,14 @@
   right: var(--sp-4);
 }
 
+/*
+ * 底部留白。气泡 fixed 在 bottom 24rpx、高 72rpx，占 24~96rpx；
+ * 留到 160rpx 才保证内容（尤其是可点按钮）滚不到它底下。
+ */
+.fb-spacer {
+  height: 160rpx;
+}
+
 .fb-fab--left {
   left: var(--sp-4);
 }

@@ -1,0 +1,182 @@
+/* ============================================================
+ * 版本答案（R-03）
+ * ============================================================ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: var(--bg-page);
+  color: var(--text-1);
+}
+
+.app-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+/* ---------------- 搜索框：吸在导航下面，滚列表时不跑 ---------------- */
+
+.search {
+  position: sticky;
+  top: var(--nav-h);
+  z-index: 19;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--page-x);
+  background: var(--bg-page);
+}
+
+.search__input {
+  flex: 1;
+  min-width: 0;
+}
+
+.search__clear {
+  flex: none;
+  padding: 0 var(--sp-2);
+  font-size: var(--fs-caption);
+  color: var(--text-3);
+}
+
+.page-body {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0 var(--page-x);
+}
+
+/* ---------------- 答案卡 ---------------- */
+
+.ans {
+  margin-bottom: 20rpx;
+}
+
+.ans__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.ans__keyword {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-1);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ans__tag {
+  flex: none;
+  padding: 2rpx 12rpx;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-tiny);
+}
+
+.ans__tag.is-good {
+  color: var(--success);
+  background: var(--success-weak);
+}
+
+.ans__tag.is-bad {
+  color: var(--danger);
+  background: var(--danger-weak);
+}
+
+.ans__who {
+  flex: none;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.ans__answer {
+  display: block;
+  margin-top: 6rpx;
+  font-size: var(--fs-h2);
+  line-height: 1.5;
+  color: var(--text-1);
+  word-break: break-word;
+}
+
+.ans__hint {
+  display: block;
+  margin-top: var(--sp-2);
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.ans-retry {
+  margin-top: var(--sp-3);
+}
+
+/* ---------------- 录入面板 ---------------- */
+
+.ans-sheet {
+  max-height: 84vh;
+}
+
+.ans-sheet__label {
+  display: block;
+  margin: var(--sp-2) 0 6rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.ans-sheet__area {
+  width: 100%;
+  min-height: 140rpx;
+  box-sizing: border-box;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.chip {
+  padding: 10rpx var(--sp-3);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-caption);
+  color: var(--text-2);
+  background: var(--bg-sunken);
+}
+
+.chip.is-on {
+  color: var(--on-primary);
+  background: var(--primary);
+}
+
+.ans-sheet__foot {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.ans-sheet__del {
+  flex: 0 0 200rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: var(--r-md);
+  color: var(--danger);
+  background: var(--danger-weak);
+}
+
+.ans-sheet__ok {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: var(--r-md);
+}
+
+.ans-sheet__save {
+  margin-top: var(--sp-3);
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: var(--r-md);
+}

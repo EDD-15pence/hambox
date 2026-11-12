@@ -65,6 +65,21 @@ Page({
     this.loadAll();
   },
 
+  /**
+   * 下拉刷新（B-03）。
+   *
+   * `loadAll` 内部已经把「失败保留旧列表 + toast」处理完了，这里只负责
+   * 收起下拉动画。用 finally 式的双分支是因为微信里 stopPullDownRefresh
+   * 漏调会一直转圈，宁可多调一次也不能少调。
+   */
+  onPullDownRefresh: function () {
+    this.loadAll().then(function () {
+      wx.stopPullDownRefresh();
+    }).catch(function () {
+      wx.stopPullDownRefresh();
+    });
+  },
+
   onBack: function () {
     wx.navigateBack({
       delta: 1,

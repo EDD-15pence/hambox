@@ -38,6 +38,22 @@ const TOOLS = [
     path: '/pages/storage/quick/quick',
   },
   {
+    key: 'record',
+    icon: '🗓️',
+    name: '记录',
+    desc: '按天记吃了什么、去了哪',
+    tag: '新',
+    path: '/pages/record/calendar',
+  },
+  {
+    key: 'answer',
+    icon: '🔍',
+    name: '版本答案',
+    desc: '问一句，下次该选哪个',
+    tag: '新',
+    path: '/pages/answer/index',
+  },
+  {
     key: 'punchin',
     icon: '📅',
     name: '习惯打卡',
@@ -116,6 +132,16 @@ Page({
 
   onToggleTheme() {
     this.setData({ isDark: theme.toggleTheme() });
+  },
+
+  /**
+   * 长按主题按钮 = 本次会话内放弃手动值、回到跟随系统。
+   * 不给它单独一个按钮/开关：手动值本来就不跨会话，这个入口只是省得杀掉重进。
+   */
+  onResetTheme() {
+    const isDark = theme.resetToSystem();
+    this.setData({ isDark });
+    wx.showToast({ title: '已跟随系统', icon: 'none' });
   },
 
   /** 语音面板保存成功（提示由组件负责，这里刷新一下角标） */

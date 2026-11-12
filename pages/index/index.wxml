@@ -6,7 +6,7 @@
       <text class="app-nav__sub">{{todayText}} · {{tools.length}} 个工具</text>
     </view>
     <view class="app-nav__actions">
-      <button class="icon-btn" hover-class="icon-hover" bindtap="onToggleTheme">{{isDark ? '🌙' : '☀️'}}</button>
+      <button class="icon-btn" hover-class="icon-hover" bindtap="onToggleTheme" bindlongpress="onResetTheme">{{isDark ? '🌙' : '☀️'}}</button>
     </view>
   </view>
 
@@ -42,5 +42,5 @@
 
   <!-- 悬浮麦克风：说一句 → 面板内确认 → 直接入库，不跳页面 -->
   <voice-add bind:saved="onVoiceSaved" />
-  <feedback-fab side="left" />
+  <feedback-fab side="left" spacer="{{false}}" />
 </view>

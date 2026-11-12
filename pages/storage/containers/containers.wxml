@@ -52,24 +52,32 @@
         <text class="ui-notice__action">重试</text>
       </view>
 
-      <!-- 在路上：买了还没到的，拖到柜子里就算放好了 -->
+      <!-- 在路上：买了还没到的，拖到柜子里就算放好了；也可以多选一次放完 -->
       <view wx:if="{{pendingCount > 0}}" class="pending">
         <view class="pending__head">
           <text class="pending__title">在路上</text>
           <text class="pending__count num">{{pendingCount}}</text>
-          <text class="pending__hint">长按拖进柜子</text>
+          <text wx:if="{{!pendingSelect}}" class="pending__hint">长按拖进柜子</text>
+          <text wx:else class="pending__hint">点一下勾选</text>
+          <text
+            wx:if="{{pendingCount > 1}}"
+            class="pending__multi"
+            bindtap="onTogglePendingSelect">{{pendingSelect ? '退出多选' : '多选'}}</text>
         </view>
         <scroll-view class="pending__list" scroll-x enable-flex>
           <view
             wx:for="{{pending}}" wx:key="id"
-            class="pchip"
+            class="pchip {{pendingSelect ? 'is-selectable' : ''}} {{pendingChecked[item.id] ? 'is-checked' : ''}}"
             data-id="{{item.id}}"
             data-name="{{item.name}}"
             data-emoji="{{item.emoji}}"
             bindlongpress="onPendingLongPress"
             bindtouchmove="onPendingDragMove"
             bindtouchend="onPendingDragEnd"
-            bindtap="onPlacePending">
+            bindtap="onPendingTap">
+            <view wx:if="{{pendingSelect}}" class="pchip__check">
+              <text wx:if="{{pendingChecked[item.id]}}" class="pchip__tick">✓</text>
+            </view>
             <view class="pchip__pic">
               <image wx:if="{{item.imageSrc}}" class="pchip__img" src="{{item.imageSrc}}" mode="aspectFill" />
               <text wx:else class="pchip__emoji">{{item.emoji}}</text>
@@ -77,14 +85,14 @@
             </view>
             <text class="pchip__name">{{item.name}}</text>
             <text class="pchip__days">{{item.waitText}}</text>
-            <text class="pchip__del" data-id="{{item.id}}" catchtap="onDeletePending">✕</text>
+            <text wx:if="{{!pendingSelect}}" class="pchip__del" data-id="{{item.id}}" catchtap="onDeletePending">✕</text>
           </view>
         </scroll-view>
       </view>
 
-      <!-- 挑选态：点哪个柜子就把这件在途放进去 -->
-      <view wx:if="{{picking}}" class="picking-bar">
-        <text class="picking-bar__text">把「{{pickingName}}」放进哪个柜子？</text>
+      <!-- 挑选态：点哪个柜子就把这些在途放进去 -->
+      <view wx:if="{{picking && picking.length}}" class="picking-bar">
+        <text class="picking-bar__text">{{pickingText}}</text>
         <text class="picking-bar__cancel" bindtap="onCancelPicking">取消</text>
       </view>
 
@@ -474,5 +482,15 @@
       </view>
     </view>
   </view>
-  <feedback-fab />
+  <!-- 多选态底部条：攒够了一次放完，不用一件件拖 -->
+  <view wx:if="{{pendingSelect}}" class="pending-bar">
+    <text class="pending-bar__count">已选 {{pendingCheckedCount}} 件</text>
+    <view class="pending-bar__actions">
+      <text class="pending-bar__cancel" bindtap="onCancelPendingSelect">取消</text>
+      <view class="pending-bar__ok {{pendingCheckedCount ? '' : 'is-off'}}" bindtap="onPlaceChecked">放进柜子</view>
+    </view>
+  </view>
+
+  <!-- 拖拽时藏起来：底部会浮出「换柜子」条，两个都贴底会挤在一起 -->
+  <feedback-fab hidden="{{!!drag}}" spacer="{{false}}" />
 </view>

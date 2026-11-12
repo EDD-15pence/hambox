@@ -20,7 +20,7 @@
     </view>
   </view>
 
-  <scroll-view class="page-scroll" scroll-y>
+  <view class="page-scroll">
     <view class="page-body">
     <!-- 首屏加载：骨架屏占位，避免空列表闪一下「还没有物品」 -->
     <block wx:if="{{loading && items.length === 0}}">
@@ -189,7 +189,7 @@
     <view class="bottom-spacer"></view>
     </block>
     </view>
-  </scroll-view>
+  </view>
 
   <!-- 悬浮添加：加号用两条线画，不用字符图标 -->
   <view class="ui-fab" bindtap="onAddItem">
@@ -257,5 +257,5 @@
       </scroll-view>
     </view>
   </view>
-  <feedback-fab side="left" />
+  <feedback-fab side="left" spacer="{{false}}" />
 </view>

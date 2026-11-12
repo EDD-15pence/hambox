@@ -1,0 +1,157 @@
+/* ============================================================
+ * 记录 · 日历（R-02）
+ * 只写本页差异；颜色/间距/阴影全部来自 styles/tokens.wxss
+ * ============================================================ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: var(--bg-page);
+  color: var(--text-1);
+}
+
+/* 自绘导航在 page 滚动下要粘住 */
+.app-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+/* ---------------- 月份切换 ---------------- */
+
+.cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-2) var(--page-x);
+}
+
+.cal-month {
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: var(--r-sm);
+  font-size: 40rpx;
+  line-height: 1;
+  color: var(--text-2);
+}
+
+/* ---------------- 星期行 ---------------- */
+
+.cal-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding: 0 var(--page-x) var(--sp-1);
+}
+
+.cal-week__item {
+  text-align: center;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+/* ---------------- 格子 ---------------- */
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8rpx;
+  padding: 0 var(--page-x);
+}
+
+.cal-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 100rpx;
+  border-radius: var(--r-md);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+/* 非本月的补位格：留白但不可点，避免误触到上个月 */
+.cal-cell.is-out {
+  background: transparent;
+  box-shadow: none;
+}
+
+.cal-day {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+/* 今天：加一圈主色，不加底色（底色留给「有记录」） */
+.cal-cell.is-today {
+  box-shadow: inset 0 0 0 3rpx var(--primary);
+}
+
+/* 有记录：浅主色底，让人一眼看出哪天写过 */
+.cal-cell.has-entry {
+  background: var(--primary-weak);
+}
+
+.cal-dot {
+  width: 8rpx;
+  height: 8rpx;
+  margin-top: 6rpx;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+/* 一天多条：圆点换成小横条，宽度不同才看得出「这天不止一条」 */
+.cal-dot.is-many {
+  width: 24rpx;
+  height: 8rpx;
+  border-radius: 4rpx;
+}
+
+/* ---------------- 底部说明 ---------------- */
+
+.cal-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--page-x) 0;
+}
+
+.cal-summary__text {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-2);
+}
+
+.cal-summary__retry {
+  flex: none;
+  font-size: var(--fs-caption);
+  color: var(--primary);
+}
+
+.cal-tip {
+  padding: var(--sp-2) var(--page-x) calc(var(--sp-4) + env(safe-area-inset-bottom));
+}
+
+.cal-tip__text {
+  display: block;
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--bg-sunken);
+  font-size: var(--fs-tiny);
+  line-height: 1.6;
+  color: var(--text-3);
+}
