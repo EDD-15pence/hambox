@@ -64,6 +64,38 @@ function collectOrder(defs) {
   return map;
 }
 
+/**
+ * 把后端 slots 摊成 { 物品 id: {container, zone, row, pos} }。
+ *
+ * `zone_key` 里编了层号（第 2 层起 `区:层`，第 1 层仍是纯区 key），
+ * 反解出来就是「这件钉在哪一层」。容器的 id 也一起记，
+ * 因为跨柜拖拽时目标柜可能不在墙上，得靠这张表算它那层原有的顺序。
+ */
+function collectSlots(defs) {
+  var map = {};
+  (defs || []).forEach(function (c) {
+    (c.slots || []).forEach(function (s) {
+      var parsed = containers.parseZoneKey(s.zone_key);
+      map[String(s.item_id)] = {
+        container: c.id,
+        zone: parsed.zone,
+        row: parsed.row,
+        pos: s.position
+      };
+    });
+  });
+  return map;
+}
+
+/** 位次表 → sortTiles 用的扁平映射 */
+function orderOf(slots) {
+  var map = {};
+  Object.keys(slots || {}).forEach(function (id) {
+    map[id] = slots[id].pos;
+  });
+  return map;
+}
+
 Page({
   data: {
     isDark: false,
@@ -148,6 +180,7 @@ Page({
         self._items = items;
         self._pending = pending;
         self._order = collectOrder(defs);
+        self._slots = collectSlots(defs);
 
         self.setData({ loading: false, retrying: false, loadError: '' });
         self.render();
@@ -168,6 +201,7 @@ Page({
     // 有在途要归位、或者在整理，就把空容器也画出来 —— 否则没地方可以拖/可以点
     var grouped = containers.groupByContainer(this._items || [], {
       order: this._order || {},
+      slots: this._slots || {},
       showEmpty: inOrganize || pending.length > 0 || !!this.data.picking
     });
 
@@ -691,11 +725,12 @@ Page({
   // ==============================
 
   /**
-   * 量一遍三类落点。
+   * 量一遍四类落点。
    *
    * 只量格子是不够的：格子只存在于「已经有东西的位置」，所以拖到空层、
-   * 拖到空的冷冻室、拖到别的柜子，全都没有落点。三类一起量才够：
-   * - `.thing` 格子 → 同区换序，或插到别区的某一格前；
+   * 拖到空的冷冻室、拖到别的柜子，全都没有落点。四类一起量才够：
+   * - `.thing` 格子 → 同层换序，或插到别层某一格前；
+   * - `.shelf` 层（S-12）→ 钉在这一层，含空层；
    * - `.zone` 分区 → 扔进这个区（空的区也算）；
    * - `.xfer__cab` 换柜子胶囊 → 跨容器。
    */
@@ -704,11 +739,13 @@ Page({
     query.selectAll('.thing').boundingClientRect();
     query.selectAll('.zone').boundingClientRect();
     query.selectAll('.xfer__cab').boundingClientRect();
+    query.selectAll('.shelf').boundingClientRect();
     query.exec(function (res) {
       callback({
         tiles: (res && res[0]) || [],
         zones: (res && res[1]) || [],
-        cabs: (res && res[2]) || []
+        cabs: (res && res[2]) || [],
+        shelves: (res && res[3]) || []
       });
     });
   },
@@ -722,6 +759,7 @@ Page({
       id: String(ds.id),
       // 无分区的容器 wxml 传的是 'main'
       zone: ds.zone || 'main',
+      row: Number(ds.row) > 0 ? Number(ds.row) : 1,
       name: ds.name || '',
       emoji: ds.emoji || ''
     };
@@ -745,9 +783,10 @@ Page({
   /**
    * 手指在 (x, y) 上松开，算什么落点。
    *
-   * 顺序是「胶囊 → 格子 → 分区」：胶囊位置固定要优先；
-   * 分区包着格子，所以格子必须先判，否则永远只会落到分区。
-   * @returns {{type:'cab'|'tile'|'zone', id?:string, zone?:string, key:string}|null}
+   * 顺序是「胶囊 → 格子 → 层 → 分区」：胶囊位置固定要优先；
+   * 格子嵌在层里、层嵌在区里，所以必须从里往外判，
+   * 否则永远只会落到最外面那个区，指定不了第几层。
+   * @returns {{type:'cab'|'tile'|'shelf'|'zone', id?:string, zone?:string, row?:number, key:string}|null}
    */
   resolveDrop: function (x, y) {
     var rects = this._rects || {};
@@ -784,9 +823,20 @@ Page({
           type: 'tile',
           id: tileId,
           zone: String((best.dataset && best.dataset.zone) || 'main'),
+          row: Number(best.dataset && best.dataset.row) || 1,
           key: tileId
         };
       }
+    }
+
+    // 层：格子之间的空白也算这一层，空层同样能落
+    var shelves = rects.shelves || [];
+    for (i = 0; i < shelves.length; i++) {
+      r = shelves[i];
+      if (!inRect(r, x, y)) continue;
+      var sZone = String((r.dataset && r.dataset.zone) || 'main');
+      var sRow = Number(r.dataset && r.dataset.row) || 1;
+      return { type: 'shelf', zone: sZone, row: sRow, key: 'shelf:' + sZone + ':' + sRow };
     }
 
     var zones = rects.zones || [];
@@ -841,119 +891,193 @@ Page({
 
     var active = this.data.active;
     var here = active ? active.id : '';
-    var hereZone = tile.zone || 'main';
 
     if (drop.type === 'cab') {
-      if (drop.id && drop.id !== here) this.moveItem(tile, drop.id, '');
+      // 胶囊只指定柜子，落在目标柜的默认区第 1 层
+      if (drop.id && drop.id !== here) {
+        this.placeTile(tile, { containerId: drop.id, zone: '', row: 1 });
+      }
       return;
     }
     if (drop.type === 'zone') {
-      if (drop.zone && drop.zone !== hereZone) this.moveItem(tile, here, drop.zone);
+      // 拖到区的空白处：放进这一区最后一层的末尾
+      var zone = this.findZone(drop.zone);
+      var last = zone && zone.shelves.length
+        ? zone.shelves[zone.shelves.length - 1].no
+        : 1;
+      this.placeTile(tile, { containerId: here, zone: drop.zone, row: last });
       return;
     }
-    // 落到格子
-    if (drop.zone && drop.zone !== hereZone) {
-      this.moveItem(tile, here, drop.zone, drop.id);
+    if (drop.type === 'shelf') {
+      // 拖到某一层（含空层）：钉在这一层，落末尾
+      this.placeTile(tile, { containerId: here, zone: drop.zone, row: drop.row });
       return;
     }
-    this.reorder(tile, drop.id);
-  },
-
-  /** 同分区换序：只动位次，不动 location */
-  reorder: function (tile, overId) {
-    var self = this;
-    var zone = this.findZone(tile.zone);
-    if (!zone) return;
-
-    var ids = zone.tiles.map(function (t) { return String(t.id); });
-    var from = ids.indexOf(tile.id);
-    var to = ids.indexOf(String(overId));
-    if (from === -1 || to === -1 || from === to) return;
-    ids.splice(from, 1);
-    ids.splice(to, 0, tile.id);
-
-    // 乐观更新：先把界面上的顺序改掉，请求失败再回滚
-    var before = Object.assign({}, this._order);
-    ids.forEach(function (id, index) { self._order[id] = index; });
-    this.render();
-
-    var containerId = this.data.active ? this.data.active.id : '';
-    api.saveSlots(containerId, tile.zone, ids).catch(function (err) {
-      self._order = before;
-      self.render();
-      wx.showToast({ title: (err && err.message) || '顺序没存上', icon: 'none' });
+    // 落到格子：钉到那一格所在的层，插在它前面
+    this.placeTile(tile, {
+      containerId: here,
+      zone: drop.zone,
+      row: drop.row,
+      beforeId: drop.id
     });
   },
 
   /**
-   * 把一件东西搬到另一个区 / 另一个柜子。
+   * 把一件东西放到「某容器 / 某区 / 某层 / 某件之前」（S-12）。
    *
-   * 搬家的实质是改 `location`：归位只认位置文本，位次只是锦上添花。
-   * 所以先 PUT 物品，再把旧区的位次重提交一遍（不含这件）——
-   * 不清掉的话，下次「恢复自动排布」或者位次比对会留下一个幽灵 id。
+   * 三种落点其实是一次调用的三种参数：
+   * - 同区同层 → 只提交这一层的顺序；
+   * - 换层 / 跨区（含跨层）→ 层号编进 `zone_key`（第 2 层起 `区:层`）；
+   * - 换柜子 → 还得改 `location`，因为归位只认位置文本。
    *
-   * @param {Object} tile 被拖的那件 {id, zone}
-   * @param {string} containerId 目标容器
-   * @param {string} zoneKey 目标分区，跨容器传空串
-   * @param {string} beforeId 落在某个格子上时，插到它前面
+   * 每层单独提交，是因为后端 `save_slots` 按 `zone_key` **整份替换**：
+   * 提交一个层的完整顺序，别的层不受影响；反过来说，
+   * 搬走的那件必须从旧层里删干净，否则旧 zone_key 会留下幽灵位次。
+   *
+   * @param {Object} tile 被拖的那件 {id, zone, row}
+   * @param {{containerId?:string, zone?:string, row?:number, beforeId?:string}} target
    */
-  moveItem: function (tile, containerId, zoneKey, beforeId) {
+  placeTile: function (tile, target) {
     var self = this;
     var item = this.itemById(tile.id);
     var active = this.data.active;
     var here = active ? active.id : '';
     if (!item) return;
 
-    var location = containers.presetLocation(containerId, zoneKey);
-    if (!location) {
-      wx.showToast({ title: '这个柜子还没有归位关键字', icon: 'none' });
-      return;
+    var toContainer = target.containerId || here;
+    var sameContainer = toContainer === here;
+    var toZone = target.zone || this.defaultZoneOf(toContainer);
+    var toRow = target.row > 0 ? target.row : 1;
+    var fromZone = tile.zone || 'main';
+    var fromRow = tile.row > 0 ? tile.row : 1;
+
+    var fromKey = containers.zoneKeyOf(fromZone, fromRow);
+    var toKey = containers.zoneKeyOf(toZone, toRow);
+
+    // 换柜子要能拼出新的位置文本，拼不出来就别动了
+    var location = item.location || '';
+    if (!sameContainer) {
+      location = containers.presetLocation(toContainer, toZone);
+      if (!location) {
+        wx.showToast({ title: '这个柜子还没有归位关键字', icon: 'none' });
+        return;
+      }
     }
 
-    // 旧区剩下的顺序
-    var fromZone = this.findZone(tile.zone);
-    var fromIds = (fromZone ? fromZone.tiles : [])
-      .map(function (t) { return String(t.id); })
-      .filter(function (id) { return id !== tile.id; });
+    // 源层剩下的顺序（同一件东西只会出现在一个 zone_key 里）
+    var fromIds = this.shelfIds(here, fromZone, fromRow).filter(function (id) {
+      return id !== tile.id;
+    });
 
-    // 同容器跨区时，新区的顺序要把这件插到目标格前面（落空处就排最后）
-    var toIds = null;
-    if (containerId === here) {
-      var toZone = this.findZone(zoneKey);
-      toIds = (toZone ? toZone.tiles : [])
-        .map(function (t) { return String(t.id); })
-        .filter(function (id) { return id !== tile.id; });
-      var at = beforeId ? toIds.indexOf(String(beforeId)) : -1;
-      if (at < 0) at = toIds.length;
-      toIds.splice(at, 0, tile.id);
+    // 目标层顺序：同层就在 fromIds 上插，别层 / 别柜从目标层取
+    var base = (sameContainer && fromKey === toKey)
+      ? fromIds
+      : this.shelfIds(toContainer, toZone, toRow).filter(function (id) { return id !== tile.id; });
+    var ids = base.slice();
+    var at = target.beforeId ? ids.indexOf(String(target.beforeId)) : -1;
+    if (at < 0) at = ids.length;
+    ids.splice(at, 0, tile.id);
+
+    // 落在原地（顺序没变）就别发请求
+    if (sameContainer && fromKey === toKey) {
+      var current = this.shelfIds(here, fromZone, fromRow);
+      if (current.join(',') === ids.join(',')) return;
     }
 
-    var beforeOrder = Object.assign({}, this._order);
+    var beforeSlots = this._slots;
+    var beforeOrder = this._order;
     var beforeItems = this._items;
 
-    // 乐观更新：本地先把 location 换掉重算，东西立刻出现在新位置
-    this._items = (this._items || []).map(function (it) {
-      return String(it.id) === tile.id ? Object.assign({}, it, { location: location }) : it;
+    // 乐观更新：层号、层内位次、位置文本一起换，松手那一刻界面就到位
+    var slots = Object.assign({}, this._slots);
+    if (fromKey !== toKey) {
+      fromIds.forEach(function (id, index) {
+        slots[id] = { container: here, zone: fromZone, row: fromRow, pos: index };
+      });
+    }
+    ids.forEach(function (id, index) {
+      slots[id] = { container: toContainer, zone: toZone, row: toRow, pos: index };
     });
-    if (toIds) {
-      toIds.forEach(function (id, index) { self._order[id] = index; });
+    this._slots = slots;
+    this._order = orderOf(slots);
+    if (!sameContainer) {
+      this._items = (this._items || []).map(function (it) {
+        return String(it.id) === tile.id ? Object.assign({}, it, { location: location }) : it;
+      });
     }
     this.render();
 
-    var payload = Object.assign({}, item, { location: location });
-    api.updateItem(tile.id, payload).then(function () {
-      var tasks = [api.saveSlots(here, tile.zone, fromIds)];
-      if (toIds) tasks.push(api.saveSlots(containerId, zoneKey, toIds));
+    var tasks;
+    if (sameContainer && fromKey === toKey) {
+      tasks = [api.saveSlots(here, toKey, ids)];
+    } else {
+      tasks = [
+        api.saveSlots(here, fromKey, fromIds),
+        api.saveSlots(toContainer, toKey, ids)
+      ];
+    }
+
+    var chain = sameContainer
+      ? Promise.resolve()
+      : api.updateItem(tile.id, Object.assign({}, item, { location: location }));
+
+    chain.then(function () {
       return Promise.all(tasks);
     }).then(function () {
-      var target = containers.getContainer(containerId);
-      wx.showToast({ title: '已移到' + target.name, icon: 'none' });
+      if (!sameContainer) {
+        var targetCab = containers.getContainer(toContainer);
+        wx.showToast({ title: '已移到' + targetCab.name, icon: 'none' });
+      } else if (fromKey !== toKey) {
+        wx.showToast({ title: '已放到第 ' + toRow + ' 层', icon: 'none' });
+      }
     }).catch(function (err) {
+      self._slots = beforeSlots;
       self._order = beforeOrder;
       self._items = beforeItems;
       self.render();
-      wx.showToast({ title: (err && err.message) || '移动失败', icon: 'none' });
+      wx.showToast({ title: (err && err.message) || '没放上', icon: 'none' });
     });
+  },
+
+  /**
+   * 某容器某层现在的物品顺序（视觉顺序）。
+   *
+   * 优先从墙上那张卡片取 —— 它已经是「层 → 层内位次」摊平后的结果。
+   * 目标柜不在墙上（空柜子且不在整理态）时退回位次表，按 pos 还原。
+   */
+  shelfIds: function (containerId, zone, row) {
+    var card = null;
+    (this._rawWall || []).forEach(function (c) {
+      if (c.id === containerId) card = c;
+    });
+    if (card && card.zones) {
+      for (var i = 0; i < card.zones.length; i++) {
+        if (card.zones[i].key !== zone) continue;
+        var shelf = card.zones[i].shelves[row - 1];
+        return shelf
+          ? shelf.items.map(function (t) { return String(t.id); })
+          : [];
+      }
+      return [];
+    }
+
+    var slots = this._slots || {};
+    var rows = [];
+    Object.keys(slots).forEach(function (id) {
+      var s = slots[id];
+      if (s.container === containerId && s.zone === zone && s.row === row) {
+        rows.push({ id: id, pos: s.pos });
+      }
+    });
+    rows.sort(function (a, b) { return a.pos - b.pos; });
+    return rows.map(function (x) { return x.id; });
+  },
+
+  /** 目标区没指定时用哪个：和归位一致，认不出子区的进最后一个区 */
+  defaultZoneOf: function (containerId) {
+    var c = containers.getContainer(containerId);
+    if (c && c.zones && c.zones.length) return c.zones[c.zones.length - 1].key;
+    return 'main';
   },
 
   /** 换柜子的胶囊：除当前容器和「未归位」之外，都能拖过去 */

@@ -266,13 +266,16 @@ function toTile(item) {
  * 由调用方传 `opts.showEmpty` 决定。
  *
  * @param {Array} items 物品数组
- * @param {{order?: Object, showEmpty?: boolean}} opts
+ * @param {{order?: Object, slots?: Object, showEmpty?: boolean}} opts
  *        order: { 物品 id: 位次 }，拖拽排过序的按位次排，没排过的跟在后面
+ *        slots: { 物品 id: {zone, row, pos} }，来自 item_slots；
+ *               zone_key 里编了层号（第 2 层起 `区:层`），决定东西钉在哪一层
  * @returns {{ wall: Array, total: number, warning: number, expired: number }}
  */
 function groupByContainer(items, opts) {
   var options = opts || {};
   var order = options.order || {};
+  var slots = options.slots || {};
   var showEmpty = !!options.showEmpty;
   var list = items || [];
   var buckets = {};
@@ -291,7 +294,7 @@ function groupByContainer(items, opts) {
     var isUnplaced = c.id === UNPLACED.id;
     // 未归位没有东西就彻底不画；其他容器看 showEmpty
     if (!own.length && (isUnplaced || !showEmpty)) return;
-    wall.push(buildCard(c, own, order));
+    wall.push(buildCard(c, own, order, slots));
   });
 
   return {
@@ -310,10 +313,18 @@ function countStatus(items, status) {
   return n;
 }
 
-function buildCard(container, items, order) {
+function buildCard(container, items, order, slots) {
   var cols = container.cols || 4;
   var rows = container.rows || 0;
   var tiles = sortTiles(items.map(toTile), order);
+
+  // 把「这件钉在哪层」附到块上：层号来自 item_slots 的 zone_key
+  if (slots && Object.keys(slots).length) {
+    tiles = tiles.map(function (t) {
+      var slot = slots[String(t.id)];
+      return slot ? Object.assign({}, t, { row: slot.row, pos: slot.pos }) : t;
+    });
+  }
 
   return {
     id: container.id,
@@ -354,7 +365,6 @@ function buildZones(container, tiles, cols, rows) {
   var defs = container.zones && container.zones.length
     ? container.zones
     : [{ key: 'main', name: '', match: [] }];
-
   var groups = defs.map(function (def) {
     return { def: def, items: [] };
   });
@@ -382,6 +392,19 @@ function buildZones(container, tiles, cols, rows) {
     // 空的区不画（冰箱没有冻货就不该出现一块空隔板），
     // 但容器整体定了层数时，最后一个区要撑满，否则「4 层」看不出效果
     if (!g.items.length && !minRows && !multiZone) return;
+    var shelves = layoutShelves(g.items, cols, minRows).map(function (s) {
+      // 落点 key 在模板里拼不出来，先算好；rowKey 同时挂到块上
+      var rowKey = 'shelf:' + g.def.key + ':' + s.no;
+      var items = s.items.map(function (t) {
+        // 用**实际**层号（装不下会顺延），拖拽时据此判断是不是换了层
+        return Object.assign({}, t, { row: s.no, rowKey: rowKey });
+      });
+      return { k: s.k, no: s.no, items: items, dropKey: rowKey };
+    });
+    // 摊平后的顺序才是真实视觉顺序（层 → 层内位次），
+    // 拖拽找「这件前后是谁」必须按它算，不能再用 sortTiles 的顺序
+    var flat = [];
+    shelves.forEach(function (s) { flat = flat.concat(s.items); });
     zones.push({
       key: g.def.key,
       name: g.def.name,
@@ -390,8 +413,8 @@ function buildZones(container, tiles, cols, rows) {
       count: g.items.length,
       warning: countStatus(g.items, 'warning'),
       expired: countStatus(g.items, 'expired'),
-      tiles: g.items,
-      shelves: chunk(g.items, cols, minRows)
+      tiles: flat,
+      shelves: shelves
     });
   });
   return zones;
@@ -406,23 +429,97 @@ function matchesAny(text, keys) {
 }
 
 /**
- * 按每层容量切段。
- * @param {Array} list
+ * 位次的 zone_key 怎么编码层号（S-12）。
+ *
+ * `item_slots.zone_key` 是自由字符串，后端不校验格式，所以层号直接编进去：
+ * - 第 1 层沿用**纯区 key**（`chill`）—— 1.3.0 / 1.3.1 手动排过的旧位次读出来
+ *   还是第 1 层，零迁移、不弹位；
+ * - 第 2 层起写 `chill:2`。
+ *
+ * @param {string} zone 分区 key
+ * @param {number} row 1 起的层号
+ * @returns {string}
+ */
+function zoneKeyOf(zone, row) {
+  var key = zone || 'main';
+  return row > 1 ? key + ':' + row : key;
+}
+
+/**
+ * 反解 zone_key。
+ * @param {string} zoneKey `chill` / `chill:2`
+ * @returns {{ zone: string, row: number }}
+ */
+function parseZoneKey(zoneKey) {
+  var raw = String(zoneKey || 'main');
+  var at = raw.indexOf(':');
+  if (at < 0) return { zone: raw, row: 1 };
+  var row = parseInt(raw.slice(at + 1), 10);
+  return { zone: raw.slice(0, at), row: row > 0 ? row : 1 };
+}
+
+/**
+ * 把一区的物品摊成层。
+ *
+ * 和以前「按顺序每 cols 件切一段」的区别：现在**层是物品的属性**。
+ * 拖到第 2 层的东西必须留在第 2 层，不能再被顺序切段冲走 ——
+ * 否则「冷藏 2 层拖到冷冻 2 层」松手后又会被自动排到别处。
+ *
+ * 三种情况：
+ * 1. 钉了层（`t.row > 0`，来自 item_slots 的 zone_key）→ 放那一层，层内按位次排；
+ * 2. 没钉层的（新记的、老数据没排过的）→ 从第 1 层起找空位，排满往下开层；
+ * 3. 一层装不下（每层件数被改小）→ 顺延到下一层，宁可多画一层也不丢东西。
+ *
+ * @param {Array} list 已按 sortTiles 排好的块
  * @param {number} size 每层几件
  * @param {number} minRows 至少画几层（空的补占位层）
  */
-function chunk(list, size, minRows) {
-  var out = [];
+function layoutShelves(list, size, minRows) {
   var step = size > 0 ? size : 4;
-  for (var i = 0; i < list.length; i += step) {
-    out.push({ k: out.length, items: list.slice(i, i + step) });
+  var buckets = [];
+
+  function bucketAt(row) {
+    while (buckets.length < row) buckets.push([]);
+    return buckets[row - 1];
   }
+
+  function push(fromRow, tile) {
+    var row = fromRow > 0 ? fromRow : 1;
+    var bucket = bucketAt(row);
+    while (bucket.length >= step) {
+      row += 1;
+      bucket = bucketAt(row);
+    }
+    bucket.push(tile);
+  }
+
+  var pinned = [];
+  var free = [];
+  (list || []).forEach(function (t) {
+    if (t && t.row > 0) pinned.push(t);
+    else free.push(t);
+  });
+
+  // 钉住先放：层号小的先，同层按层内位次
+  pinned.sort(function (a, b) {
+    if (a.row !== b.row) return a.row - b.row;
+    var pa = a.pos === null || a.pos === undefined ? Number.MAX_SAFE_INTEGER : a.pos;
+    var pb = b.pos === null || b.pos === undefined ? Number.MAX_SAFE_INTEGER : b.pos;
+    return pa - pb;
+  });
+  pinned.forEach(function (t) { push(t.row, t); });
+
+  // 自由的从第 1 层起补空位，补满才往下开层
+  free.forEach(function (t) { push(1, t); });
+
   var want = minRows || 0;
-  while (out.length < want) {
-    out.push({ k: out.length, items: [] });
-  }
-  if (!out.length) out.push({ k: 0, items: [] });
-  return out;
+  while (buckets.length < want) buckets.push([]);
+  if (!buckets.length) buckets.push([]);
+
+  return buckets.map(function (items, i) {
+    // no 是 1 起的层号，模板里当落点标识用；k 仍给 wx:key
+    return { k: i, no: i + 1, items: items };
+  });
 }
 
 /**
@@ -526,7 +623,8 @@ function applyKeyword(wall, keyword) {
           if (hit) hits++;
           return Object.assign({}, t, { hit: hit, dim: !hit });
         });
-        return { k: shelf.k, items: items };
+        // no / dropKey 要一起带过去，否则搜索状态下拖拽找不到层落点
+        return Object.assign({}, shelf, { items: items });
       });
       return Object.assign({}, zone, { shelves: shelves });
     });
@@ -562,6 +660,8 @@ module.exports = {
   source: source,
   resolve: resolve,
   presetLocation: presetLocation,
+  zoneKeyOf: zoneKeyOf,
+  parseZoneKey: parseZoneKey,
   toTile: toTile,
   groupByContainer: groupByContainer,
   applyKeyword: applyKeyword,

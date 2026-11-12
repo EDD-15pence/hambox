@@ -1400,6 +1400,14 @@
   min-height: 96rpx;
 }
 
+/* 拖到某一层：整块隔板亮起来。用 inset 而不是外扩描边，
+   避免影响布局、也避免半透明色和柜体背景叠色（1.3.0 的坑） */
+.shelf.is-drop {
+  border-radius: var(--r-md);
+  background: var(--primary-weak);
+  box-shadow: inset 0 0 0 3rpx var(--primary);
+}
+
 /* ---------------- 容器编辑面板 ---------------- */
 
 .sheet-mask {

@@ -306,6 +306,108 @@ var moved = C.groupByContainer([
 ]).wall[0];
 check('预填冷冻就进冷冻区', zoneOf(moved, 'freeze').tiles.map(function (t) { return t.id; }), ['k']);
 
+// ---------- 以层为单位（S-12） ----------
+// 层号编码在 item_slots.zone_key 里：第 1 层沿用纯区 key，第 2 层起 '区:层'。
+// 这几条兜住「拖到第 2 层就留在第 2 层」以及「旧位次不弹位」。
+
+check('第 1 层不带层号', C.zoneKeyOf('chill', 1), 'chill');
+check('第 2 层编层号', C.zoneKeyOf('chill', 2), 'chill:2');
+check('第 1 层反解', C.parseZoneKey('chill'), { zone: 'chill', row: 1 });
+check('带层号反解', C.parseZoneKey('freeze:2'), { zone: 'freeze', row: 2 });
+check('空分区当 main', C.parseZoneKey(''), { zone: 'main', row: 1 });
+
+C.setDefs([
+  { id: 'box', name: '测试柜', icon: '📦', skin: 'door2', cols: 2, rows: 2, keys: ['测试柜'], zones: [], sort_order: 10, deletable: true },
+  { id: 'unplaced', name: '未归位', icon: '📦', skin: 'carton', cols: 4, rows: 0, keys: [], sort_order: 999, deletable: false }
+]);
+
+function rowsOf(card) {
+  var zone = (card && card.zones && card.zones[0]) || { shelves: [] };
+  return zone.shelves.map(function (s) {
+    return s.items.map(function (t) { return t.id; });
+  });
+}
+
+var pinned = C.groupByContainer(
+  [
+    { id: 'a', name: 'A', location: '测试柜', status: 'fresh', daysLeft: 10, quantity: 1 },
+    { id: 'b', name: 'B', location: '测试柜', status: 'fresh', daysLeft: 30, quantity: 1 },
+    { id: 'c', name: 'C', location: '测试柜', status: 'fresh', daysLeft: 20, quantity: 1 }
+  ],
+  {
+    slots: {
+      b: { zone: 'main', row: 1, pos: 0 },
+      c: { zone: 'main', row: 1, pos: 1 },
+      a: { zone: 'main', row: 2, pos: 0 }
+    }
+  }
+).wall[0];
+check('钉在第 2 层的留在第 2 层', rowsOf(pinned)[1], ['a']);
+check('第 1 层按位次', rowsOf(pinned)[0], ['b', 'c']);
+check('层落点 key 带层号', pinned.zones[0].shelves[1].dropKey, 'shelf:main:2');
+check('块上带实际层号', pinned.zones[0].shelves[1].items[0].row, 2);
+check('区里的顺序也是层优先', pinned.zones[0].tiles.map(function (t) { return t.id; }), ['b', 'c', 'a']);
+
+// 旧数据：slots 里只有纯区 key（等于第 1 层），读出来还在第 1 层
+var legacy = C.groupByContainer(
+  [
+    { id: 'b', name: 'B', location: '测试柜', status: 'fresh', daysLeft: 30, quantity: 1 },
+    { id: 'c', name: 'C', location: '测试柜', status: 'fresh', daysLeft: 20, quantity: 1 },
+    { id: 'd', name: 'D', location: '测试柜', status: 'fresh', daysLeft: 40, quantity: 1 }
+  ],
+  {
+    slots: {
+      c: { zone: 'main', row: 1, pos: 0 },
+      b: { zone: 'main', row: 1, pos: 1 }
+    }
+  }
+).wall[0];
+check('旧位次仍在第 1 层且不弹位', rowsOf(legacy)[0], ['c', 'b']);
+check('没位次的顺在已有的层后面', rowsOf(legacy)[1], ['d']);
+
+// 一层装不下：钉在同一层的三件不能丢，顺延到下一层
+var overflow = C.groupByContainer(
+  [
+    { id: 'p', name: 'P', location: '测试柜', status: 'fresh', daysLeft: 5, quantity: 1 },
+    { id: 'q', name: 'Q', location: '测试柜', status: 'fresh', daysLeft: 6, quantity: 1 },
+    { id: 'r', name: 'R', location: '测试柜', status: 'fresh', daysLeft: 7, quantity: 1 }
+  ],
+  {
+    slots: {
+      p: { zone: 'main', row: 1, pos: 0 },
+      q: { zone: 'main', row: 1, pos: 1 },
+      r: { zone: 'main', row: 1, pos: 2 }
+    }
+  }
+).wall[0];
+check('装不下顺延', rowsOf(overflow), [['p', 'q'], ['r']]);
+
+// 多分区：冷藏第 2 层 → 冷冻第 2 层，各在各的层
+C.setDefs([
+  { id: 'fridge', name: '冰箱', icon: '❄️', skin: 'fridge', cols: 4, rows: 0,
+    keys: ['冰箱', '冷藏', '冷冻'], sort_order: 20, is_builtin: true, deletable: true,
+    zones: [
+      { key: 'freeze', name: '冷冻室', match: ['冷冻', '冰柜'] },
+      { key: 'chill', name: '冷藏室', match: [] }
+    ] },
+  { id: 'unplaced', name: '未归位', icon: '📦', skin: 'carton', cols: 4, rows: 0, keys: [], sort_order: 999, deletable: false }
+]);
+var crossRow = C.groupByContainer(
+  [
+    { id: 'x', name: '青菜', location: '冰箱冷藏', status: 'fresh', daysLeft: 3, quantity: 1 },
+    { id: 'y', name: '水饺', location: '冰箱冷冻', status: 'fresh', daysLeft: 90, quantity: 1 }
+  ],
+  {
+    slots: {
+      x: { zone: 'chill', row: 2, pos: 0 },
+      y: { zone: 'freeze', row: 2, pos: 0 }
+    }
+  }
+).wall[0];
+check('冷藏第 2 层', zoneOf(crossRow, 'chill').shelves[1].items.map(function (t) { return t.id; }), ['x']);
+check('冷冻第 2 层', zoneOf(crossRow, 'freeze').shelves[1].items.map(function (t) { return t.id; }), ['y']);
+check('冷藏第 1 层是空的', zoneOf(crossRow, 'chill').shelves[0].items.length, 0);
+
 C.resetDefs();
 check('重置回内置', C.source(), 'builtin');
 check('内置仍认得柜子名', C.resolve('储物柜'), 'cabinet');

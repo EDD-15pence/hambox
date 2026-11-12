@@ -273,7 +273,9 @@
           </view>
 
           <view
-            class="shelf {{!shelf.items.length ? 'is-blank' : ''}}"
+            class="shelf {{!shelf.items.length ? 'is-blank' : ''}} {{dragOver === shelf.dropKey ? 'is-drop' : ''}}"
+            data-zone="{{zone.key}}"
+            data-row="{{shelf.no}}"
             wx:for="{{zone.shelves}}" wx:for-item="shelf" wx:key="k">
             <view class="shelf__tier shelf__tier--{{active.cols}}">
               <view
@@ -282,6 +284,7 @@
                 class="thing {{t.cls}} {{t.hit ? 'is-hit' : ''}} {{t.dim ? 'is-dim' : ''}} {{dragOver === t.id ? 'is-target' : ''}} {{drag && drag.id === t.id ? 'is-lifted' : ''}}"
                 data-id="{{t.id}}"
                 data-zone="{{zone.key}}"
+                data-row="{{t.row}}"
                 data-name="{{t.name}}"
                 data-emoji="{{t.emoji}}"
                 bindlongpress="onTileLongPress"
