@@ -5,15 +5,25 @@
  */
 const templates = require('../../../data/prompt-templates');
 const nav = require('../../../utils/nav');
+const theme = require('../../../utils/theme');
 
 Page({
   data: {
     templates: [],
+    isDark: false,
     statusBarHeight: nav.STATUS_BAR_HEIGHT
   },
   onLoad() {
-    // 加载本地模板数据
-    this.setData({ templates, statusBarHeight: nav.STATUS_BAR_HEIGHT });
+    // 加载本地模板数据；主题走 utils/theme.js（A-07 前本页完全没有深色）
+    this.setData({
+      templates,
+      isDark: theme.getTheme(),
+      statusBarHeight: nav.STATUS_BAR_HEIGHT,
+    });
+  },
+  onShow() {
+    const isDark = theme.getTheme();
+    if (isDark !== this.data.isDark) this.setData({ isDark });
   },
   onBack() {
     wx.navigateBack({ delta: 1, fail: () => wx.reLaunch({ url: '/pages/index/index' }) });

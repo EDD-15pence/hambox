@@ -2,6 +2,7 @@ const nav = require('../../utils/nav');
 const theme = require('../../utils/theme');
 const api = require('../../utils/api');
 const storageView = require('../../utils/storage-view');
+const version = require('../../utils/version');
 
 /** 角标不用每次都拉：一分钟内的切页面/返回都复用上次结果 */
 const BADGE_TTL = 60 * 1000;
@@ -93,6 +94,7 @@ Page({
   onLoad() {
     this.setData({
       isDark: theme.getTheme(),
+      versionText: version.describe(),
       statusBarHeight: nav.STATUS_BAR_HEIGHT,
       navRight: nav.SAFE_RIGHT,
     });
@@ -142,6 +144,12 @@ Page({
     const isDark = theme.resetToSystem();
     this.setData({ isDark });
     wx.showToast({ title: '已跟随系统', icon: 'none' });
+  },
+
+  /** 长按页脚版本号 → 连接设置（债-1）。刻意不做成按钮：这是运维入口，不是功能 */
+  onOpenSettings() {
+    wx.vibrateShort({ type: 'light' });
+    wx.navigateTo({ url: '/pages/settings/index' });
   },
 
   /** 语音面板保存成功（提示由组件负责，这里刷新一下角标） */

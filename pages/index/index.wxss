@@ -120,3 +120,13 @@
   font-size: var(--fs-tiny);
   color: var(--text-3);
 }
+
+/* 版本号兼隐藏入口：不做按钮外观，但仍要留够可长按的高度 */
+.footer-ver {
+  display: inline-block;
+  margin-top: var(--sp-1);
+  padding: 8rpx 16rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+  opacity: 0.65;
+}

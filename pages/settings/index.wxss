@@ -1,0 +1,126 @@
+.container {
+  min-height: 100vh;
+  background: var(--bg-page);
+  color: var(--text-1);
+}
+
+.page {
+  padding: var(--sp-3) var(--page-x) calc(64rpx + env(safe-area-inset-bottom));
+}
+
+/* 顶部三行状态：当前线路 / 版本 / 改了几项 */
+.card {
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+}
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10rpx 0;
+}
+.row__k {
+  font-size: var(--fs-caption);
+  color: var(--text-3);
+}
+.row__v {
+  font-size: var(--fs-body);
+  color: var(--text-1);
+  font-weight: 500;
+}
+
+/* 表单 */
+.sfield {
+  margin-top: var(--sp-4);
+}
+.sfield__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--sp-2);
+}
+.sfield__label {
+  font-size: var(--fs-caption);
+  color: var(--text-2);
+  font-weight: 600;
+}
+/* 「已改」和「显示/隐藏」共用一个位置：前者只读，后者可点 */
+.sfield__flag {
+  font-size: var(--fs-tiny);
+  color: var(--primary-strong);
+}
+.sfield__toggle {
+  padding: 6rpx 0 6rpx 24rpx;
+  font-size: var(--fs-tiny);
+  color: var(--primary-strong);
+}
+.sfield__hint {
+  display: block;
+  margin-top: var(--sp-1);
+  font-size: var(--fs-tiny);
+  line-height: 1.6;
+  color: var(--text-3);
+}
+
+/* 按钮 */
+.actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-6);
+}
+.actions .ui-btn {
+  flex: 1;
+}
+.reset-btn {
+  margin-top: var(--sp-3);
+  width: 100%;
+}
+
+/* 连通性测试结果 */
+.result {
+  margin-top: var(--sp-3);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+}
+.result__row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 8rpx 0;
+}
+.result__dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  flex: none;
+}
+.result__dot.is-ok {
+  background: var(--success);
+}
+.result__dot.is-bad {
+  background: var(--danger);
+}
+.result__label {
+  flex: 0 0 90rpx;
+  font-size: var(--fs-caption);
+  color: var(--text-2);
+}
+.result__text {
+  flex: 1;
+  font-size: var(--fs-caption);
+  color: var(--text-1);
+}
+
+.tip {
+  margin-top: var(--sp-6);
+}
+.tip__line {
+  display: block;
+  font-size: var(--fs-tiny);
+  line-height: 1.8;
+  color: var(--text-3);
+}

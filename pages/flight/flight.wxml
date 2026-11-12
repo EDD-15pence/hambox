@@ -1,4 +1,4 @@
-<view class="flight-root">
+<view class="container flight-root {{isDark ? 'dark' : ''}}">
 <view class="app-nav" style="padding-top:{{statusBarHeight}}px">
   <view class="nav-left">
     <text class="nav-back-icon" bindtap="onBack">‹</text>

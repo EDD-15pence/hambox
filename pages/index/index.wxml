@@ -37,6 +37,8 @@
 
     <view class="footer">
       <text class="footer-text">点卡片进入 · 右下角说话直接记一笔</text>
+      <!-- 隐藏入口：长按版本号进连接设置（换网段 / 换令牌用，见 utils/env.js 覆盖层） -->
+      <text class="footer-ver" bindlongpress="onOpenSettings">v{{versionText}}</text>
     </view>
   </view>
 

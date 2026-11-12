@@ -35,6 +35,9 @@ page {
   --primary-weak: #E2EDFB;
   /* 实心填充专用：白字压在 #007AFF 上只有 4.02:1，加深一档到 5.18:1 */
   --primary-strong: #0068E0;
+  /* 渐变第二档：只给 linear-gradient 收尾用（机票主按钮）。比 --primary 亮一档，
+     让按钮有光感又不会把白字对比度拖到 4.5:1 以下 */
+  --primary-soft: #5D98FF;
   /* 主色块上的文字/图标（两种模式下都是白色） */
   --on-primary: #FFFFFF;
 
@@ -126,6 +129,8 @@ page {
 
   --primary: #0A84FF;
   --primary-weak: rgba(10, 132, 255, 0.18);
+  /* 深色下渐变的收尾档：比 --primary 亮，避免整块按钮在暗底上发闷 */
+  --primary-soft: #4FA6FF;
   --on-primary: #FFFFFF;
 
   --success: #30D158;

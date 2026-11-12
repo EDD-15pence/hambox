@@ -1,0 +1,93 @@
+<view class="container {{isDark ? 'dark' : ''}}">
+  <view class="app-nav" style="padding-top:{{statusBarHeight}}px">
+    <view class="nav-left">
+      <text class="nav-back-icon" bindtap="onBack">‹</text>
+      <text class="app-nav__title">连接设置</text>
+    </view>
+    <text class="ui-badge">隐藏</text>
+  </view>
+
+  <view class="page">
+    <view class="card">
+      <view class="row">
+        <text class="row__k">当前线路</text>
+        <text class="row__v">{{routeLabel}}</text>
+      </view>
+      <view class="row">
+        <text class="row__k">版本</text>
+        <text class="row__v">{{versionText}}</text>
+      </view>
+      <view class="row">
+        <text class="row__k">改动</text>
+        <text class="row__v">{{dirtyText}}</text>
+      </view>
+    </view>
+
+    <view class="sfield">
+      <view class="sfield__head">
+        <text class="sfield__label">局域网地址</text>
+        <text wx:if="{{custom.lan}}" class="sfield__flag">已改</text>
+      </view>
+      <input
+        class="ui-input"
+        value="{{lan}}"
+        data-field="lan"
+        bindinput="onInput"
+        placeholder="{{defaults.lan}}"
+        placeholder-class="ui-placeholder" />
+      <text class="sfield__hint">同一 WiFi 下直连台式机。真机上 http + IP 进不了合法域名白名单，只有开发者工具能用。</text>
+    </view>
+
+    <view class="sfield">
+      <view class="sfield__head">
+        <text class="sfield__label">外网地址</text>
+        <text wx:if="{{custom.wan}}" class="sfield__flag">已改</text>
+      </view>
+      <input
+        class="ui-input"
+        value="{{wan}}"
+        data-field="wan"
+        bindinput="onInput"
+        placeholder="{{defaults.wan}}"
+        placeholder-class="ui-placeholder" />
+      <text class="sfield__hint">出门在外的线路，必须是 HTTPS 域名且已加进 mp 后台的 request 合法域名。</text>
+    </view>
+
+    <view class="sfield">
+      <view class="sfield__head">
+        <text class="sfield__label">访问令牌</text>
+        <text class="sfield__toggle" bindtap="onToggleMask">{{maskToken ? '显示' : '隐藏'}}</text>
+      </view>
+      <input
+        class="ui-input"
+        password="{{maskToken}}"
+        value="{{token}}"
+        data-field="token"
+        bindinput="onInput"
+        placeholder="与后端 API_TOKEN 一致，留空表示不覆盖"
+        placeholder-class="ui-placeholder" />
+    </view>
+
+    <view class="actions">
+      <button class="ui-btn is-primary" bindtap="onSave">保存</button>
+      <button class="ui-btn is-ghost" bindtap="onTest" disabled="{{testing}}">{{testing ? '测试中…' : '测试连接'}}</button>
+    </view>
+
+    <view wx:if="{{testRows.length}}" class="result">
+      <view wx:for="{{testRows}}" wx:key="label" class="result__row">
+        <text class="result__dot {{item.ok ? 'is-ok' : 'is-bad'}}"></text>
+        <text class="result__label">{{item.label}}</text>
+        <text class="result__text">{{item.text}}</text>
+      </view>
+    </view>
+
+    <button class="ui-btn is-danger reset-btn" bindtap="onReset">恢复默认</button>
+
+    <view class="tip">
+      <text class="tip__line">改完点保存立刻生效，不用重新上传小程序。</text>
+      <text class="tip__line">地址可以不写 http://，保存时会自动补上。</text>
+      <text class="tip__line">留空 = 用代码包里的默认值。</text>
+      <text class="tip__line">这份改动只存在这台手机上，不影响别人的小程序。</text>
+    </view>
+  </view>
+</view>

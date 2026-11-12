@@ -1,8 +1,15 @@
+/* A-07 令牌迁移：本页原先是独立的白卡 + 蓝色系（96 处硬编码色），
+   并在文件末尾手写了一整块 .dark 覆盖（深灰底 + 各种灰色文字）。
+   现已全部收口到 styles/tokens.wxss —— 深色只靠 .container.dark 的变量覆盖，
+   末尾那段 .dark 块已删除（否则两套深色互相打架）。
+   尺寸单位沿用原值（px）未动，只换色与层级表达。 */
+
 .container {
   padding: 20px;
   min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial;
-  background-color: #f5f5f5;
+  background-color: var(--bg-page);
+  color: var(--text-1);
 }
 
 /* 导航栏 */
@@ -21,7 +28,7 @@
 .title {
   font-size: 24px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-1);
 }
 
 .icon-btn {
@@ -30,20 +37,21 @@
   font-size: 20px;
   padding: 4px 8px;
   line-height: 1;
+  color: var(--text-1);
 }
 
 /* 时间卡片 */
 .time-card {
-  background: #fff;
+  background: var(--bg-raised);
   padding: 16px;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-raised);
   margin-bottom: 16px;
   text-align: center;
 }
 
 .time-label {
-  color: #888;
+  color: var(--text-3);
   font-size: 12px;
   display: block;
   margin-bottom: 8px;
@@ -52,7 +60,7 @@
 .now-time {
   font-size: 18px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-1);
   display: block;
 }
 
@@ -65,11 +73,11 @@
 
 /* 习惯卡片 */
 .habit-card {
-  background: #fff;
+  background: var(--bg-raised);
   border-radius: 12px;
   padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  border-left: 4px solid #007aff;
+  box-shadow: var(--shadow-raised);
+  border-left: 4px solid var(--primary);
 }
 
 .habit-header {
@@ -101,7 +109,7 @@
 .habit-name {
   font-size: 16px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-1);
 }
 
 .habit-difficulty {
@@ -113,18 +121,18 @@
 }
 
 .difficulty-easy {
-  background: #e8f5e9;
-  color: #4caf50;
+  background: var(--success-weak);
+  color: var(--success);
 }
 
 .difficulty-medium {
-  background: #fff3e0;
-  color: #ff9800;
+  background: var(--warning-weak);
+  color: var(--warning);
 }
 
 .difficulty-hard {
-  background: #ffebee;
-  color: #f44336;
+  background: var(--danger-weak);
+  color: var(--danger);
 }
 
 .habit-actions {
@@ -149,8 +157,8 @@
   display: flex;
   justify-content: space-around;
   padding: 12px 0;
-  border-top: 1px solid #f0f0f0;
-  border-bottom: 1px solid #f0f0f0;
+  border-top: 1px solid var(--divider);
+  border-bottom: 1px solid var(--divider);
   margin-bottom: 12px;
 }
 
@@ -164,17 +172,17 @@
 
 .stat-label {
   font-size: 11px;
-  color: #888;
+  color: var(--text-3);
 }
 
 .stat-value {
   font-size: 16px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-1);
 }
 
 .stat-value.highlight {
-  color: #007aff;
+  color: var(--primary-strong);
 }
 
 /* 进度条 */
@@ -184,14 +192,14 @@
 
 .progress-bar {
   height: 6px;
-  background: #f0f0f0;
+  background: var(--bg-sunken);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: #007aff;
+  background: var(--primary);
   border-radius: 3px;
   transition: width 0.3s ease;
 }
@@ -206,8 +214,8 @@
 
 .checkin-btn {
   flex: 1;
-  background: #007aff;
-  color: #fff;
+  background: var(--primary-strong);
+  color: var(--on-primary);
   border: none;
   border-radius: 8px;
   padding: 12px 24px;
@@ -216,8 +224,12 @@
   transition: all 0.2s;
 }
 
+/* 已打卡：原来是一块亮绿实心 + 白字，其实只有 1.9:1（深色下更糟）。
+   改成弱绿底 + 强绿字 + 内描边，两种模式下都读得清，也没有新增令牌。 */
 .checkin-btn.checked {
-  background: #4cd964;
+  background: var(--success-weak);
+  color: var(--success);
+  box-shadow: inset 0 0 0 2rpx var(--success);
 }
 
 .checkin-btn:active {
@@ -227,7 +239,7 @@
 
 .reminder-text {
   font-size: 12px;
-  color: #888;
+  color: var(--text-3);
   white-space: nowrap;
 }
 
@@ -235,9 +247,9 @@
 .empty-state {
   text-align: center;
   padding: 60px 20px;
-  background: #fff;
+  background: var(--bg-raised);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-raised);
 }
 
 .empty-icon {
@@ -248,7 +260,7 @@
 
 .empty-text {
   font-size: 16px;
-  color: #333;
+  color: var(--text-1);
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
@@ -256,7 +268,7 @@
 
 .empty-hint {
   font-size: 14px;
-  color: #888;
+  color: var(--text-3);
   display: block;
   margin-bottom: 24px;
 }
@@ -275,7 +287,7 @@
 }
 
 .modal-content {
-  background: #fff;
+  background: var(--bg-raised);
   border-radius: 20px 20px 0 0;
   width: 100%;
   max-height: 80vh;
@@ -297,24 +309,24 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--divider);
   position: sticky;
   top: 0;
-  background: #fff;
+  background: var(--bg-raised);
   z-index: 10;
 }
 
 .modal-title {
   font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-1);
 }
 
 .modal-close {
   background: transparent;
   border: none;
   font-size: 24px;
-  color: #888;
+  color: var(--text-3);
   padding: 0;
   width: 32px;
   height: 32px;
@@ -331,7 +343,7 @@
 
 .form-label {
   font-size: 14px;
-  color: #333;
+  color: var(--text-2);
   font-weight: 500;
   display: block;
   margin-bottom: 8px;
@@ -341,9 +353,11 @@
   width: 100%;
   height: 40px;
   padding: 12px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--divider);
   border-radius: 8px;
   font-size: 16px;
+  color: var(--text-1);
+  background: var(--bg-raised);
   box-sizing: border-box;
 }
 
@@ -360,16 +374,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #e0e0e0;
+  border: 2px solid var(--divider);
   border-radius: 8px;
   font-size: 24px;
-  background: #fff;
+  background: var(--bg-raised);
   transition: all 0.2s;
 }
 
 .icon-option.selected {
-  border-color: #007aff;
-  background: #f0f7ff;
+  border-color: var(--primary);
+  background: var(--primary-weak);
 }
 
 .icon-option:active {
@@ -395,12 +409,12 @@
 }
 
 .color-option.selected {
-  border-color: #333;
+  border-color: var(--text-1);
   transform: scale(1.1);
 }
 
 .check-mark {
-  color: #fff;
+  color: var(--on-primary);
   font-size: 18px;
   font-weight: bold;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -415,29 +429,29 @@
 .difficulty-option {
   flex: 1;
   padding: 12px;
-  border: 2px solid #e0e0e0;
+  border: 2px solid var(--divider);
   border-radius: 8px;
   text-align: center;
-  background: #fff;
+  background: var(--bg-raised);
   transition: all 0.2s;
 }
 
 .difficulty-option.selected {
-  border-color: #007aff;
-  background: #f0f7ff;
+  border-color: var(--primary);
+  background: var(--primary-weak);
 }
 
 .difficulty-label {
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-2);
   display: block;
   margin-bottom: 4px;
 }
 
 .difficulty-desc {
   font-size: 11px;
-  color: #888;
+  color: var(--text-3);
   display: block;
 }
 
@@ -447,29 +461,29 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--divider);
   border-radius: 8px;
-  background: #fff;
+  background: var(--bg-raised);
 }
 
 .picker-text {
   font-size: 16px;
-  color: #333;
+  color: var(--text-1);
 }
 
 .picker-arrow {
   font-size: 20px;
-  color: #888;
+  color: var(--text-3);
 }
 
 .modal-footer {
   display: flex;
   gap: 12px;
   padding: 20px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--divider);
   position: sticky;
   bottom: 0;
-  background: #fff;
+  background: var(--bg-raised);
 }
 
 .btn-cancel,
@@ -483,139 +497,21 @@
 }
 
 .btn-cancel {
-  background: #f2f2f2;
-  color: #333;
+  background: var(--bg-sunken);
+  color: var(--text-2);
 }
 
 .btn-save {
-  background: #007aff;
-  color: #fff;
+  background: var(--primary-strong);
+  color: var(--on-primary);
 }
 
 .btn-primary {
-  background: #007aff;
-  color: #fff;
+  background: var(--primary-strong);
+  color: var(--on-primary);
   border: none;
   border-radius: 8px;
   padding: 12px 24px;
   font-size: 16px;
   font-weight: 500;
-}
-
-/* 深色模式 */
-.dark {
-  background-color: #1a1a1a;
-}
-
-.dark .title {
-  color: #fff;
-}
-
-.dark .time-card,
-.dark .habit-card,
-.dark .empty-state {
-  background: #2a2a2a;
-  color: #eee;
-}
-
-.dark .time-label {
-  color: #aaa;
-}
-
-.dark .now-time {
-  color: #fff;
-}
-
-.dark .habit-name {
-  color: #fff;
-}
-
-.dark .stat-label {
-  color: #aaa;
-}
-
-.dark .stat-value {
-  color: #fff;
-}
-
-.dark .progress-bar {
-  background: #333;
-}
-
-.dark .empty-text {
-  color: #fff;
-}
-
-.dark .empty-hint {
-  color: #aaa;
-}
-
-.dark .modal-content {
-  background: #2a2a2a;
-}
-
-.dark .modal-header {
-  background: #2a2a2a;
-  border-bottom-color: #333;
-}
-
-.dark .modal-title {
-  color: #fff;
-}
-
-.dark .modal-close {
-  color: #aaa;
-}
-
-.dark .form-label {
-  color: #fff;
-}
-
-.dark .form-input {
-  background: #333;
-  border-color: #444;
-  color: #fff;
-}
-
-.dark .icon-option {
-  background: #333;
-  border-color: #444;
-}
-
-.dark .icon-option.selected {
-  border-color: #007aff;
-  background: #1a3a5a;
-}
-
-.dark .difficulty-option {
-  background: #333;
-  border-color: #444;
-}
-
-.dark .difficulty-option.selected {
-  border-color: #007aff;
-  background: #1a3a5a;
-}
-
-.dark .difficulty-label {
-  color: #fff;
-}
-
-.dark .picker-wrapper {
-  background: #333;
-  border-color: #444;
-}
-
-.dark .picker-text {
-  color: #fff;
-}
-
-.dark .modal-footer {
-  background: #2a2a2a;
-  border-top-color: #333;
-}
-
-.dark .btn-cancel {
-  background: #333;
-  color: #fff;
 }

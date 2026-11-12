@@ -1,6 +1,14 @@
-.container { padding: 20px; }
+/* A-07 令牌迁移：色值全部改取 styles/tokens.wxss，深色靠 .container.dark 的变量覆盖。
+   尺寸单位（px）沿用原值未动，避免纯换色时把版式一起改了。 */
+.container {
+  padding: 20px;
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: var(--bg-page);
+  color: var(--text-1);
+}
 .header { display: flex; align-items: center; font-size: 20px; font-weight: bold; margin-bottom: 16px; }
 .prompt-list { display: flex; flex-direction: column; gap: 12px; }
-.prompt-item { background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.prompt-item { background: var(--bg-raised); border-radius: var(--r-sm); padding: 16px; box-shadow: var(--shadow-raised); }
 .prompt-title { font-size: 16px; font-weight: 600; }
-.prompt-category { font-size: 12px; color: #888; margin-top: 4px; }
+.prompt-category { font-size: 12px; color: var(--text-3); margin-top: 4px; }

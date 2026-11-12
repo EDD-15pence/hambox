@@ -1,3 +1,139 @@
 page { background: var(--bg-page); min-height: 100%; }
 .flight-root { min-height: 100vh; background: var(--bg-page); }
-.page { padding: 32rpx 28rpx 64rpx; color: #1f2937; }.hero { display:flex; align-items:center; gap:20rpx; margin:12rpx 4rpx 30rpx; }.hero-icon{font-size:62rpx}.hero-title{display:block;font-size:40rpx;font-weight:700}.hero-subtitle{display:block;margin-top:6rpx;color:#7b8798;font-size:25rpx}.search-card,.platform-card{background:#fff;border-radius:24rpx;box-shadow:0 8rpx 28rpx rgba(30,62,108,.07)}.search-card{padding:28rpx}.field-row{display:flex;align-items:center;gap:16rpx}.field{flex:1;min-width:0;padding:20rpx 18rpx;border:2rpx solid #e8edf5;border-radius:16rpx}.field-label{display:block;color:#8a96a8;font-size:22rpx;margin-bottom:8rpx}.field input{font-size:30rpx;font-weight:600;height:40rpx}.arrow{color:#397af5;font-size:38rpx;font-weight:bold}.date-field{display:flex;justify-content:space-between;align-items:center;margin-top:24rpx;padding:6rpx 4rpx;font-size:27rpx}.date-value{color:#397af5;font-weight:600}.chevron{margin-left:10rpx;font-size:38rpx;vertical-align:-2rpx}.search-button{margin-top:24rpx;border:0;border-radius:16rpx;background:linear-gradient(135deg,#397af5,#5d98ff);color:#fff;font-size:30rpx;font-weight:600;line-height:88rpx}.results{margin-top:34rpx}.result-heading{display:flex;justify-content:space-between;align-items:center;padding:0 4rpx 20rpx}.route{display:block;font-size:32rpx;font-weight:700}.travel-date{display:block;margin-top:6rpx;color:#8995a7;font-size:24rpx}.result-count{color:#397af5;font-size:24rpx}.notice{display:flex;align-items:flex-start;gap:12rpx;padding:20rpx;margin-bottom:20rpx;border-radius:16rpx;background:#eef5ff;color:#52719a;font-size:23rpx;line-height:1.55}.notice-icon{display:inline-flex;flex:none;justify-content:center;align-items:center;width:28rpx;height:28rpx;border-radius:50%;background:#397af5;color:#fff;font-size:21rpx}.platform-list{display:flex;flex-direction:column;gap:18rpx}.platform-card{display:flex;align-items:center;padding:22rpx}.platform-logo{display:flex;justify-content:center;align-items:center;width:66rpx;height:66rpx;border-radius:16rpx;color:#fff;font-size:30rpx;font-weight:700}.platform-info{flex:1;margin-left:18rpx}.platform-name,.platform-status{display:block}.platform-name{font-size:29rpx;font-weight:600}.platform-status{margin-top:5rpx;color:#a0aab8;font-size:23rpx}.copy-button{margin:0;padding:0 18rpx;border:2rpx solid #397af5;border-radius:12rpx;background:#fff;color:#397af5;font-size:24rpx;line-height:54rpx}.empty-state{display:flex;flex-direction:column;align-items:center;padding-top:150rpx;color:#95a0af}.empty-icon{font-size:80rpx}.empty-title{margin-top:22rpx;color:#64748b;font-size:29rpx;font-weight:600}.empty-desc{margin-top:10rpx;font-size:24rpx}
+
+/* A-07 令牌迁移：下面原本是压缩成一行的蓝色系硬编码色，深色下整页发白。
+   现全部改取 styles/tokens.wxss；尺寸保留原值，只换色与层级表达。
+   平台品牌色（携程 / 去哪儿 / 同程 / 飞猪）留在 js 的 PLATFORM_LIST 里，那是数据不是主题。 */
+.page { padding: 32rpx 28rpx 64rpx; color: var(--text-1); }
+
+.hero { display: flex; align-items: center; gap: 20rpx; margin: 12rpx 4rpx 30rpx; }
+.hero-icon { font-size: 62rpx; }
+.hero-title { display: block; font-size: 40rpx; font-weight: 700; }
+.hero-subtitle { display: block; margin-top: 6rpx; color: var(--text-3); font-size: 25rpx; }
+
+.search-card,
+.platform-card {
+  background: var(--bg-raised);
+  border-radius: 24rpx;
+  box-shadow: var(--shadow-raised);
+}
+.search-card { padding: 28rpx; }
+
+.field-row { display: flex; align-items: center; gap: 16rpx; }
+/* 原来是 2rpx 浅灰描边，深色下那条边几乎看不见；改用凹陷面表达输入区 */
+.field {
+  flex: 1;
+  min-width: 0;
+  padding: 20rpx 18rpx;
+  border: none;
+  border-radius: 16rpx;
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+}
+.field-label { display: block; color: var(--text-3); font-size: 22rpx; margin-bottom: 8rpx; }
+.field input { font-size: 30rpx; font-weight: 600; height: 40rpx; color: var(--text-1); }
+
+.arrow { color: var(--primary); font-size: 38rpx; font-weight: bold; }
+
+.date-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24rpx;
+  padding: 6rpx 4rpx;
+  font-size: 27rpx;
+}
+/* 27rpx 属小字，按 §5.8 不能用 --primary（3.39:1），改用 --primary-strong */
+.date-value { color: var(--primary-strong); font-weight: 600; }
+.chevron { margin-left: 10rpx; font-size: 38rpx; vertical-align: -2rpx; }
+
+.search-button {
+  margin-top: 24rpx;
+  border: 0;
+  border-radius: 16rpx;
+  /* 渐变第二档走 --primary-soft（深色另有取值），起手仍是 --primary-strong 保证白字对比度 */
+  background: linear-gradient(135deg, var(--primary-strong), var(--primary-soft));
+  color: var(--on-primary);
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 88rpx;
+}
+
+.results { margin-top: 34rpx; }
+.result-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4rpx 20rpx;
+}
+.route { display: block; font-size: 32rpx; font-weight: 700; }
+.travel-date { display: block; margin-top: 6rpx; color: var(--text-3); font-size: 24rpx; }
+.result-count { color: var(--primary-strong); font-size: 24rpx; }
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+  border-radius: 16rpx;
+  background: var(--primary-weak);
+  color: var(--text-2);
+  font-size: 23rpx;
+  line-height: 1.55;
+}
+/* 小圆标底色用 --primary-strong：白字压 --primary 只有 4.02:1 */
+.notice-icon {
+  display: inline-flex;
+  flex: none;
+  justify-content: center;
+  align-items: center;
+  width: 28rpx;
+  height: 28rpx;
+  border-radius: 50%;
+  background: var(--primary-strong);
+  color: var(--on-primary);
+  font-size: 21rpx;
+}
+
+.platform-list { display: flex; flex-direction: column; gap: 18rpx; }
+.platform-card { display: flex; align-items: center; padding: 22rpx; }
+/* 底色由 js 的品牌色内联给出，字永远白色 */
+.platform-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 66rpx;
+  height: 66rpx;
+  border-radius: 16rpx;
+  color: var(--on-primary);
+  font-size: 30rpx;
+  font-weight: 700;
+}
+.platform-info { flex: 1; margin-left: 18rpx; }
+.platform-name,
+.platform-status { display: block; }
+.platform-name { font-size: 29rpx; font-weight: 600; }
+.platform-status { margin-top: 5rpx; color: var(--text-3); font-size: 23rpx; }
+
+.copy-button {
+  margin: 0;
+  padding: 0 18rpx;
+  border: 2rpx solid var(--primary-strong);
+  border-radius: 12rpx;
+  background: var(--bg-raised);
+  color: var(--primary-strong);
+  font-size: 24rpx;
+  line-height: 54rpx;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 150rpx;
+  color: var(--text-3);
+}
+.empty-icon { font-size: 80rpx; }
+.empty-title { margin-top: 22rpx; color: var(--text-2); font-size: 29rpx; font-weight: 600; }
+.empty-desc { margin-top: 10rpx; font-size: 24rpx; }

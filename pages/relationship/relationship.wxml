@@ -6,8 +6,8 @@
         <view class="gender">
           <text class="label">我的性别</text>
           <radio-group class="gender-group" bindchange="onChangeGender">
-            <label class="gender-item"><radio value="male" checked="{{isMale}}" color='#000000' /> 男</label>
-            <label class="gender-item"><radio value="female" checked="{{!isMale}}" color='#000000' /> 女</label>
+            <label class="gender-item"><radio value="male" checked="{{isMale}}" color="{{isDark ? '#ECEEF2' : '#262E3C'}}" /> 男</label>
+            <label class="gender-item"><radio value="female" checked="{{!isMale}}" color="{{isDark ? '#ECEEF2' : '#262E3C'}}" /> 女</label>
           </radio-group>
         </view>
       </view>

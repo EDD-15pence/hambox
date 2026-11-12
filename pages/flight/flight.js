@@ -1,4 +1,5 @@
 const nav = require('../../utils/nav');
+const theme = require('../../utils/theme');
 
 const PLATFORM_LIST = [
   { name: '携程旅行', shortName: '携程', color: '#2878ff', icon: '携' },
@@ -16,7 +17,15 @@ function getToday() {
 }
 
 Page({
-  data: { departure: '', destination: '', date: getToday(), minDate: getToday(), searched: false, routeText: '', platforms: [], statusBarHeight: nav.STATUS_BAR_HEIGHT },
+  data: { departure: '', destination: '', date: getToday(), minDate: getToday(), searched: false, routeText: '', platforms: [], isDark: false, statusBarHeight: nav.STATUS_BAR_HEIGHT },
+  onLoad() {
+    // 主题走 utils/theme.js（A-07 前本页完全没有深色）
+    this.setData({ isDark: theme.getTheme() });
+  },
+  onShow() {
+    const isDark = theme.getTheme();
+    if (isDark !== this.data.isDark) this.setData({ isDark });
+  },
   onDepartureInput(e) { this.setData({ departure: e.detail.value }); },
   onDestinationInput(e) { this.setData({ destination: e.detail.value }); },
   onDateChange(e) { this.setData({ date: e.detail.value }); },

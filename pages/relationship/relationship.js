@@ -1,4 +1,5 @@
 const navUtil = require("../../utils/nav");
+const theme = require("../../utils/theme");
 
 // 亲属称呼计算核心
 // token：f 爸爸, m 妈妈, h 老公, w 老婆, ob 哥哥, yb 弟弟, os 姐姐, ys 妹妹, s 儿子, d 女儿
@@ -1598,7 +1599,11 @@ Page({
     });
   },
   onLoad(options) {
-    this.setData({ statusBarHeight: navUtil.STATUS_BAR_HEIGHT });
+    // 主题统一走 utils/theme.js（A-07）：本页以前自己翻转 isDark，不跟系统也不跨页同步
+    this.setData({
+      statusBarHeight: navUtil.STATUS_BAR_HEIGHT,
+      isDark: theme.getTheme(),
+    });
 
     const cdnUrls = [
       "https://ghfast.top/https://raw.githubusercontent.com/EDD-15pence/relationship-audio/main/cdn_map_unified.json",
@@ -1628,6 +1633,12 @@ Page({
       withShareTicket: true,
       menus: ["shareAppMessage", "shareTimeline"],
     });
+  },
+
+  // 从别的页面切回来时同步主题：别的页可能刚手动切过
+  onShow() {
+    const isDark = theme.getTheme();
+    if (isDark !== this.data.isDark) this.setData({ isDark });
   },
 
   onBack() {
@@ -1672,7 +1683,7 @@ Page({
     this._recompute();
   },
   onToggleTheme() {
-    this.setData({ isDark: !this.data.isDark });
+    this.setData({ isDark: theme.toggleTheme() });
   },
   // 分享给朋友
   onShareAppMessage() {
