@@ -60,4 +60,5 @@
       </view>
     </view>
   </scroll-view>
+  <feedback-fab />
 </view>

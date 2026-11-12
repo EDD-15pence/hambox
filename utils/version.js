@@ -6,7 +6,7 @@
  * 所以每次 `cli.bat upload -v x.y.z` 之后要顺手改这一行，
  * 反馈记录带的 app_version 才是准的（见 AGENTS.md §16.5）。
  */
-var APP_VERSION = '1.3.4';
+var APP_VERSION = '1.3.5';
 
 function envLabel() {
   try {

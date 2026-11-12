@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "反馈记录"
+  "navigationBarTitleText": "反馈记录",
+  "usingComponents": {
+    "feedback-fab": "/components/feedback-fab/feedback-fab"
+  }
 }
