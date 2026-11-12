@@ -475,7 +475,8 @@ function toViewFeedback(row) {
     pageRoute: row.page_route || '',
     spot: row.spot || '',
     appVersion: row.app_version || '',
-    createdAt: normalizeTimestamp(row.created_at)
+    createdAt: normalizeTimestamp(row.created_at),
+    deletedAt: normalizeTimestamp(row.deleted_at)
   };
 }
 
@@ -498,6 +499,19 @@ function listFeedbacks(limit, offset) {
       hasMore: !!data.has_more
     };
   });
+}
+
+/**
+ * 软删除。前端只用批量这个（勾 1 条也是 1 个元素的数组）：
+ * 一个接口覆盖单条和批量，免得两套逻辑各错各的。
+ * 后端只盖 deleted_at，不真删，所以「撤销」是恢复同一行，不是重新插一条。
+ */
+function deleteFeedbacks(ids) {
+  return request('/api/feedbacks/delete-batch', 'POST', { ids: ids || [] });
+}
+
+function restoreFeedbacks(ids) {
+  return request('/api/feedbacks/restore-batch', 'POST', { ids: ids || [] });
 }
 
 module.exports = {
@@ -527,5 +541,7 @@ module.exports = {
   deletePending: deletePending,
   placePending: placePending,
   createFeedback: createFeedback,
-  listFeedbacks: listFeedbacks
+  listFeedbacks: listFeedbacks,
+  deleteFeedbacks: deleteFeedbacks,
+  restoreFeedbacks: restoreFeedbacks
 };

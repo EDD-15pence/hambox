@@ -12,7 +12,8 @@
   <scroll-view class="page-scroll" scroll-y>
     <view class="page-body">
       <view wx:if="{{!loading && !error}}" class="fb-tip">
-        {{total ? '共 ' + total + ' 条 · 最新在上 · 长按一条可复制' : '还没提过反馈'}}
+        <text class="fb-tip__text">{{total ? '共 ' + total + ' 条 · 点一条勾选，长按复制' : '还没提过反馈'}}</text>
+        <text wx:if="{{total}}" class="fb-tip__action" bindtap="onToggleAll">{{allChecked ? '取消全选' : '全选'}}</text>
       </view>
 
       <!-- 连不上后端 -->
@@ -38,27 +39,51 @@
       <view
         wx:for="{{items}}"
         wx:key="id"
-        class="ui-card fb-item"
+        class="ui-card fb-item {{item.checked ? 'is-checked' : ''}}"
+        data-id="{{item.id}}"
         data-text="{{item.content}}"
+        bindtap="onToggle"
         bindlongpress="onCopy">
-        <view class="fb-item__head">
-          <text class="fb-item__where">{{item.pageTitle || '未知页面'}}</text>
-          <text class="fb-item__time num">{{item.timeText}}</text>
+        <view class="fb-check {{item.checked ? 'is-on' : ''}}">
+          <text wx:if="{{item.checked}}" class="fb-check__tick">✓</text>
         </view>
 
-        <text class="fb-item__content">{{item.content}}</text>
+        <view class="fb-item__body">
+          <view class="fb-item__head">
+            <text class="fb-item__where">{{item.pageTitle || '未知页面'}}</text>
+            <text class="fb-item__time num">{{item.timeText}}</text>
+          </view>
 
-        <view wx:if="{{item.spot}}" class="fb-item__spot">
-          <text class="fb-item__spot-label">具体位置</text>
-          <text class="fb-item__spot-text">{{item.spot}}</text>
-        </view>
+          <text class="fb-item__content">{{item.content}}</text>
 
-        <view class="fb-item__meta">
-          <text class="fb-item__route">{{item.pageRoute}}</text>
-          <text wx:if="{{item.appVersion}}" class="fb-item__ver num">{{item.appVersion}}</text>
+          <view wx:if="{{item.spot}}" class="fb-item__spot">
+            <text class="fb-item__spot-label">具体位置</text>
+            <text class="fb-item__spot-text">{{item.spot}}</text>
+          </view>
+
+          <view class="fb-item__meta">
+            <text class="fb-item__route">{{item.pageRoute}}</text>
+            <text wx:if="{{item.appVersion}}" class="fb-item__ver num">{{item.appVersion}}</text>
+          </view>
         </view>
       </view>
     </view>
   </scroll-view>
+
+  <!-- 勾选后浮出的操作条：靠气泡上方，不压右下角的反馈按钮 -->
+  <view wx:if="{{selectedCount}}" class="fb-bar">
+    <text class="fb-bar__count">已选 {{selectedCount}} 条</text>
+    <view class="fb-bar__actions">
+      <text class="fb-bar__cancel" bindtap="onClearSelect">取消</text>
+      <view class="fb-bar__danger {{busy ? 'is-busy' : ''}}" bindtap="onDeleteSelected">删除</view>
+    </view>
+  </view>
+
+  <!-- 撤销条：5 秒内点一下就把刚才删的恢复回来 -->
+  <view wx:if="{{undoVisible && !selectedCount}}" class="fb-bar fb-bar--undo">
+    <text class="fb-bar__count">已删除 {{undoCount}} 条</text>
+    <view class="fb-bar__undo" bindtap="onUndo">撤销 · {{undoSeconds}}s</view>
+  </view>
+
   <feedback-fab />
 </view>

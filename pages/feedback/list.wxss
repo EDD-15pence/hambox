@@ -21,17 +21,76 @@
 .page-body {
   box-sizing: border-box;
   width: 100%;
-  padding: 0 var(--page-x) calc(var(--sp-6) + env(safe-area-inset-bottom));
+  /* 底部多留一条操作条的高度：最后一条不该被「删除 / 撤销」压住 */
+  padding: 0 var(--page-x) calc(var(--sp-6) + 140rpx + env(safe-area-inset-bottom));
 }
 
 .fb-tip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
   padding: var(--sp-1) 0 var(--sp-2);
   font-size: var(--fs-tiny);
   color: var(--text-3);
 }
 
+.fb-tip__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.fb-tip__action {
+  flex: none;
+  padding: 0 var(--sp-1);
+  font-size: var(--fs-caption);
+  color: var(--primary);
+}
+
 .fb-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
   margin-bottom: 20rpx;
+  transition: box-shadow var(--dur-fast) ease-out;
+}
+
+/* 选中态只加重一点点：卡片太多时整片泛蓝会更难读。
+   用外圈而不是背景色——背景一换，凸起的材质感就没了 */
+.fb-item.is-checked {
+  box-shadow: 0 0 0 3rpx var(--primary), var(--shadow-raised);
+}
+
+.fb-check {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 40rpx;
+  height: 40rpx;
+  margin-top: 2rpx;
+  border: 2rpx solid var(--border);
+  border-radius: 50%;
+  background: var(--bg-surface);
+  transition: background var(--dur-fast) ease-out, border-color var(--dur-fast) ease-out;
+}
+
+.fb-check.is-on {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.fb-check__tick {
+  font-size: var(--fs-tiny);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--on-primary);
+}
+
+.fb-item__body {
+  flex: 1;
+  min-width: 0;
 }
 
 .fb-item__head {
@@ -121,4 +180,79 @@
 
 .fb-retry {
   margin-top: var(--sp-3);
+}
+
+/* ============================================================
+ * 底部操作条（勾选后 / 删除后）
+ * 位置抬到反馈气泡上方：气泡是 fixed、bottom 24rpx、高 72rpx，
+ * 贴在 0 会正好压住它，两个都点不准
+ * ============================================================ */
+
+.fb-bar {
+  position: fixed;
+  z-index: 32;
+  left: var(--page-x);
+  right: var(--page-x);
+  bottom: calc(112rpx + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  box-sizing: border-box;
+  height: 96rpx;
+  padding: 0 var(--sp-2) 0 var(--sp-3);
+  border-radius: var(--r-pill);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-float);
+}
+
+.fb-bar__count {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--fs-caption);
+  color: var(--text-2);
+}
+
+.fb-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.fb-bar__cancel {
+  padding: 0 var(--sp-2);
+  height: 64rpx;
+  line-height: 64rpx;
+  font-size: var(--fs-caption);
+  color: var(--text-3);
+}
+
+.fb-bar__danger {
+  padding: 0 var(--sp-3);
+  height: 64rpx;
+  line-height: 64rpx;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--on-primary);
+  background: var(--danger);
+}
+
+.fb-bar__danger.is-busy {
+  opacity: 0.5;
+}
+
+.fb-bar__undo {
+  flex: none;
+  padding: 0 var(--sp-3);
+  height: 64rpx;
+  line-height: 64rpx;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--primary-weak);
 }
