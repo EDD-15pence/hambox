@@ -474,4 +474,5 @@
       </view>
     </view>
   </view>
+  <feedback-fab />
 </view>

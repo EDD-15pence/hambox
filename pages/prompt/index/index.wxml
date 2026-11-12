@@ -16,4 +16,5 @@
       </view>
     </block>
   </view>
+  <feedback-fab />
 </view>

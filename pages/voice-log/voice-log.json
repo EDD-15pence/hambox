@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "识别日志"
+  "navigationBarTitleText": "识别日志",
+  "usingComponents": {
+    "feedback-fab": "/components/feedback-fab/feedback-fab"
+  }
 }

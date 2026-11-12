@@ -1,6 +1,7 @@
 {
   "navigationBarTitleText": "物品详情",
   "usingComponents": {
-    "conn-error": "/components/conn-error/conn-error"
+    "conn-error": "/components/conn-error/conn-error",
+    "feedback-fab": "/components/feedback-fab/feedback-fab"
   }
 }

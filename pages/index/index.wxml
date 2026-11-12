@@ -42,4 +42,5 @@
 
   <!-- 悬浮麦克风：说一句 → 面板内确认 → 直接入库，不跳页面 -->
   <voice-add bind:saved="onVoiceSaved" />
+  <feedback-fab side="left" />
 </view>

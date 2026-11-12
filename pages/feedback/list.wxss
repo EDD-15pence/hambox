@@ -1,0 +1,124 @@
+/* ============================================================
+ * 反馈记录（F-03）
+ * 只写本页差异；材质、尺寸、颜色全部来自 styles/*
+ * ============================================================ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
+  background: var(--bg-page);
+  color: var(--text-1);
+}
+
+.page-scroll {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.page-body {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0 var(--page-x) calc(var(--sp-6) + env(safe-area-inset-bottom));
+}
+
+.fb-tip {
+  padding: var(--sp-1) 0 var(--sp-2);
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.fb-item {
+  margin-bottom: 20rpx;
+}
+
+.fb-item__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-1);
+}
+
+.fb-item__where {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-2);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.fb-item__time {
+  flex: none;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.fb-item__content {
+  display: block;
+  font-size: var(--fs-body);
+  line-height: 1.55;
+  color: var(--text-1);
+  word-break: break-word;
+}
+
+.fb-item__spot {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  padding: var(--sp-2);
+  border-radius: var(--r-sm);
+  background: var(--bg-sunken);
+}
+
+.fb-item__spot-label {
+  flex: none;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.fb-item__spot-text {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-tiny);
+  line-height: 1.5;
+  color: var(--text-2);
+  word-break: break-word;
+}
+
+.fb-item__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.fb-item__route {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+  word-break: break-all;
+}
+
+.fb-item__ver {
+  flex: none;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.fb-skeleton {
+  height: 160rpx;
+  margin-bottom: 20rpx;
+  border-radius: var(--r-md);
+}
+
+.fb-retry {
+  margin-top: var(--sp-3);
+}

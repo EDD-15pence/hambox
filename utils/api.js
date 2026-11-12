@@ -457,6 +457,49 @@ function placePending(id, containerId, zoneKey) {
   });
 }
 
+// ==============================
+// 反馈（F-01）
+// ==============================
+
+/**
+ * 提一条反馈。位置三件套由组件自动采集，用户只打字也能提交。
+ * POST 不走线路重试（见 request 的 retryable）：宁可让人点一次重试，
+ * 也不要静默写进两条重复记录。
+ */
+/** 服务端反馈 -> 列表用的对象（时间补时区，见 normalizeTimestamp） */
+function toViewFeedback(row) {
+  return {
+    id: row.id,
+    content: row.content || '',
+    pageTitle: row.page_title || '',
+    pageRoute: row.page_route || '',
+    spot: row.spot || '',
+    appVersion: row.app_version || '',
+    createdAt: normalizeTimestamp(row.created_at)
+  };
+}
+
+function createFeedback(feedback) {
+  return request('/api/feedbacks', 'POST', {
+    content: (feedback.content || '').trim(),
+    page_route: feedback.pageRoute || '',
+    page_title: feedback.pageTitle || '',
+    spot: (feedback.spot || '').trim(),
+    app_version: feedback.appVersion || ''
+  }).then(toViewFeedback);
+}
+
+function listFeedbacks(limit, offset) {
+  var q = '/api/feedbacks?limit=' + (limit || 50) + '&offset=' + (offset || 0);
+  return request(q).then(function (data) {
+    return {
+      items: (data.items || []).map(toViewFeedback),
+      total: data.total || 0,
+      hasMore: !!data.has_more
+    };
+  });
+}
+
 module.exports = {
   getBaseUrl: env.getBaseUrl,
   probe: probe,
@@ -482,5 +525,7 @@ module.exports = {
   createPending: createPending,
   updatePending: updatePending,
   deletePending: deletePending,
-  placePending: placePending
+  placePending: placePending,
+  createFeedback: createFeedback,
+  listFeedbacks: listFeedbacks
 };

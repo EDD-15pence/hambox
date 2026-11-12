@@ -1,0 +1,63 @@
+<view class="container {{isDark ? 'dark' : ''}}">
+  <view class="app-nav" style="padding-top:{{statusBarHeight}}px;padding-right:{{navRight}}px">
+    <view class="nav-left">
+      <text class="nav-back-icon" bindtap="onBack">‹</text>
+      <text class="app-nav__title">反馈记录</text>
+    </view>
+    <view class="app-nav__actions">
+      <text class="nav-text-btn" bindtap="onRefresh">刷新</text>
+    </view>
+  </view>
+
+  <scroll-view class="page-scroll" scroll-y>
+    <view class="page-body">
+      <view wx:if="{{!loading && !error}}" class="fb-tip">
+        {{total ? '共 ' + total + ' 条 · 最新在上 · 长按一条可复制' : '还没提过反馈'}}
+      </view>
+
+      <!-- 连不上后端 -->
+      <view wx:if="{{error}}" class="ui-empty">
+        <text class="ui-empty__title">没拉到反馈记录</text>
+        <text class="ui-empty__desc">{{error}}</text>
+        <button class="ui-btn is-block fb-retry" bindtap="onRefresh">重试</button>
+      </view>
+
+      <!-- 加载中 -->
+      <block wx:if="{{loading}}">
+        <view class="ui-skeleton fb-skeleton"></view>
+        <view class="ui-skeleton fb-skeleton"></view>
+        <view class="ui-skeleton fb-skeleton"></view>
+      </block>
+
+      <!-- 空 -->
+      <view wx:if="{{!loading && !error && !total}}" class="ui-empty">
+        <text class="ui-empty__title">还没有反馈</text>
+        <text class="ui-empty__desc">任何页面右下角的小气泡，点开写一句就记下了</text>
+      </view>
+
+      <view
+        wx:for="{{items}}"
+        wx:key="id"
+        class="ui-card fb-item"
+        data-text="{{item.content}}"
+        bindlongpress="onCopy">
+        <view class="fb-item__head">
+          <text class="fb-item__where">{{item.pageTitle || '未知页面'}}</text>
+          <text class="fb-item__time num">{{item.timeText}}</text>
+        </view>
+
+        <text class="fb-item__content">{{item.content}}</text>
+
+        <view wx:if="{{item.spot}}" class="fb-item__spot">
+          <text class="fb-item__spot-label">具体位置</text>
+          <text class="fb-item__spot-text">{{item.spot}}</text>
+        </view>
+
+        <view class="fb-item__meta">
+          <text class="fb-item__route">{{item.pageRoute}}</text>
+          <text wx:if="{{item.appVersion}}" class="fb-item__ver num">{{item.appVersion}}</text>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+</view>

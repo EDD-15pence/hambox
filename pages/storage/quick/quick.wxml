@@ -165,4 +165,5 @@
     <view class="bottom-spacer"></view>
     </view>
   </scroll-view>
+  <feedback-fab />
 </view>

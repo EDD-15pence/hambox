@@ -2,6 +2,7 @@
   "navigationBarTitleText": "智能仓储",
   "usingComponents": {
     "voice-add": "/components/voice-add/voice-add",
-    "conn-error": "/components/conn-error/conn-error"
+    "conn-error": "/components/conn-error/conn-error",
+    "feedback-fab": "/components/feedback-fab/feedback-fab"
   }
 }

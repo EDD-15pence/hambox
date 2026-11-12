@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "机票比价"
+  "navigationBarTitleText": "机票比价",
+  "usingComponents": {
+    "feedback-fab": "/components/feedback-fab/feedback-fab"
+  }
 }

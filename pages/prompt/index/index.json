@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "Prompt 模板库"
+  "navigationBarTitleText": "Prompt 模板库",
+  "usingComponents": {
+    "feedback-fab": "/components/feedback-fab/feedback-fab"
+  }
 }

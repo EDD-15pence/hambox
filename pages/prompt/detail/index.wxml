@@ -23,5 +23,6 @@
     <view class="copy-tip">{{copyTip}}</view>
   </view>
   <view wx:else>未找到模板</view>
+  <feedback-fab />
 </view>
 

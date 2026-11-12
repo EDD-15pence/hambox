@@ -138,4 +138,5 @@
     </block>
     </view>
   </scroll-view>
+  <feedback-fab />
 </view>

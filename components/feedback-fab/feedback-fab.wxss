@@ -1,0 +1,145 @@
+/*
+ * 全局反馈按钮
+ *
+ * 刻意做得比语音按钮「轻」：小一圈、同色凸起、文字色不用主色，
+ * 因为它是兜底入口，不该抢首页那一下的注意力。
+ * 深浅色不另做配色，全部吃页面上的令牌（.container.dark 覆盖后自动跟着变）。
+ */
+
+.fb-fab {
+  position: fixed;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+  opacity: 0.92;
+  transition: box-shadow var(--dur-fast) ease-out, opacity var(--dur-fast) ease-out;
+}
+
+.fb-fab--right {
+  right: var(--sp-4);
+}
+
+.fb-fab--left {
+  left: var(--sp-4);
+}
+
+.fb-fab--active {
+  opacity: 1;
+  box-shadow: var(--shadow-raised-press);
+}
+
+/* 气泡图标：圆角矩形 + 三个点。纯 CSS，不带图片，深色下自动反色 */
+.fb-bubble {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 38rpx;
+  height: 30rpx;
+  border: 3rpx solid var(--text-2);
+  border-radius: 10rpx;
+}
+
+/* 小尾巴：旋转 45° 的方块，压在气泡左下 */
+.fb-bubble::after {
+  content: '';
+  position: absolute;
+  left: 8rpx;
+  bottom: -7rpx;
+  width: 8rpx;
+  height: 8rpx;
+  border-right: 3rpx solid var(--text-2);
+  border-bottom: 3rpx solid var(--text-2);
+  background: var(--bg-raised);
+  transform: rotate(45deg);
+}
+
+.fb-bubble__dot {
+  width: 6rpx;
+  height: 6rpx;
+  margin: 0 2rpx;
+  border-radius: 50%;
+  background: var(--text-2);
+}
+
+/* ---------- 面板 ---------- */
+
+.fb-sheet {
+  padding-bottom: calc(var(--sp-4) + env(safe-area-inset-bottom));
+}
+
+.fb-where {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  padding: var(--sp-2) 0 var(--sp-3);
+}
+
+.fb-where__label {
+  margin-right: var(--sp-2);
+  font-size: var(--fs-caption);
+  color: var(--text-3);
+}
+
+.fb-where__page {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.fb-where__route {
+  width: 100%;
+  margin-top: 4rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+  word-break: break-all;
+}
+
+.fb-text {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 200rpx;
+  max-height: 44vh;
+  padding: var(--sp-3);
+  border: none;
+  border-radius: var(--r-md);
+  font-size: var(--fs-body);
+  line-height: 1.55;
+  color: var(--text-1);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken);
+}
+
+.fb-spot {
+  margin-top: var(--sp-2);
+}
+
+.fb-error {
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+  color: var(--danger);
+  background: var(--danger-weak);
+}
+
+.fb-submit {
+  margin-top: var(--sp-3);
+}
+
+.fb-hint {
+  display: block;
+  margin-top: var(--sp-2);
+  font-size: var(--fs-tiny);
+  line-height: 1.5;
+  color: var(--text-3);
+  text-align: center;
+}

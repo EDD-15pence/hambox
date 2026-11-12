@@ -4,5 +4,8 @@
   "navigationBarTextStyle": "black",
   "backgroundTextStyle": "light",
   "backgroundColor": "#f6f7fb",
-  "enableShareAppMessage": true
+  "enableShareAppMessage": true,
+  "usingComponents": {
+    "feedback-fab": "/components/feedback-fab/feedback-fab"
+  }
 }

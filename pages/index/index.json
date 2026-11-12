@@ -1,6 +1,7 @@
 {
   "navigationBarTitleText": "汉堡盒",
   "usingComponents": {
-    "voice-add": "/components/voice-add/voice-add"
+    "voice-add": "/components/voice-add/voice-add",
+    "feedback-fab": "/components/feedback-fab/feedback-fab"
   }
 }

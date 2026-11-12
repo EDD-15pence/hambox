@@ -1,0 +1,74 @@
+<!--
+  全局反馈入口：右下角一个小气泡按钮 → 底部面板写一句话 → 落库。
+  位置（页面 + 标题）由组件自己取，页面不用传参。
+  长按按钮回看提过的反馈。
+-->
+<view class="fb-root">
+  <view
+    wx:if="{{!visible}}"
+    class="fb-fab fb-fab--{{side}}"
+    style="bottom: calc({{offset + 24}}rpx + env(safe-area-inset-bottom))"
+    bindtap="onOpen"
+    bindlongpress="onOpenList"
+    hover-class="fb-fab--active"
+    hover-stay-time="80">
+    <view class="fb-bubble">
+      <view class="fb-bubble__dot"></view>
+      <view class="fb-bubble__dot"></view>
+      <view class="fb-bubble__dot"></view>
+    </view>
+  </view>
+
+  <view
+    wx:if="{{visible}}"
+    class="ui-mask"
+    style="padding-bottom: {{kb}}px"
+    bindtap="onMaskTap">
+    <view class="ui-sheet fb-sheet" catchtap="noop">
+      <view class="ui-sheet__header">
+        <text class="ui-sheet__title">提一条反馈</text>
+        <text class="nav-text-btn" bindtap="onClose">关闭</text>
+      </view>
+
+      <view class="fb-where">
+        <text class="fb-where__label">记在</text>
+        <text class="fb-where__page">{{pageTitleText}}</text>
+        <text class="fb-where__route">{{pageRoute}}</text>
+      </view>
+
+      <textarea
+        class="ui-input fb-text"
+        value="{{content}}"
+        placeholder="哪儿不对劲？想怎么改？"
+        placeholder-class="ui-placeholder"
+        maxlength="1000"
+        auto-height
+        show-confirm-bar="{{false}}"
+        cursor-spacing="24"
+        bindinput="onContentInput"
+        bindfocus="onFocus"
+        bindblur="onBlur"></textarea>
+
+      <input
+        class="ui-input fb-spot"
+        value="{{spot}}"
+        placeholder="具体哪一处（可不填）：冰箱第二层、保存按钮"
+        placeholder-class="ui-placeholder"
+        maxlength="128"
+        cursor-spacing="24"
+        bindinput="onSpotInput"
+        bindfocus="onFocus"
+        bindblur="onBlur" />
+
+      <view wx:if="{{error}}" class="fb-error">{{error}}</view>
+
+      <button
+        class="ui-btn is-primary is-block fb-submit"
+        loading="{{saving}}"
+        disabled="{{saving}}"
+        bindtap="onSubmit">{{error ? '重试' : '提交'}}</button>
+
+      <text class="fb-hint">长按右下角气泡可以回看提过的反馈</text>
+    </view>
+  </view>
+</view>

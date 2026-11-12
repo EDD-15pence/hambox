@@ -20,4 +20,5 @@
   </view>
   <view wx:else class="empty-state"><text class="empty-icon">🛫</text><text class="empty-title">输入行程，开始比价</text><text class="empty-desc">支持国内和国际航线查询</text></view>
 </view>
+  <feedback-fab />
 </view>

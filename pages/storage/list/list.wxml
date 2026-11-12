@@ -257,4 +257,5 @@
       </scroll-view>
     </view>
   </view>
+  <feedback-fab side="left" />
 </view>

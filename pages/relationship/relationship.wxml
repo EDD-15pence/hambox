@@ -51,6 +51,7 @@
       <button class="key clear" hover-class="btn-press" bindtap="onTapKey" data-key="清空">清空</button>
     </view>
   </view>
+  <feedback-fab />
 </view>
 
 

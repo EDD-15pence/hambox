@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "打卡"
+  "navigationBarTitleText": "打卡",
+  "usingComponents": {
+    "feedback-fab": "/components/feedback-fab/feedback-fab"
+  }
 }

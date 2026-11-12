@@ -11,7 +11,8 @@
   "pages/voice-log/voice-log",
   "pages/prompt/index/index",
   "pages/prompt/detail/index",
-  "pages/flight/flight"
+  "pages/flight/flight",
+  "pages/feedback/list"
   ],
   "window": {
     "navigationStyle": "custom",
