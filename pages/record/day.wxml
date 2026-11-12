@@ -15,7 +15,7 @@
       <textarea
         class="composer__input"
         value="{{draft}}"
-        placeholder="肉肉大米（虽然很饱 但是都是米饭）"
+        placeholder="记录今天做了什么"
         placeholder-class="ui-placeholder"
         auto-height
         maxlength="500"
@@ -41,7 +41,7 @@
     <block wx:if="{{!error}}">
       <view wx:if="{{!loading && !items.length}}" class="ui-empty">
         <text class="ui-empty__title">这天还空着</text>
-        <text class="ui-empty__hint">上面写一行就记下了，比如「寿司郎（还不错）」</text>
+        <text class="ui-empty__hint">上面写一行就记下了</text>
       </view>
 
       <view
@@ -80,7 +80,7 @@
       <input
         class="ui-input"
         value="{{editing.comment}}"
-        placeholder="好吃 / 不会再去"
+        placeholder="简单评价，可不填"
         placeholder-class="ui-placeholder"
         data-field="comment"
         maxlength="500"
@@ -90,7 +90,7 @@
       <textarea
         class="ui-input day-sheet__area"
         value="{{editing.content}}"
-        placeholder="想多写几句就写在这儿"
+        placeholder="补充说明，可不填"
         placeholder-class="ui-placeholder"
         data-field="content"
         maxlength="2000"

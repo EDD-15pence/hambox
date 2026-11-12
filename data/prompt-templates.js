@@ -19,10 +19,10 @@ module.exports = [
     category: "规划",
     template: "你是一名{{role}}。根据以下背景：{{background}}，请制定一个{{timeRange}}的工作计划。输出请遵循：{{outputFormat}}。",
     variables: [
-      { key: "role", label: "你的角色", placeholder: "如：软件工程师", defaultValue: "专业顾问", required: true },
-      { key: "background", label: "背景信息", placeholder: "请描述你的场景", required: true },
-      { key: "timeRange", label: "时间范围", placeholder: "如：2周", required: false },
-      { key: "outputFormat", label: "输出格式", placeholder: "要点/表格", defaultValue: "编号列表", required: false }
+      { key: "role", label: "你的角色", placeholder: "填写角色描述", defaultValue: "专业顾问", required: true },
+      { key: "background", label: "背景信息", placeholder: "填写背景信息", required: true },
+      { key: "timeRange", label: "时间范围", placeholder: "填写时间范围", required: false },
+      { key: "outputFormat", label: "输出格式", placeholder: "填写输出格式", defaultValue: "编号列表", required: false }
     ]
   },
   // more templates can be added here
@@ -33,10 +33,10 @@ module.exports = [
     category: "规划",
     template: "你是一名{{role}}。根据以下背景：{{background}}，请制定一个{{timeRange}}的工作计划。输出请遵循：{{outputFormat}}。",
     variables: [
-      { key: "role", label: "你的角色", placeholder: "如：软件工程师", defaultValue: "专业顾问", required: true },
-      { key: "background", label: "背景信息", placeholder: "请描述你的场景", required: true },
-      { key: "timeRange", label: "时间范围", placeholder: "如：2周", required: false },
-      { key: "outputFormat", label: "输出格式", placeholder: "要点/表格", defaultValue: "编号列表", required: false }
+      { key: "role", label: "你的角色", placeholder: "填写角色描述", defaultValue: "专业顾问", required: true },
+      { key: "background", label: "背景信息", placeholder: "填写背景信息", required: true },
+      { key: "timeRange", label: "时间范围", placeholder: "填写时间范围", required: false },
+      { key: "outputFormat", label: "输出格式", placeholder: "填写输出格式", defaultValue: "编号列表", required: false }
     ]
   },
   {
@@ -46,10 +46,10 @@ module.exports = [
     category: "规划",
     template: "你是一名{{role}}。根据以下背景：{{background}}，请制定一个{{timeRange}}的工作计划。输出请遵循：{{outputFormat}}。",
     variables: [
-      { key: "role", label: "你的角色", placeholder: "如：软件工程师", defaultValue: "专业顾问", required: true },
-      { key: "background", label: "背景信息", placeholder: "请描述你的场景", required: true },
-      { key: "timeRange", label: "时间范围", placeholder: "如：2周", required: false },
-      { key: "outputFormat", label: "输出格式", placeholder: "要点/表格", defaultValue: "编号列表", required: false }
+      { key: "role", label: "你的角色", placeholder: "填写角色描述", defaultValue: "专业顾问", required: true },
+      { key: "background", label: "背景信息", placeholder: "填写背景信息", required: true },
+      { key: "timeRange", label: "时间范围", placeholder: "填写时间范围", required: false },
+      { key: "outputFormat", label: "输出格式", placeholder: "填写输出格式", defaultValue: "编号列表", required: false }
     ]
   },
   {
@@ -59,10 +59,10 @@ module.exports = [
     category: "规划",
     template: "你是一名{{role}}。根据以下背景：{{background}}，请制定一个{{timeRange}}的工作计划。输出请遵循：{{outputFormat}}。",
     variables: [
-      { key: "role", label: "你的角色", placeholder: "如：软件工程师", defaultValue: "专业顾问", required: true },
-      { key: "background", label: "背景信息", placeholder: "请描述你的场景", required: true },
-      { key: "timeRange", label: "时间范围", placeholder: "如：2周", required: false },
-      { key: "outputFormat", label: "输出格式", placeholder: "要点/表格", defaultValue: "编号列表", required: false }
+      { key: "role", label: "你的角色", placeholder: "填写角色描述", defaultValue: "专业顾问", required: true },
+      { key: "background", label: "背景信息", placeholder: "填写背景信息", required: true },
+      { key: "timeRange", label: "时间范围", placeholder: "填写时间范围", required: false },
+      { key: "outputFormat", label: "输出格式", placeholder: "填写输出格式", defaultValue: "编号列表", required: false }
     ]
   }
 

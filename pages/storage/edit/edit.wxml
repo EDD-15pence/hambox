@@ -37,7 +37,7 @@
     <view class="field">
       <text class="field__label">名称 <text class="field__required">必填</text></text>
       <input class="ui-input"
-        placeholder="例如：可口可乐 330ml"
+        placeholder="物品名称和规格"
         placeholder-class="ui-placeholder"
         value="{{item.name}}"
         bindinput="onFieldInput"
@@ -77,7 +77,7 @@
     <view class="field">
       <text class="field__label">存放位置</text>
       <input class="ui-input"
-        placeholder="例如：厨房上层橱柜"
+        placeholder="存放位置"
         placeholder-class="ui-placeholder"
         value="{{item.location}}"
         bindinput="onFieldInput"
@@ -120,7 +120,7 @@
         <view class="months-row">
           <input class="ui-input months-row__input"
             type="digit"
-            placeholder="输入月数"
+            placeholder="保质月数"
             placeholder-class="ui-placeholder"
             value="{{expiryMonths}}"
             bindinput="onMonthsInput" />
@@ -136,7 +136,7 @@
     <text class="ui-section-title">备注</text>
     <view class="field">
       <textarea class="ui-textarea"
-        placeholder="添加备注信息…"
+        placeholder="备注信息，可不填"
         placeholder-class="ui-placeholder"
         value="{{item.note}}"
         bindinput="onFieldInput"

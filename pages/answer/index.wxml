@@ -13,7 +13,7 @@
     <input
       class="ui-input search__input"
       value="{{query}}"
-      placeholder="搜「奶茶」「火锅」…"
+      placeholder="输入关键词搜索"
       placeholder-class="ui-placeholder"
       confirm-type="search"
       bindinput="onQueryInput" />
@@ -30,7 +30,7 @@
     <block wx:if="{{!error}}">
       <view wx:if="{{!loading && !items.length}}" class="ui-empty">
         <text class="ui-empty__title">{{query ? '没有匹配的答案' : '还没有答案'}}</text>
-        <text class="ui-empty__hint">{{query ? '换个词，或者直接把它记成一条' : '比如「奶茶 → 沪上阿姨 啵啵奶茶 五分糖」'}}</text>
+        <text class="ui-empty__hint">{{query ? '换个词，或者直接把它记成一条' : '关键词和答案配对记，搜到就能直接用'}}</text>
         <button wx:if="{{query}}" class="ui-btn is-block ans-retry" bindtap="onOpenCreate">把「{{query}}」记下来</button>
       </view>
 
@@ -65,7 +65,7 @@
       <input
         class="ui-input"
         value="{{form.keyword}}"
-        placeholder="奶茶"
+        placeholder="关键词"
         placeholder-class="ui-placeholder"
         data-field="keyword"
         maxlength="128"
@@ -75,7 +75,7 @@
       <textarea
         class="ui-input ans-sheet__area"
         value="{{form.answer}}"
-        placeholder="沪上阿姨 啵啵奶茶 五分糖"
+        placeholder="对应答案"
         placeholder-class="ui-placeholder"
         data-field="answer"
         maxlength="1000"

@@ -17,7 +17,7 @@
       <textarea
         class="ui-textarea input-card__area"
         value="{{raw}}"
-        placeholder="例：可乐 生产日期9月1日 保质期9个月 放厨房柜子"
+        placeholder="按「物品 数量 日期 位置」写一句话，写清的部分会自动识别"
         placeholder-class="ui-placeholder"
         maxlength="200"
         auto-height
@@ -60,14 +60,7 @@
       <view wx:if="{{needName}}" class="fallback">
         <text class="fallback__title">这次没抓出是哪件东西</text>
         <text class="fallback__desc">名称是必填的，直接在下面名称框里填；分类、数量、位置也都能手动改，不影响保存。</text>
-        <text class="fallback__label">照着这样说更准</text>
-        <view class="fallback__examples">
-          <text
-            wx:for="{{examples}}" wx:key="*this"
-            class="fallback__eg"
-            data-text="{{item}}"
-            bindtap="onUseExample">{{item}}</text>
-        </view>
+        <text class="fallback__label">下次说清物品名称、日期和位置，识别会更准</text>
       </view>
 
       <view class="result__head">
@@ -78,7 +71,7 @@
 
       <view class="field">
         <text class="field__label">名称 <text wx:if="{{needName}}" class="field__required">必填</text></text>
-        <input class="ui-input {{needName ? 'is-alert' : ''}}" value="{{draft.name}}" data-field="name" bindinput="onFieldInput" placeholder="物品名称，如 可乐" placeholder-class="ui-placeholder" focus="{{focusName}}" />
+        <input class="ui-input {{needName ? 'is-alert' : ''}}" value="{{draft.name}}" data-field="name" bindinput="onFieldInput" placeholder="物品名称" placeholder-class="ui-placeholder" focus="{{focusName}}" />
       </view>
 
       <view class="field">
@@ -137,7 +130,7 @@
 
       <view class="field">
         <text class="field__label">存放位置</text>
-        <input class="ui-input" value="{{draft.location}}" data-field="location" bindinput="onFieldInput" placeholder="如 冰箱冷藏 / 厨房柜子" placeholder-class="ui-placeholder" />
+        <input class="ui-input" value="{{draft.location}}" data-field="location" bindinput="onFieldInput" placeholder="存放位置" placeholder-class="ui-placeholder" />
       </view>
 
       <view wx:if="{{missing.length > 0}}" class="missing">
@@ -155,9 +148,9 @@
       </view>
     </view>
 
-    <!-- 空态示例 -->
+    <!-- 空态提示 -->
     <view wx:if="{{!parsed && !raw}}" class="tips">
-      <text class="tips__title">这样说就行</text>
+      <text class="tips__title">可以这样写</text>
       <text class="tips__line" wx:for="{{examples}}" wx:key="*this">{{item}}</text>
     </view>
 

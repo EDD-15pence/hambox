@@ -102,7 +102,7 @@
           <text class="form-label">习惯名称</text>
           <input 
             class="form-input" 
-            placeholder="例如：每天运动30分钟"
+            placeholder="填写习惯名称和目标"
             value="{{newHabit.name}}"
             bindinput="onHabitNameInput"
             maxlength="20" />

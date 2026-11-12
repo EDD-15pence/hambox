@@ -27,12 +27,10 @@ var EMPTY_DRAFT = {
   shelfLifeDays: ''
 };
 
-/** 示例句式：既是空态引导，也是解析失败时的"照着说"参照 */
+/** 空态提示：只讲能识别哪几项，不举具体例子 */
 var EXAMPLES = [
-  '可乐 保质期9个月 放厨房柜子',
-  '牛奶 昨天生产 保质期7天 放冰箱',
-  '感冒药 有效期至12月31日 放药箱',
-  '三袋薯片 放客厅茶几'
+  '物品 · 数量 · 生产日期 · 保质期 · 存放位置',
+  '能写几项写几项，写不清的保存后再补'
 ];
 
 /** 今天已记多少条 —— 按日期存，过了零点自动归零 */
@@ -68,9 +66,10 @@ Page({
     parsed: false,
     saving: false,
     savedCount: 0,
-    // 解析不出名称时走兜底：给示例句式 + 直接聚焦名称框
+    // 解析不出名称时走兜底：提示补哪些项，名称框标红
     needName: false,
     focusName: false,
+    // 空态提示：只讲能识别哪几项，不放具体例子
     examples: EXAMPLES,
     statusText: '',
     daysLeft: null,
@@ -341,15 +340,6 @@ Page({
     });
     this.syncPickers();
     this.refreshStatus(draft.expireDate);
-  },
-
-  /** 点了示例句式：直接替换输入框，等于现场演示一次"怎么说才准" */
-  onUseExample: function (e) {
-    var text = e.currentTarget.dataset.text || '';
-    this._rawText = '';
-    this.setData({ raw: text, fixNote: '' });
-    this.parse();
-    wx.showToast({ title: '改成你的东西就行', icon: 'none', duration: 1500 });
   },
 
   /** 下拉选择器要的是下标，把 draft 里的 id/单位换算成 index */

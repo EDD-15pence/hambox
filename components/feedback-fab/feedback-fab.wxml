@@ -39,7 +39,7 @@
       <textarea
         class="ui-input fb-text"
         value="{{content}}"
-        placeholder="哪儿不对劲？想怎么改？"
+        placeholder="请描述遇到的问题或建议"
         placeholder-class="ui-placeholder"
         maxlength="1000"
         auto-height
@@ -52,7 +52,7 @@
       <input
         class="ui-input fb-spot"
         value="{{spot}}"
-        placeholder="具体哪一处（可不填）：冰箱第二层、保存按钮"
+        placeholder="出错位置，可不填"
         placeholder-class="ui-placeholder"
         maxlength="128"
         cursor-spacing="24"

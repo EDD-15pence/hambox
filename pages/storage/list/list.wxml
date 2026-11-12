@@ -82,7 +82,7 @@
     <view class="quick-entry is-pressable" bindtap="onQuickAdd" hover-class="is-pressed">
       <view class="quick-entry__text">
         <text class="quick-entry__title">点一下说话，快速记录</text>
-        <text class="quick-entry__desc">也可以直接打字，例：可乐 保质期9个月 放厨房柜子</text>
+        <text class="quick-entry__desc">也可以直接打字，一句话说清物品、日期和位置</text>
       </view>
       <text class="quick-entry__arrow">›</text>
     </view>

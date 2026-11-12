@@ -47,7 +47,7 @@
       </view>
 
       <text class="va-hint">{{recognizing ? '识别中…' : (recording ? '正在听，点一下结束' : '点一下，说一句话')}}</text>
-      <text class="va-hint va-hint--sub">例：布洛芬缓释胶囊 保质期两年 放药箱</text>
+      <text class="va-hint va-hint--sub">说清物品、日期和存放位置就行</text>
 
       <view wx:if="{{raw}}" class="va-live">
         <text class="va-live__text">{{raw}}</text>
@@ -109,7 +109,7 @@
             class="ui-input"
             value="{{draft.location}}"
             data-field="location"
-            placeholder="放在哪"
+            placeholder="存放位置"
             placeholder-class="ui-placeholder"
             bindinput="onFieldInput" />
         </view>

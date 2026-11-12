@@ -113,7 +113,7 @@
       <view wx:if="{{showSearch}}" class="ui-search">
         <input
           class="ui-input ui-search__input"
-          placeholder="搜名称 / 位置，比如 可乐"
+          placeholder="搜索名称或位置"
           placeholder-class="ui-placeholder"
           value="{{keyword}}"
           bindinput="onSearchInput"
@@ -220,7 +220,7 @@
         <block wx:else>
           <input
             class="ui-input pending-add__input"
-            placeholder="买了什么，比如 三箱牛奶"
+            placeholder="买了什么，写清物品和数量"
             placeholder-class="ui-placeholder"
             value="{{pendingName}}"
             bindinput="onPendingName"
@@ -243,7 +243,7 @@
 
       <view class="wall-empty" wx:elif="{{!wall.length}}">
         <text class="wall-empty__text">收纳里还是空的</text>
-        <text class="wall-empty__desc">记一件东西时写上「放冰箱」，它就会出现在这里</text>
+        <text class="wall-empty__desc">记一件东西时写上位置关键词，它就会出现在这里</text>
         <button class="ui-btn is-primary is-block wall-empty__btn" bindtap="onGoQuick">记一件</button>
       </view>
     </block>
@@ -372,7 +372,7 @@
           <input
             class="ui-input"
             value="{{editor.name}}"
-            placeholder="比如 阳台收纳箱"
+            placeholder="容器名称"
             placeholder-class="ui-placeholder"
             maxlength="12"
             bindinput="onEditorName" />
@@ -424,11 +424,11 @@
           <input
             class="ui-input"
             value="{{editor.keysText}}"
-            placeholder="位置里会出现的词，顿号隔开"
+            placeholder="位置关键词，用顿号分隔"
             placeholder-class="ui-placeholder"
             maxlength="60"
             bindinput="onEditorKeys" />
-          <text class="field__hint">记东西时位置里出现这些词，就归到这个柜子。比如「储物柜、收纳箱」。</text>
+          <text class="field__hint">记东西时位置里出现这些词，就归到这个柜子。</text>
         </view>
       </scroll-view>
 

@@ -45,7 +45,7 @@
   </view>
 
   <view class="cal-tip">
-    <text class="cal-tip__text">点任意一天进去记：一行写「吃了什么（评价）」，比如「肉肉大米（虽然很饱 但是都是米饭）」。有记录的日子带小圆点。</text>
+    <text class="cal-tip__text">点任意一天进去记：一行写「做了什么（评价）」。有记录的日子带小圆点。</text>
   </view>
 
   <feedback-fab spacer="{{false}}" />

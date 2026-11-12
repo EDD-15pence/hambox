@@ -348,29 +348,9 @@
 .fallback__label {
   display: block;
   margin-top: var(--sp-3);
-  margin-bottom: var(--sp-1);
   font-size: var(--fs-tiny);
+  line-height: 1.6;
   color: var(--text-3);
-}
-
-.fallback__examples {
-  display: flex;
-  flex-direction: column;
-  gap: 8rpx;
-}
-
-.fallback__eg {
-  padding: var(--sp-2) var(--sp-3);
-  border-radius: var(--r-sm);
-  background: var(--bg-raised);
-  box-shadow: var(--shadow-raised);
-  font-size: var(--fs-tiny);
-  line-height: 1.5;
-  color: var(--text-2);
-}
-
-.fallback__eg:active {
-  box-shadow: var(--shadow-raised-press);
 }
 
 /* ---------- 从柜子进来的位置预填提示 ---------- */

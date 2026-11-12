@@ -99,7 +99,7 @@
         wx:if="{{noteEditing}}"
         class="ui-textarea note__input"
         value="{{noteDraft}}"
-        placeholder="写点什么，比如谁买的、在冰箱第几层"
+        placeholder="备注信息，可不填"
         placeholder-class="ui-placeholder"
         maxlength="200"
         auto-height

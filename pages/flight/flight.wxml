@@ -9,7 +9,7 @@
 <view class="page">
   <view class="hero"><text class="hero-icon">✈️</text><view><text class="hero-title">机票比价</text><text class="hero-subtitle">查询携程、去哪儿、同程、飞猪</text></view></view>
   <view class="search-card">
-    <view class="field-row"><view class="field"><text class="field-label">出发地</text><input placeholder="如：上海" value="{{departure}}" bindinput="onDepartureInput" maxlength="20" /></view><text class="arrow">→</text><view class="field"><text class="field-label">目的地</text><input placeholder="如：北京" value="{{destination}}" bindinput="onDestinationInput" maxlength="20" /></view></view>
+    <view class="field-row"><view class="field"><text class="field-label">出发地</text><input placeholder="出发城市" value="{{departure}}" bindinput="onDepartureInput" maxlength="20" /></view><text class="arrow">→</text><view class="field"><text class="field-label">目的地</text><input placeholder="到达城市" value="{{destination}}" bindinput="onDestinationInput" maxlength="20" /></view></view>
     <view class="date-field"><text>出发日期</text><picker mode="date" value="{{date}}" start="{{minDate}}" bindchange="onDateChange"><view class="date-value">{{date}} <text class="chevron">›</text></view></picker></view>
     <button class="search-button" bindtap="onSearch">开始比价</button>
   </view>
