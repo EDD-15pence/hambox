@@ -33,8 +33,12 @@
   "packOptions": {
     "ignore": [
       {
-        "value": "utils/quick-parse.test.js",
-        "type": "file"
+        "value": ".test.js",
+        "type": "suffix"
+      },
+      {
+        "value": "scripts",
+        "type": "folder"
       },
       {
         "value": "AI_RELATIONSHIPCALC_README.md",

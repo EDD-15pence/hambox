@@ -1487,7 +1487,7 @@
 
 .picking-bar__text {
   font-size: var(--fs-caption);
-  color: var(--primary-strong);
+  color: var(--primary-text);
 }
 
 .picking-bar__cancel {

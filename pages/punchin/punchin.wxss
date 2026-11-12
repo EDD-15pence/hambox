@@ -182,7 +182,7 @@
 }
 
 .stat-value.highlight {
-  color: var(--primary-strong);
+  color: var(--primary-text);
 }
 
 /* 进度条 */

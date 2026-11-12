@@ -49,12 +49,12 @@
 /* 「已改」和「显示/隐藏」共用一个位置：前者只读，后者可点 */
 .sfield__flag {
   font-size: var(--fs-tiny);
-  color: var(--primary-strong);
+  color: var(--primary-text);
 }
 .sfield__toggle {
   padding: 6rpx 0 6rpx 24rpx;
   font-size: var(--fs-tiny);
-  color: var(--primary-strong);
+  color: var(--primary-text);
 }
 .sfield__hint {
   display: block;

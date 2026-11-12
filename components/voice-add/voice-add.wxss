@@ -230,7 +230,7 @@
 .va-raw__again {
   flex: none;
   font-size: var(--fs-tiny);
-  color: var(--primary-strong);
+  color: var(--primary-text);
 }
 
 .va-field {

@@ -32,8 +32,18 @@ check('牛奶巧克力不被「牛奶」抢', E.emojiFor('牛奶巧克力'), '�
 check('速冻水饺按饺子算', E.emojiFor('速冻水饺'), '🥟');
 check('西红柿不被「柿」影响', E.emojiFor('西红柿'), '🍅');
 
+// ---------- 调味品不能和洗护用品共用一个图标（B-11）---------- 
+// 🧴 是 lotion bottle，真机上生抽显示成它会被当成洗洁精
+check('生抽按调味算', E.emojiFor('生抽'), '🧂');
+check('食用油按调味算', E.emojiFor('食用油'), '🧂');
+check('蚝油按调味算', E.emojiFor('蚝油'), '🧂');
+check('洗发水仍按洗护算', E.emojiFor('洗发水'), '🧴');
+check('面霜仍按洗护算', E.emojiFor('面霜'), '🧴');
+
 // ---------- 认不出的 ----------
 check('没词表按分类兜底', E.emojiFor('张三送的礼盒', 'medicine'), '💊');
+check('日用品兜底不是奶瓶', E.emojiFor('张三送的礼盒', 'daily'), '🧺');
+check('调味分类兜底', E.emojiFor('张三送的礼盒', 'seasoning'), '🧂');
 check('分类也没有就给箱子', E.emojiFor('张三送的礼盒'), '📦');
 check('未知分类给箱子', E.emojiFor('张三送的礼盒', 'weird'), '📦');
 check('空名称按分类兜底', E.emojiFor('', 'beverage'), '🥤');

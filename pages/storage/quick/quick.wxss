@@ -114,7 +114,7 @@
 
 /* 词库纠错过用词时换成主色，和普通提示区分开 */
 .input-card__hint.is-fix {
-  color: var(--primary-strong);
+  color: var(--primary-text);
 }
 
 .input-card__counter {

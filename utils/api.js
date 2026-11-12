@@ -9,6 +9,7 @@
  */
 
 var env = require('./env');
+var auth = require('./auth');
 
 var TIMEOUT = 8000;
 // 内网不通时没必要等满 8 秒：同一 WiFi 下 3 秒还没响应基本就是不在家
@@ -22,6 +23,10 @@ function authHeader() {
   var header = { 'content-type': 'application/json' };
   var token = env.getToken();
   if (token) header['X-Api-Token'] = token;
+  // 身份层（U-02）：没登录时不带，后端会按「没身份」处理。
+  // 与 X-Api-Token 是两道独立的关，互不替代。
+  var session = auth.getToken();
+  if (session) header['X-Session'] = session;
   return header;
 }
 
@@ -166,6 +171,47 @@ function probe() {
     return env.getRouteLabel();
   }).catch(function () {
     return '';
+  });
+}
+
+// ==============================
+// 身份（U-02）
+// ==============================
+
+/**
+ * 换会话。
+ *
+ * `code` 来自 `wx.login`，后端有 appsecret 时会拿它换真 openid；
+ * 没有时用 `dev_openid` 顶上（后端 `auth_dev_mode`）。两个都传，
+ * 由后端决定用哪个 —— 前端不必知道自己有没有配钥匙。
+ *
+ * 成败都在 `app.js` 里静默处理：登录不该阻塞首页，也不该弹错误。
+ */
+function createSession(body) {
+  return request('/api/auth/session', 'POST', {
+    code: (body && body.code) || '',
+    dev_openid: (body && body.dev_openid) || ''
+  });
+}
+
+/** 当前身份 + 这份 ACL（会话无效时后端返 401） */
+function fetchMe() {
+  return request('/api/auth/me');
+}
+
+/** `wx.login` 拿 code 后再换会话；拿不到 code 也继续（调试身份不需要它） */
+function loginWithWechat() {
+  return new Promise(function (resolve) {
+    wx.login({
+      success: function (res) {
+        resolve((res && res.code) || '');
+      },
+      fail: function () {
+        resolve('');
+      }
+    });
+  }).then(function (code) {
+    return createSession({ code: code, dev_openid: auth.getDevOpenid() });
   });
 }
 
@@ -646,6 +692,9 @@ module.exports = {
   getBaseUrl: env.getBaseUrl,
   probe: probe,
   request: request,
+  createSession: createSession,
+  fetchMe: fetchMe,
+  loginWithWechat: loginWithWechat,
   toViewItem: toViewItem,
   toPayload: toPayload,
   listItems: listItems,
