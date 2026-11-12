@@ -21,8 +21,9 @@
 .page-body {
   box-sizing: border-box;
   width: 100%;
-  /* 底部多留一条操作条的高度：最后一条不该被「删除 / 撤销」压住 */
-  padding: 0 var(--page-x) calc(var(--sp-6) + 140rpx + env(safe-area-inset-bottom));
+  /* 底部多留一条操作条的高度：操作条占 112~208rpx（含气泡让位），
+     留到 228rpx 才不会被最后一条卡片压住 */
+  padding: 0 var(--page-x) calc(var(--sp-6) + 180rpx + env(safe-area-inset-bottom));
 }
 
 .fb-tip {
