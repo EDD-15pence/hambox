@@ -29,7 +29,9 @@ var PAGE_TITLES = {
   'pages/flight/flight': '机票比价',
   'pages/feedback/list': '反馈记录',
   'pages/shop/wall/wall': '店铺记',
-  'pages/shop/events/events': '店铺流水'
+  'pages/shop/events/events': '店铺流水',
+  'pages/correction/index': '随机打卡',
+  'pages/correction/detail': '随机打卡详情'
 };
 
 Component({

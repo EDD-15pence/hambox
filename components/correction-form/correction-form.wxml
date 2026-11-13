@@ -1,0 +1,98 @@
+<!-- 新建 / 编辑矫正项。mask 补键盘高度：`.ui-mask` 是 fixed，
+     微信对 fixed 容器的自动上推不可靠（§5.5 硬规则 2） -->
+<view wx:if="{{visible}}" class="ui-mask" style="padding-bottom: {{kb}}px" bindtap="onClose">
+  <view class="ui-sheet cf-sheet" catchtap="onNoop">
+    <view class="ui-sheet__header">
+      <text class="ui-sheet__title">{{editing ? '改规则' : '新建矫正项'}}</text>
+      <text class="nav-text-btn" bindtap="onClose">关闭</text>
+    </view>
+
+    <scroll-view class="cf-body" scroll-y="true" enhanced="{{true}}" show-scrollbar="{{false}}">
+      <!-- 预设：选一个就等于填好名字 + 图标，也决定用哪一组内置建议 -->
+      <view class="cf-presets">
+        <view
+          wx:for="{{presets}}"
+          wx:key="key"
+          class="cf-preset {{form.topic === item.topic && form.name === item.name ? 'is-on' : ''}}"
+          data-key="{{item.key}}"
+          bindtap="onPickPreset">
+          <text class="cf-preset__icon">{{item.icon}}</text>
+          <text class="cf-preset__name">{{item.name}}</text>
+        </view>
+      </view>
+
+      <text class="cf-label">叫什么</text>
+      <input
+        class="ui-input"
+        value="{{form.name}}"
+        placeholder="要改掉的坏习惯"
+        placeholder-class="ui-placeholder"
+        maxlength="32"
+        focus="{{nameFocus}}"
+        cursor-spacing="24"
+        bindinput="onNameInput"
+        bindfocus="onFieldFocus"
+        bindblur="onFieldBlur"
+        bindkeyboardheightchange="onKeyboardHeight" />
+
+      <text class="cf-label">选个图标</text>
+      <view class="cf-icons">
+        <text
+          wx:for="{{icons}}"
+          wx:key="*this"
+          class="cf-icon {{form.icon === item ? 'is-on' : ''}}"
+          data-icon="{{item}}"
+          bindtap="onPickIcon">{{item}}</text>
+      </view>
+
+      <text class="cf-label">什么时候问</text>
+      <view class="cf-modes">
+        <text
+          wx:for="{{modeOptions}}"
+          wx:key="key"
+          class="cf-chip {{form.scheduleMode === item.key ? 'is-on' : ''}}"
+          data-mode="{{item.key}}"
+          bindtap="onPickMode">{{item.label}}</text>
+      </view>
+
+      <view wx:if="{{form.scheduleMode === 'custom'}}" class="cf-days">
+        <text
+          wx:for="{{weekLabels}}"
+          wx:key="*this"
+          class="cf-day {{dayOn[index] ? 'is-on' : ''}}"
+          data-day="{{index}}"
+          bindtap="onToggleDay">{{item}}</text>
+      </view>
+
+      <view class="cf-times">
+        <view class="cf-time">
+          <text class="cf-label">从</text>
+          <picker mode="time" value="{{form.windowStart}}" bindchange="onPickStart">
+            <view class="cf-time__value">{{form.windowStart}}</view>
+          </picker>
+        </view>
+        <view class="cf-time">
+          <text class="cf-label">到</text>
+          <picker mode="time" value="{{form.windowEnd}}" bindchange="onPickEnd">
+            <view class="cf-time__value">{{form.windowEnd}}</view>
+          </picker>
+        </view>
+      </view>
+
+      <text class="cf-label">一天问几次（打开小程序时随机弹，答满就停）</text>
+      <view class="cf-stepper">
+        <text class="cf-step" data-delta="-1" bindtap="onStepCount">−</text>
+        <text class="cf-step__value">{{form.checksPerDay}}</text>
+        <text class="cf-step" data-delta="1" bindtap="onStepCount">＋</text>
+      </view>
+
+      <text wx:if="{{error}}" class="cf-error">{{error}}</text>
+    </scroll-view>
+
+    <button
+      class="ui-btn is-primary is-block cf-save"
+      loading="{{saving}}"
+      disabled="{{saving}}"
+      bindtap="onSubmit">{{editing ? '保存' : '建好，开始抽查'}}</button>
+  </view>
+</view>

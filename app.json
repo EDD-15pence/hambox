@@ -18,7 +18,9 @@
   "pages/answer/index",
   "pages/settings/index",
   "pages/shop/wall/wall",
-  "pages/shop/events/events"
+  "pages/shop/events/events",
+  "pages/correction/index",
+  "pages/correction/detail"
   ],
   "window": {
     "navigationStyle": "custom",

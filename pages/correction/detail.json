@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "随机打卡 · 详情",
+  "usingComponents": {
+    "correction-form": "/components/correction-form/correction-form",
+    "correction-ask": "/components/correction-ask/correction-ask",
+    "feedback-fab": "/components/feedback-fab/feedback-fab"
+  }
+}

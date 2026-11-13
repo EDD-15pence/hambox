@@ -900,6 +900,191 @@ function createShopBrand(payload) {
   }).then(toViewShopBrand);
 }
 
+// ==============================
+// 随机打卡（§19）
+// ==============================
+
+/**
+ * 矫正项。`activeDays` 对外统一 **0 = 周一**（与后端 `weekday()` 一致），
+ * 前端 JS 的 `getDay()` 是 0 = 周日，换算只在 `utils/correction.js` 一处做。
+ */
+function toViewCorrection(row) {
+  var today = row.today || {};
+  return {
+    id: row.id,
+    name: row.name || '',
+    icon: row.icon || '🙅',
+    topic: row.topic || '',
+    scheduleMode: row.schedule_mode || 'weekdays',
+    activeDays: row.active_days || [],
+    windowStart: row.window_start || '09:00',
+    windowEnd: row.window_end || '18:00',
+    checksPerDay: row.checks_per_day || 3,
+    enabled: row.enabled !== false,
+    today: {
+      planned: today.planned || 0,
+      answered: today.answered || 0,
+      doing: today.doing || 0,
+      clean: today.clean || 0,
+      skipped: today.skipped || 0,
+      remaining: today.remaining || 0
+    }
+  };
+}
+
+function toViewCheck(row) {
+  return {
+    id: row.id,
+    correctionId: row.correction_id,
+    correctionName: row.correction_name || '',
+    icon: row.icon || '🙅',
+    planDate: row.plan_date || '',
+    plannedAt: normalizeTimestamp(row.planned_at),
+    answeredAt: normalizeTimestamp(row.answered_at),
+    answer: row.answer || '',
+    status: row.status || 'planned',
+    source: row.source || '',
+    suggestionText: row.suggestion_text || ''
+  };
+}
+
+function toViewSuggestion(row) {
+  return {
+    id: row.id,
+    correctionId: row.correction_id,
+    topic: row.topic || '',
+    text: row.text || '',
+    isBuiltin: !!row.is_builtin,
+    enabled: row.enabled !== false,
+    sort: row.sort || 0
+  };
+}
+
+function correctionList(includeDisabled) {
+  var q = '?include_disabled=' + (includeDisabled ? 'true' : 'false');
+  return request('/api/corrections' + q).then(function (data) {
+    return { items: (data.items || []).map(toViewCorrection), total: data.total || 0 };
+  });
+}
+
+function correctionGet(id) {
+  return request('/api/corrections/' + encodeURIComponent(id)).then(toViewCorrection);
+}
+
+function correctionCreate(payload) {
+  return request('/api/corrections', 'POST', {
+    name: (payload.name || '').trim(),
+    icon: payload.icon || '🙅',
+    topic: payload.topic || '',
+    schedule_mode: payload.scheduleMode || 'weekdays',
+    active_days: payload.activeDays || [],
+    window_start: payload.windowStart || '09:00',
+    window_end: payload.windowEnd || '18:00',
+    checks_per_day: Number(payload.checksPerDay) || 3
+  }).then(toViewCorrection);
+}
+
+function correctionUpdate(id, patch) {
+  var body = {};
+  if (patch.name !== undefined) body.name = patch.name;
+  if (patch.icon !== undefined) body.icon = patch.icon;
+  if (patch.topic !== undefined) body.topic = patch.topic;
+  if (patch.scheduleMode !== undefined) body.schedule_mode = patch.scheduleMode;
+  if (patch.activeDays !== undefined) body.active_days = patch.activeDays;
+  if (patch.windowStart !== undefined) body.window_start = patch.windowStart;
+  if (patch.windowEnd !== undefined) body.window_end = patch.windowEnd;
+  if (patch.checksPerDay !== undefined) body.checks_per_day = patch.checksPerDay;
+  if (patch.enabled !== undefined) body.enabled = patch.enabled;
+  return request('/api/corrections/' + encodeURIComponent(id), 'PATCH', body).then(toViewCorrection);
+}
+
+/** 停用（不是物理删除）：历史答案要留着算无犯率，§19 数据口径 */
+function correctionDisable(id) {
+  return request('/api/corrections/' + encodeURIComponent(id), 'DELETE');
+}
+
+function correctionStats(id, days) {
+  return request(
+    '/api/corrections/' + encodeURIComponent(id) + '/stats?days=' + (days || 7)
+  ).then(function (data) {
+    return {
+      days: data.days || 7,
+      items: data.items || [],
+      planned: data.planned || 0,
+      answered: data.answered || 0,
+      doing: data.doing || 0,
+      clean: data.clean || 0,
+      skipped: data.skipped || 0,
+      cleanRate: data.clean_rate || 0,
+      hourly: data.hourly || {}
+    };
+  });
+}
+
+function correctionChecks(correctionId, days) {
+  var q = '?days=' + (days || 14);
+  if (correctionId) q += '&correction_id=' + encodeURIComponent(correctionId);
+  return request('/api/corrections/checks' + q).then(function (data) {
+    return { items: (data.items || []).map(toViewCheck), total: data.total || 0 };
+  });
+}
+
+/**
+ * A 线：打开小程序就问一次「现在该不该弹」。`check` 为空表示不弹
+ * （窗口外 / 今天答完了 / 还没有矫正项），`reason` 可用于页码提示。
+ */
+function correctionAsk() {
+  return request('/api/corrections/ask').then(function (data) {
+    return {
+      check: data.check ? toViewCheck(data.check) : null,
+      correction: data.correction ? toViewCorrection(data.correction) : null,
+      reason: data.reason || ''
+    };
+  });
+}
+
+/** 一步答题。POST 不重试：重复写会把「已答」变成两条统计 */
+function correctionAnswer(checkId, answer, source) {
+  return request('/api/corrections/checks/' + encodeURIComponent(checkId) + '/answer', 'POST', {
+    answer: answer,
+    source: source || 'in-app'
+  }).then(function (data) {
+    return {
+      check: toViewCheck(data.check || {}),
+      message: data.message || '',
+      suggestion: data.suggestion ? toViewSuggestion(data.suggestion) : null
+    };
+  });
+}
+
+function suggestionList(correctionId) {
+  var q = correctionId ? '?correction_id=' + encodeURIComponent(correctionId) : '';
+  return request('/api/corrections/suggestions' + q).then(function (data) {
+    return { items: (data.items || []).map(toViewSuggestion), total: data.total || 0 };
+  });
+}
+
+function suggestionCreate(payload) {
+  return request('/api/corrections/suggestions', 'POST', {
+    correction_id: payload.correctionId || null,
+    text: (payload.text || '').trim()
+  }).then(toViewSuggestion);
+}
+
+function suggestionUpdate(id, patch) {
+  var body = {};
+  if (patch.text !== undefined) body.text = patch.text;
+  if (patch.enabled !== undefined) body.enabled = patch.enabled;
+  if (patch.sort !== undefined) body.sort = patch.sort;
+  return request('/api/corrections/suggestions/' + encodeURIComponent(id), 'PATCH', body).then(
+    toViewSuggestion
+  );
+}
+
+function suggestionDelete(id) {
+  return request('/api/corrections/suggestions/' + encodeURIComponent(id), 'DELETE');
+}
+
 module.exports = {
   getBaseUrl: env.getBaseUrl,
   probe: probe,
@@ -953,5 +1138,18 @@ module.exports = {
   createShopSku: createShopSku,
   updateShopSku: updateShopSku,
   deleteShopSku: deleteShopSku,
-  createShopBrand: createShopBrand
+  createShopBrand: createShopBrand,
+  correctionList: correctionList,
+  correctionGet: correctionGet,
+  correctionCreate: correctionCreate,
+  correctionUpdate: correctionUpdate,
+  correctionDisable: correctionDisable,
+  correctionStats: correctionStats,
+  correctionChecks: correctionChecks,
+  correctionAsk: correctionAsk,
+  correctionAnswer: correctionAnswer,
+  suggestionList: suggestionList,
+  suggestionCreate: suggestionCreate,
+  suggestionUpdate: suggestionUpdate,
+  suggestionDelete: suggestionDelete
 };

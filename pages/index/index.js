@@ -4,6 +4,7 @@ const api = require('../../utils/api');
 const auth = require('../../utils/auth');
 const storageView = require('../../utils/storage-view');
 const version = require('../../utils/version');
+const hold = require('../../utils/hold');
 
 /** 角标不用每次都拉：一分钟内的切页面/返回都复用上次结果 */
 const BADGE_TTL = 60 * 1000;
@@ -15,7 +16,7 @@ function todayText() {
   return `${now.getMonth() + 1}月${now.getDate()}日 ${WEEKDAY[now.getDay()]}`;
 }
 
-/** 工具清单：新增工具只改这个数组，不用动 wxml */
+/** 工具清单：新增工具只改这个数组，不用动 wxml；下架只改 `utils/hold.js` */
 const TOOLS = [
   {
     key: 'relationship',
@@ -71,6 +72,14 @@ const TOOLS = [
     path: '/pages/punchin/punchin',
   },
   {
+    key: 'correction',
+    icon: '🎯',
+    name: '随机打卡',
+    desc: '随机问一句，戒掉坏习惯',
+    tag: '新',
+    path: '/pages/correction/index',
+  },
+  {
     key: 'prompt',
     icon: '📝',
     name: 'Prompt 模板',
@@ -94,8 +103,9 @@ Page({
     navRight: nav.SAFE_RIGHT,
     isDark: false,
     todayText: todayText(),
-    // 按 ACL 过滤后的可见卡片（U-04）。没拿到身份前先全给，见 utils/auth.js 头部
-    tools: TOOLS,
+    // 按 HOLD → ACL 过滤后的可见卡片（§20.3）。初始值也要过一遍 HOLD，
+    // 否则登录前那一帧会闪出已下架的卡
+    tools: TOOLS.filter((tool) => !hold.isHeld(tool.key)),
     // 智能仓储卡片右上角：几件要提醒的（已过期 + 临期）
     storageBadge: 0,
     storageBadgeType: 'warning',
@@ -123,17 +133,35 @@ Page({
     const ready = (app && app.sessionPromise) || Promise.resolve(null);
     ready.then(() => this.applyTools());
     this.refreshStorageBadge();
+    this.askCorrection();
   },
 
   /**
-   * 按 ACL 过滤首页卡片（U-04）。
+   * 随机打卡的 A 线（§19.4）：打开小程序就走这条，不消耗服务通知授权。
+   * 组件内部记了「本次会话弹过哪一条」，所以从别的页面返回首页不会反复弹。
+   * 拉不到 / 没有配额都静默 —— 首页不该因为抽查失败而弹错误。
+   */
+  askCorrection() {
+    // 没有这个工具的身份别去撞 403（妹妹 `shop` 档看不到随机打卡，也不该收通知）
+    if (!auth.can('correction')) return;
+    const ask = this.selectComponent('#ask');
+    if (ask) ask.ask();
+  },
+
+  /**
+   * 按 HOLD → ACL 过滤首页卡片（§20.3 / U-04）。
+   *
+   * 顺序不能反：HOLD 是产品下架（与身份无关），ACL 是按角色隔离。先剔 HOLD，
+   * 再判 `auth.can()`，以后想「恢复某个工具但只对 admin 开放」才不用改结构。
    *
    * 白名单语义：不在 allowlist 里的工具默认不显示，所以以后新增工具
    * 不会自动出现在妹妹的首页上（§18.9.4）。`quick` 与 `storage` 是同一组，
    * 归组逻辑在 `utils/auth.js` 的 `GROUP_OF`。
    */
   applyTools() {
-    const tools = TOOLS.filter((tool) => auth.can(tool.key));
+    const tools = TOOLS
+      .filter((tool) => !hold.isHeld(tool.key))
+      .filter((tool) => auth.can(tool.key));
     // 比 key 不比长度：从「guest 空表」换成「shop 一张卡」时两者可能都是
     // 1 张但内容不同，比长度会漏掉整次更新
     const before = this.data.tools.map((tool) => tool.key).join(',');
@@ -227,7 +255,12 @@ Page({
     const key = e.currentTarget.dataset.tool;
     const tool = TOOLS.find((t) => t.key === key);
     if (!tool) return;
-    // 再校验一次：data 可能还是登录前的旧值，分享带参数也可能绕过过滤（U-04）
+    // 已下架的卡：`data` 可能还是登录前的旧值，分享带参数也可能绕过过滤（§20.4-2）
+    if (hold.isHeld(key)) {
+      wx.showToast({ title: '这个工具暂时下架了', icon: 'none' });
+      return;
+    }
+    // 再校验一次权限：同理，data 可能还是登录前的旧值（U-04）
     if (!auth.can(key)) {
       wx.showToast({ title: '当前身份没有这个工具', icon: 'none' });
       return;
@@ -245,10 +278,11 @@ Page({
 
   /**
    * 分享标题也按角色走（§18.9.8「一起遮」）：妹妹这一档不该在分享里
-   * 露出「找东西、查称呼」这些她根本看不到的能力。
+   * 露出她根本看不到的能力。admin 档 16:02 定稿为「找东西、随手记、记库存」
+   * —— 不再提已 HOLD 的「查称呼」（§20.8-2）。
    */
   shareTitle() {
-    return auth.can('storage') ? '汉堡盒 · 找东西、随手记、查称呼' : '汉堡盒 · 店铺记';
+    return auth.can('storage') ? '汉堡盒 · 找东西、随手记、记库存' : '汉堡盒 · 店铺记';
   },
 
   onShareAppMessage() {

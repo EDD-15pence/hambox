@@ -1,0 +1,221 @@
+/* ============================================================
+ * 随机打卡 · 列表（§19 / H-06）
+ *
+ * 与「习惯打卡」刻意长得不一样：那边是一张张白卡堆连续天数，
+ * 这边是「规则 + 今天几个点」——一次抽查一个点，答了就点亮。
+ * 全部走 v2 令牌，深色自动跟随。
+ * ============================================================ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: var(--bg-page);
+  color: var(--text-1);
+}
+
+.app-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.page-body {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0 var(--page-x);
+}
+
+/* ---------------- 今日合计 ---------------- */
+
+.today {
+  display: flex;
+  margin: var(--sp-2) var(--page-x) 0;
+  padding: var(--sp-3) var(--sp-2);
+  border-radius: var(--r-lg);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.today__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+  position: relative;
+}
+
+.today__item + .today__item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10rpx;
+  bottom: 10rpx;
+  width: 1rpx;
+  background: var(--divider);
+}
+
+.today__label {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.today__value {
+  font-size: var(--fs-h1);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.today__unit {
+  font-size: var(--fs-tiny);
+  font-weight: 400;
+  color: var(--text-3);
+}
+
+.today__sub {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.today-ask {
+  display: block;
+  margin: var(--sp-2) var(--page-x) 0;
+  text-align: right;
+  font-size: var(--fs-caption);
+  color: var(--primary-text);
+}
+
+/* ---------------- 矫正项卡片 ---------------- */
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  padding: var(--sp-3);
+  border-radius: var(--r-lg);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.item--active {
+  box-shadow: var(--shadow-raised-press);
+}
+
+/* 停用的：降对比但不隐藏 —— 历史统计还要能看 */
+.item.is-off {
+  opacity: 0.6;
+}
+
+.item__icon {
+  flex: none;
+  width: 88rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  font-size: 44rpx;
+  border-radius: var(--r-md);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+}
+
+.item__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.item__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.item__name {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item__remain {
+  flex: none;
+  font-size: var(--fs-tiny);
+  color: var(--primary-text);
+}
+
+.item__remain.is-done {
+  color: var(--text-3);
+}
+
+.item__rule {
+  font-size: var(--fs-caption);
+  color: var(--text-3);
+}
+
+.item__dots {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex-wrap: wrap;
+}
+
+.dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+}
+
+.dot.is-on {
+  background: var(--success);
+  box-shadow: none;
+}
+
+.dot__empty {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.item__arrow {
+  flex: none;
+  font-size: var(--fs-h2);
+  color: var(--text-3);
+}
+
+.hint {
+  display: block;
+  margin: var(--sp-3) 0 var(--sp-6);
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+  text-align: center;
+}
+
+/* ---------------- 底部按钮 ---------------- */
+
+.bottom {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  padding: var(--sp-2) var(--page-x) calc(var(--sp-3) + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--bg-page) 76%, transparent);
+}
+
+.bottom__add {
+  width: 100%;
+}
+
+.retry {
+  margin-top: var(--sp-3);
+  width: 100%;
+}

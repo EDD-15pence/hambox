@@ -1,0 +1,149 @@
+<view class="container {{isDark ? 'dark' : ''}}">
+  <view class="app-nav" style="padding-top:{{statusBarHeight}}px;padding-right:{{navRight}}px">
+    <view class="nav-left">
+      <text class="nav-back-icon" bindtap="onBack">‹</text>
+      <view class="app-nav__titles">
+        <text class="app-nav__title">{{item ? item.name : '随机打卡'}}</text>
+        <text class="app-nav__sub">{{item ? item.scheduleText : ''}}</text>
+      </view>
+    </view>
+    <view class="app-nav__actions">
+      <text wx:if="{{item}}" class="nav-text-btn" bindtap="onOpenEdit">改规则</text>
+    </view>
+  </view>
+
+  <view class="page-body">
+    <view wx:if="{{loading}}" class="ui-empty">
+      <text class="ui-empty__title">正在算统计</text>
+    </view>
+
+    <view wx:elif="{{error}}" class="ui-empty">
+      <text class="ui-empty__title">没拉到数据</text>
+      <text class="ui-empty__hint">{{error}}</text>
+      <button class="ui-btn is-block retry" bindtap="onRetry">重试</button>
+    </view>
+
+    <block wx:else>
+      <!-- 今天：四个数，跳过单列一格并说明不算分母 -->
+      <view class="today">
+        <view class="today__item">
+          <text class="today__label">今天已答</text>
+          <text class="today__value">{{item.today.answered}}<text class="today__unit">/{{item.today.planned}}</text></text>
+        </view>
+        <view class="today__item">
+          <text class="today__label">正在</text>
+          <text class="today__value is-warn">{{item.today.doing}}</text>
+        </view>
+        <view class="today__item">
+          <text class="today__label">没有</text>
+          <text class="today__value is-ok">{{item.today.clean}}</text>
+        </view>
+        <view class="today__item">
+          <text class="today__label">跳过</text>
+          <text class="today__value is-mute">{{item.today.skipped}}</text>
+        </view>
+      </view>
+      <text wx:if="{{item.enabled && item.today.remaining}}" class="ask-now" bindtap="onAskNow">现在问一次 ›</text>
+
+      <!-- 七天无犯率：分母只算「正在 + 没有」，跳过和未答都不进 -->
+      <view class="rate">
+        <view class="rate__left">
+          <text class="rate__label">近 7 天无犯率</text>
+          <text class="rate__value">{{rateText}}</text>
+        </view>
+        <view class="rate__right">
+          <text class="rate__line">没有 {{stats.clean}} 次 · 正在 {{stats.doing}} 次</text>
+          <text class="rate__line">跳过 {{stats.skipped}} 次，没算进分母</text>
+        </view>
+      </view>
+
+      <!-- 最近七天：一天一行圆点。没答的留空心，别让空白消失 -->
+      <view class="card">
+        <text class="card__title">最近七天</text>
+        <view wx:for="{{days}}" wx:key="key" class="day">
+          <text class="day__label">{{item.label}}</text>
+          <view class="day__dots">
+            <text
+              wx:for="{{item.dots}}"
+              wx:for-item="dot"
+              wx:key="i"
+              class="dot is-{{dot.tone}}"
+              title="{{dot.text}}"></text>
+            <text wx:if="{{!item.dots.length}}" class="day__none">没安排</text>
+          </view>
+          <text class="day__count">{{item.answered}}/{{item.planned}}</text>
+        </view>
+        <view class="legend">
+          <text class="legend__item"><text class="dot is-warn"></text>正在</text>
+          <text class="legend__item"><text class="dot is-ok"></text>没有</text>
+          <text class="legend__item"><text class="dot is-mute"></text>跳过</text>
+          <text class="legend__item"><text class="dot is-idle"></text>没答</text>
+        </view>
+      </view>
+
+      <!-- 时段分布：只在有「正在」记录时出现 -->
+      <view wx:if="{{hourly.length}}" class="card">
+        <text class="card__title">都在什么时间犯</text>
+        <view wx:for="{{hourly}}" wx:key="key" class="hour">
+          <text class="hour__label">{{item.label}}</text>
+          <view class="hour__bar">
+            <view class="hour__fill" style="width: {{item.percent}}%"></view>
+          </view>
+          <text class="hour__count">{{item.count}}</text>
+        </view>
+        <text class="card__hint">按当时答「正在」的次数统计，看哪一段时间最容易犯。</text>
+      </view>
+
+      <!-- 建议库：内置 + 自定义，可加可删 -->
+      <view class="card">
+        <view class="card__head">
+          <text class="card__title">答「正在」时给的建议</text>
+          <text wx:if="{{suggestions.length > 6}}" class="card__more" bindtap="onToggleSuggestions">{{showAllSuggestions ? '收起' : '全部 ' + suggestions.length + ' 条'}}</text>
+        </view>
+
+        <view wx:for="{{visibleSuggestions}}" wx:key="id" class="sg">
+          <text class="sg__text">{{item.text}}</text>
+          <text wx:if="{{item.isBuiltin}}" class="sg__tag">内置</text>
+          <text class="sg__del" data-id="{{item.id}}" bindtap="onDeleteSuggestion">删</text>
+        </view>
+        <text wx:if="{{!suggestions.length}}" class="card__hint">还没有建议，加一条吧。</text>
+
+        <view class="sg-add">
+          <input
+            class="ui-input sg-add__input"
+            value="{{newSuggestion}}"
+            placeholder="加一条自己的建议"
+            placeholder-class="ui-placeholder"
+            maxlength="200"
+            cursor-spacing="24"
+            bindinput="onSuggestionInput"
+            bindkeyboardheightchange="onKeyboardHeight" />
+          <button
+            class="ui-btn is-primary sg-add__btn"
+            loading="{{addingSuggestion}}"
+            disabled="{{addingSuggestion}}"
+            bindtap="onAddSuggestion">加</button>
+        </view>
+        <view wx:if="{{kb}}" style="height: {{kb}}px"></view>
+      </view>
+
+      <!-- 停用 / 恢复 -->
+      <view class="actions">
+        <button wx:if="{{item.enabled}}" class="ui-btn is-block" bindtap="onDisable">停掉这一项</button>
+        <button wx:else class="ui-btn is-primary is-block" bindtap="onRestore">重新启用</button>
+        <text class="actions__hint">{{item.enabled ? '停掉后不再抽查，历史记录照旧保留。' : '这一项已经停用，历史统计还在。'}}</text>
+      </view>
+    </block>
+  </view>
+
+  <feedback-fab spacer="{{true}}" />
+
+  <correction-ask id="ask" bind:changed="onAsked" />
+
+  <correction-form
+    visible="{{formVisible}}"
+    value="{{formValue}}"
+    saving="{{saving}}"
+    bind:save="onFormSave"
+    bind:close="onFormClose" />
+</view>

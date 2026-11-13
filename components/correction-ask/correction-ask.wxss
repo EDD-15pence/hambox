@@ -1,0 +1,154 @@
+/* 一步抽查面板（§19.4 A 线）。全部用 v2 令牌，深色自动跟随 —— 不要写死色值 */
+
+.ask-mask {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6);
+  background: var(--shade);
+}
+
+.ask-card {
+  width: 100%;
+  max-width: 560rpx;
+  padding: var(--sp-6);
+  border-radius: var(--r-lg);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-float);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ask-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ask-tag {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+  letter-spacing: 1rpx;
+}
+
+.ask-close {
+  font-size: var(--fs-h2);
+  line-height: 1;
+  padding: 0 4rpx;
+  color: var(--text-3);
+}
+
+.ask-icon {
+  margin-top: var(--sp-4);
+  font-size: 72rpx;
+  line-height: 1;
+}
+
+.ask-title {
+  margin-top: var(--sp-3);
+  font-size: var(--fs-h1);
+  font-weight: 600;
+  color: var(--text-1);
+  text-align: center;
+}
+
+.ask-hint {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-caption);
+  color: var(--text-3);
+}
+
+.ask-actions {
+  width: 100%;
+  margin-top: var(--sp-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/* 三态按钮：不用 .ui-btn —— 这里是「点一下就走」的大块，尺寸和音调都不一样 */
+.ask-btn {
+  width: 100%;
+  height: 96rpx;
+  line-height: 96rpx;
+  border-radius: var(--r-md);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  border: none;
+  box-shadow: var(--shadow-raised);
+}
+
+.ask-btn::after {
+  border: none;
+}
+
+.ask-btn.is-warn {
+  color: var(--warning);
+  background: var(--warning-weak);
+}
+
+.ask-btn.is-ok {
+  color: var(--success);
+  background: var(--success-weak);
+}
+
+.ask-btn.is-mute {
+  color: var(--text-2);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+}
+
+.ask-btn:active {
+  box-shadow: var(--shadow-raised-press);
+}
+
+.ask-result {
+  width: 100%;
+  margin-top: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ask-message {
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--primary-weak);
+  color: var(--primary-text);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+}
+
+.ask-message.is-quiet {
+  background: var(--bg-sunken);
+  color: var(--text-2);
+}
+
+.ask-done {
+  width: 100%;
+  margin-top: var(--sp-4);
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: var(--r-md);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  border: none;
+}
+
+.ask-done::after {
+  border: none;
+}
+
+.ask-done:active {
+  background: var(--primary-strong);
+}

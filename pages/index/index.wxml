@@ -53,5 +53,7 @@
 
   <!-- 悬浮麦克风：说一句 → 面板内确认 → 直接入库，不跳页面 -->
   <voice-add bind:saved="onVoiceSaved" />
+  <!-- 随机打卡的 A 线：打开小程序就弹一次（同一条本次会话只弹一次） -->
+  <correction-ask id="ask" />
   <feedback-fab side="left" spacer="{{false}}" />
 </view>

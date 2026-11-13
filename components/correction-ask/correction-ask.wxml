@@ -1,0 +1,42 @@
+<!-- 一步抽查面板（A 线）。居中卡片而不是底部 sheet：没有输入框，
+     三个大按钮要占满拇指区，也不需要键盘避让 -->
+<view wx:if="{{visible}}" class="ask-mask" catchtap="onNoop">
+  <view class="ask-card">
+    <view class="ask-head">
+      <text class="ask-tag">随机打卡 · {{timeText}}</text>
+      <text class="ask-close" bindtap="onClose">✕</text>
+    </view>
+
+    <text class="ask-icon">{{check.icon}}</text>
+    <text class="ask-title">现在有没有{{check.correctionName}}？</text>
+    <text class="ask-hint">点一下就记下，不用填任何东西</text>
+
+    <!-- 未答：三态大按钮 -->
+    <view wx:if="{{!answered}}" class="ask-actions">
+      <button
+        class="ask-btn is-warn"
+        data-answer="doing"
+        loading="{{saving}}"
+        disabled="{{saving}}"
+        bindtap="onAnswer">正在</button>
+      <button
+        class="ask-btn is-ok"
+        data-answer="clean"
+        loading="{{saving}}"
+        disabled="{{saving}}"
+        bindtap="onAnswer">没有</button>
+      <button
+        class="ask-btn is-mute"
+        data-answer="skipped"
+        disabled="{{saving}}"
+        bindtap="onAnswer">跳过</button>
+    </view>
+
+    <!-- 已答：一句反馈（答「没有」是正反馈，答「跳过」没有话） -->
+    <view wx:else class="ask-result">
+      <text wx:if="{{message}}" class="ask-message">{{message}}</text>
+      <text wx:else class="ask-message is-quiet">记下了，下次再问。</text>
+      <button class="ask-done" bindtap="onClose">知道了</button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,105 @@
+<view class="container {{isDark ? 'dark' : ''}}">
+  <view class="app-nav" style="padding-top:{{statusBarHeight}}px;padding-right:{{navRight}}px">
+    <view class="nav-left">
+      <text class="nav-back-icon" bindtap="onBack">‹</text>
+      <view class="app-nav__titles">
+        <text class="app-nav__title">随机打卡</text>
+        <text class="app-nav__sub">{{todayText}}</text>
+      </view>
+    </view>
+    <view class="app-nav__actions">
+      <text class="nav-text-btn" bindtap="onOpenCreate">＋ 新建</text>
+    </view>
+  </view>
+
+  <!-- 今天的合计：答了几次、守住了几次。没有数据时不显示 0% -->
+  <view wx:if="{{!error && activeCount}}" class="today">
+    <view class="today__item">
+      <text class="today__label">今天已答</text>
+      <text class="today__value">{{doneCount}}<text class="today__unit">/{{planCount}}</text></text>
+      <text class="today__sub">{{doneCount >= planCount && planCount ? '今天问完了' : '还有 ' + (planCount - doneCount) + ' 次'}}</text>
+    </view>
+    <view class="today__item">
+      <text class="today__label">守住了</text>
+      <text class="today__value">{{cleanCount}}<text class="today__unit"> 次</text></text>
+      <text class="today__sub">犯 {{doingCount}} 次</text>
+    </view>
+    <view class="today__item">
+      <text class="today__label">今日无犯率</text>
+      <text class="today__value">{{todayRateText}}</text>
+      <text class="today__sub">跳过的没算</text>
+    </view>
+  </view>
+
+  <!-- 手动再问一次：自动弹的那条本次会话已经弹过了，用户想现在答就点这里 -->
+  <text wx:if="{{!error && activeCount}}" class="today-ask" bindtap="onAskNow">现在问一次 ›</text>
+
+  <view class="page-body">
+    <view wx:if="{{loading}}" class="ui-empty">
+      <text class="ui-empty__title">正在取今天的抽查</text>
+      <text class="ui-empty__hint">稍等一下</text>
+    </view>
+
+    <view wx:elif="{{error}}" class="ui-empty">
+      <text class="ui-empty__title">没拉到数据</text>
+      <text class="ui-empty__hint">{{error}}</text>
+      <button class="ui-btn is-block retry" bindtap="onRetry">重试</button>
+    </view>
+
+    <view wx:elif="{{!items.length}}" class="ui-empty">
+      <text class="ui-empty__title">还没有要改的习惯</text>
+      <text class="ui-empty__hint">建一个，比如「翘二郎腿」。之后打开小程序就会随机问一次，点一下就记下。</text>
+      <button class="ui-btn is-primary is-block retry" bindtap="onOpenCreate">＋ 新建一个</button>
+    </view>
+
+    <block wx:else>
+      <view
+        wx:for="{{items}}"
+        wx:key="id"
+        class="item {{item.enabled ? '' : 'is-off'}}"
+        data-id="{{item.id}}"
+        bindtap="onOpenDetail"
+        bindlongpress="onOpenEdit"
+        hover-class="item--active"
+        hover-stay-time="80">
+        <view class="item__icon">{{item.icon}}</view>
+        <view class="item__body">
+          <view class="item__head">
+            <text class="item__name">{{item.name}}</text>
+            <text wx:if="{{!item.enabled}}" class="ui-badge">已停用</text>
+            <text wx:elif="{{item.remaining}}" class="item__remain">还剩 {{item.remaining}} 次</text>
+            <text wx:else class="item__remain is-done">今天答完了</text>
+          </view>
+          <text class="item__rule">{{item.scheduleText}}</text>
+          <view class="item__dots">
+            <text
+              wx:for="{{item.dots}}"
+              wx:for-item="dot"
+              wx:key="i"
+              class="dot {{dot.on ? 'is-on' : ''}}"></text>
+            <text wx:if="{{!item.dots.length}}" class="dot__empty">今天不抽查</text>
+          </view>
+        </view>
+        <text class="item__arrow">›</text>
+      </view>
+
+      <text class="hint">点开看统计和记录 · 长按直接改规则</text>
+    </block>
+  </view>
+
+  <view wx:if="{{items.length}}" class="bottom">
+    <button class="ui-btn is-primary is-block bottom__add" bindtap="onOpenCreate">＋ 再加一项</button>
+  </view>
+
+  <feedback-fab spacer="{{true}}" />
+
+  <!-- A 线：进页面就问一次，有配额直接弹（不消耗服务通知授权） -->
+  <correction-ask id="ask" bind:changed="onAskChanged" />
+
+  <correction-form
+    visible="{{formVisible}}"
+    value="{{formValue}}"
+    saving="{{saving}}"
+    bind:save="onFormSave"
+    bind:close="onFormClose" />
+</view>

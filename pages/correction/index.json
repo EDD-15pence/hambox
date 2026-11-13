@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "随机打卡",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "correction-ask": "/components/correction-ask/correction-ask",
+    "correction-form": "/components/correction-form/correction-form",
+    "feedback-fab": "/components/feedback-fab/feedback-fab"
+  }
+}
