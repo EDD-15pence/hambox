@@ -2,7 +2,7 @@
  * 智能仓储 - 物品列表页
  * 数据来自 storage-server 接口（局域网），本地只做筛选 / 排序 / 展示
  */
-var auth = require('../../utils/auth');
+var auth = require('../../../utils/auth');
 var api = require('../../../utils/api');
 var storageUtils = require('../../../utils/storage-utils');
 var storageView = require('../../../utils/storage-view');

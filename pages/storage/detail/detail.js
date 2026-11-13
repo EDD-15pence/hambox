@@ -1,7 +1,7 @@
 /**
  * 智能仓储 - 物品详情页（数据来自 storage-server 接口）
  */
-var auth = require('../../utils/auth');
+var auth = require('../../../utils/auth');
 var api = require('../../../utils/api');
 var nav = require('../../../utils/nav');
 var theme = require('../../../utils/theme');

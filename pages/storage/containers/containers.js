@@ -16,7 +16,7 @@
  * → `touchend` 算最近的格子并落库。拖拽期间把 scroll-view 的 scroll-y 关掉，
  * 否则手势会被滚动吃掉（这是小程序里做拖拽最容易踩的坑）。
  */
-var auth = require('../../utils/auth');
+var auth = require('../../../utils/auth');
 var api = require('../../../utils/api');
 var nav = require('../../../utils/nav');
 var theme = require('../../../utils/theme');
