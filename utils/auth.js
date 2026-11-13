@@ -128,6 +128,11 @@ function needsRefresh() {
   // 解析不出到期时间就当作要刷新：宁可多登录一次，也不要抱着一个
   // 不知道何时失效的 token 等到它 401
   if (!session.expiresAt) return true;
+  // 一个工具都没有 = 这份 ACL 要么是还没授权时的旧缓存，要么是后台刚给人
+  // 开了权限。**权限是后端说了算的**，本地缓存判断不了它是否过期，所以这种
+  // 状态下每次启动都重登一次（一次请求而已），否则会出现「后台已经授权、
+  // 手机上永远白屏」—— 2026-11-13 真机踩过这个坑
+  if (session.allow !== '*' && (!session.allow || !session.allow.length)) return true;
   return session.expiresAt - Date.now() < 2 * 60 * 60 * 1000;
 }
 

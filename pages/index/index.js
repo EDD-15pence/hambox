@@ -134,8 +134,41 @@ Page({
    */
   applyTools() {
     const tools = TOOLS.filter((tool) => auth.can(tool.key));
-    if (tools.length === this.data.tools.length) return;
+    // 比 key 不比长度：从「guest 空表」换成「shop 一张卡」时两者可能都是
+    // 1 张但内容不同，比长度会漏掉整次更新
+    const before = this.data.tools.map((tool) => tool.key).join(',');
+    const after = tools.map((tool) => tool.key).join(',');
+    if (before === after) return;
     this.setData({ tools });
+  },
+
+  /**
+   * 首页兜底：一张卡都看不见时的出口（2026-11-13 真机踩过）。
+   *
+   * 以前这里就是一片空白，用户完全不知道自己被当成访客了。现在给一个
+   * 身份状态 + 「重新登录」，改完权限点一下就好，不用知道设置页藏在哪。
+   */
+  onRefreshIdentity() {
+    if (this._refreshing) return;
+    this._refreshing = true;
+    wx.showLoading({ title: '重连中', mask: true });
+    const app = getApp();
+    const done = (session) => {
+      this._refreshing = false;
+      wx.hideLoading();
+      this.applyTools();
+      this.refreshStorageBadge();
+      if (!session) {
+        wx.showToast({ title: '重连失败，检查线路与后端', icon: 'none' });
+        return;
+      }
+      wx.showToast({
+        title: session.role === 'admin' ? '已是管理员' : '身份已刷新',
+        icon: 'none',
+      });
+    };
+    if (app && app.refreshSession) app.refreshSession().then(done);
+    else done(null);
   },
 
   /**

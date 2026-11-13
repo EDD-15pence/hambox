@@ -76,11 +76,14 @@ Page({
     dirtyText: '未改',
     maskToken: true,
     testing: false,
+    refreshing: false,
     testRows: []
   },
 
   onLoad() {
-    if (!auth.guard('settings')) return;
+    // **这里刻意不加 auth.guard()**：设置页是「身份出问题时的唯一出口」——
+    // 权限被收走、openid 还没授权、后端换了密钥，都要靠这一页看 openid 和
+    // 重新登录。给它加守卫等于把钥匙锁在屋里（2026-11-13 真机踩过）。
     this.setData({
       isDark: theme.getTheme(),
       versionText: version.describe(),
@@ -145,6 +148,32 @@ Page({
       success: function () {
         wx.showToast({ title: '已复制，填进后端 ADMIN_OPENIDS', icon: 'none' });
       }
+    });
+  },
+
+  /**
+   * 强制换一张新会话。
+   *
+   * 后台改完 `ADMIN_OPENIDS` 或 `users.role` 之后，本地缓存里的 ACL 还是旧的，
+   * 重进小程序也不一定刷新（缓存没过期）。这个按钮让「改完立刻生效」变成
+   * 一次点击，不用清缓存、不用重装。
+   */
+  onRefreshIdentity() {
+    var self = this;
+    var app = getApp();
+    if (this.data.refreshing) return;
+    this.setData({ refreshing: true });
+    (app && app.refreshSession ? app.refreshSession() : Promise.resolve(null)).then(function (session) {
+      self.setData({ refreshing: false });
+      self.refresh();
+      if (!session) {
+        wx.showToast({ title: '重连失败，检查线路与后端', icon: 'none' });
+        return;
+      }
+      wx.showToast({
+        title: session.role === 'admin' ? '已是管理员' : '身份已刷新',
+        icon: 'none'
+      });
     });
   },
 

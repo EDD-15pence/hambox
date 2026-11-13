@@ -21,7 +21,8 @@
         <text class="row__k">openid</text>
         <text class="row__v row__v--mono">{{openid || '—'}}</text>
       </view>
-      <text class="id-hint">点 openid 复制。要把谁提成管理员，就把他的 openid 填进后端 .env 的 ADMIN_OPENIDS，重启服务后重新进入小程序即可。</text>
+      <text class="id-hint">点 openid 复制。要把谁提成管理员，就把他的 openid 填进后端 .env 的 ADMIN_OPENIDS，重启服务后点下面的「重新登录」即可。</text>
+      <button class="ui-btn is-ghost id-refresh" bindtap="onRefreshIdentity" disabled="{{refreshing}}">{{refreshing ? '重连中…' : '重新登录'}}</button>
     </view>
 
     <view class="card">

@@ -49,6 +49,11 @@
   line-height: 1.5;
 }
 
+/* 「重新登录」：身份改完之后的一键生效，别让人去清缓存 */
+.id-refresh {
+  margin-top: var(--sp-2);
+}
+
 /* 表单 */
 .sfield {
   margin-top: var(--sp-4);

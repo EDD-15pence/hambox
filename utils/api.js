@@ -135,7 +135,10 @@ function request(path, method, data) {
               sessionRetried = true;
               var app = typeof getApp === 'function' ? getApp() : null;
               if (app && app.ensureSession) {
-                app.ensureSession().then(function () {
+                // **必须 force**：走到这里说明手里这张 token 后端已经不认了
+                // （换了 SESSION_SECRET、库里删了人），本地 `needsRefresh()`
+                // 却可能认为它还新鲜，不强制就白等一轮再撞同一个 401
+                app.ensureSession(true).then(function () {
                   go();
                 }, function () {
                   reject(new Error(message401 || '身份失效，请重新进入小程序'));

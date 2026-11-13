@@ -35,6 +35,15 @@
       </view>
     </view>
 
+    <!-- 一张卡都没有 = 身份是访客、或 ACL 里一个工具都没有。给出口，别给白屏 -->
+    <view wx:if="{{tools.length === 0}}" class="empty-auth">
+      <text class="empty-auth__icon">🔒</text>
+      <text class="empty-auth__title">这个身份还没有可用的工具</text>
+      <text class="empty-auth__desc">后台可能刚授权、或这台设备的身份还没登记。先点「重新登录」换一张新会话；还不行就把 openid 发给管理员。</text>
+      <button class="ui-btn is-primary empty-auth__btn" bindtap="onRefreshIdentity">重新登录</button>
+      <text class="empty-auth__link" bindtap="onOpenSettings">查看身份信息 ›</text>
+    </view>
+
     <view class="footer">
       <text class="footer-text">点卡片进入 · 右下角说话直接记一笔</text>
       <!-- 隐藏入口：长按版本号进连接设置（换网段 / 换令牌用，见 utils/env.js 覆盖层） -->

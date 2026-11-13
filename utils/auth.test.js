@@ -170,5 +170,22 @@ check('拦住会退回首页', store.__redirect, '/pages/index/index');
 reset();
 check('没有身份时 guard 放行（真隔离在后端）', auth.guard('storage'), true);
 
+// 会话刷新口径：ACL 为空必须重登，否则「后台已授权、手机永远白屏」
+reset();
+auth.setSession({ token: 't', role: 'admin', allow: '*', expires_at: futureIso(24) });
+check('新鲜的全权会话不重登', auth.needsRefresh(), false);
+
+reset();
+auth.setSession({ token: 't', role: 'shop', allow: ['shop'], expires_at: futureIso(24) });
+check('新鲜的分权会话不重登', auth.needsRefresh(), false);
+
+reset();
+auth.setSession({ token: 't', role: 'guest', allow: [], expires_at: futureIso(24) });
+check('ACL 为空的会话每次都重登', auth.needsRefresh(), true);
+
+reset();
+auth.setSession({ token: 't', role: 'admin', allow: '*', expires_at: futureIso(1) });
+check('快过期的会话提前重登', auth.needsRefresh(), true);
+
 console.log(pass + ' ok, ' + fail + ' fail');
 process.exit(fail === 0 ? 0 : 1);
