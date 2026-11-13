@@ -61,7 +61,7 @@
   </view>
 
   <!-- 录入 / 编辑面板 -->
-  <view wx:if="{{form}}" class="ui-mask" bindtap="onCloseForm">
+  <view wx:if="{{form}}" class="ui-mask" style="padding-bottom: {{kb}}px" bindtap="onCloseForm">
     <view class="ui-sheet ans-sheet" catchtap="onNoop">
       <view class="ui-sheet__header">
         <text class="ui-sheet__title">{{form.id ? '改这条答案' : '记一条答案'}}</text>
@@ -76,7 +76,10 @@
         placeholder-class="ui-placeholder"
         data-field="keyword"
         maxlength="128"
-        bindinput="onFormField" />
+        cursor-spacing="24"
+        bindinput="onFormField"
+        bindfocus="onKbFocus"
+        bindblur="onKbBlur" />
 
       <text class="ans-sheet__label">答案（整句，复制出去就能用）</text>
       <textarea
@@ -87,7 +90,9 @@
         data-field="answer"
         maxlength="1000"
         cursor-spacing="24"
-        bindinput="onFormField" />
+        bindinput="onFormField"
+        bindfocus="onKbFocus"
+        bindblur="onKbBlur" />
 
       <text class="ans-sheet__label">结论</text>
       <view class="chips">

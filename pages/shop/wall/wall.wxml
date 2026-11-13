@@ -117,8 +117,10 @@
 
   <feedback-fab spacer="{{true}}" />
 
-  <!-- ============ 弹层：售卖 / 管理格子 / 新增 ============ -->
-  <view wx:if="{{sheet}}" class="ui-mask" bindtap="onSheetClose">
+  <!-- ============ 弹层：售卖 / 管理格子 / 新增 ============
+       mask 加键盘高度补偿：`.ui-mask` 是 position:fixed，微信对 fixed 容器的
+       自动上推不可靠（§5.5 弹层键盘避让硬规则 2） -->
+  <view wx:if="{{sheet}}" class="ui-mask" style="padding-bottom: {{kb}}px" bindtap="onSheetClose">
     <view class="ui-sheet" catchtap="onNoop">
       <view class="ui-sheet__header">
         <text class="ui-sheet__title">{{sheet.type === 'sell' ? '卖一件' : sheet.title}}</text>
@@ -135,8 +137,12 @@
           value="{{sheet.price}}"
           placeholder="成交价，单位元"
           placeholder-class="ui-placeholder"
-          focus="{{true}}"
-          bindinput="onPriceInput" />
+          focus="{{sheetFocus}}"
+          cursor-spacing="24"
+          bindinput="onPriceInput"
+          bindfocus="onFieldFocus"
+          bindblur="onFieldBlur"
+          bindkeyboardheightchange="onKeyboardHeight" />
         <button
           class="ui-btn is-primary is-block sheet__save"
           loading="{{saving}}"
@@ -156,7 +162,11 @@
           placeholder-class="ui-placeholder"
           data-field="model"
           maxlength="64"
-          bindinput="onManageField" />
+          cursor-spacing="24"
+          bindinput="onManageField"
+          bindfocus="onFieldFocus"
+          bindblur="onFieldBlur"
+          bindkeyboardheightchange="onKeyboardHeight" />
 
         <text class="sheet__label">品类</text>
         <view class="chips">
@@ -176,7 +186,11 @@
           placeholder="成本价，单位元"
           placeholder-class="ui-placeholder"
           data-field="cost"
-          bindinput="onManageField" />
+          cursor-spacing="24"
+          bindinput="onManageField"
+          bindfocus="onFieldFocus"
+          bindblur="onFieldBlur"
+          bindkeyboardheightchange="onKeyboardHeight" />
 
         <view class="sheet__foot">
           <button class="ui-btn sheet__del" bindtap="onDeleteSku">删掉</button>
@@ -211,7 +225,11 @@
           placeholder-class="ui-placeholder"
           data-field="model"
           maxlength="64"
-          bindinput="onManageField" />
+          cursor-spacing="24"
+          bindinput="onManageField"
+          bindfocus="onFieldFocus"
+          bindblur="onFieldBlur"
+          bindkeyboardheightchange="onKeyboardHeight" />
 
         <text class="sheet__label">品类</text>
         <view class="chips">
@@ -231,7 +249,11 @@
           placeholder="成本价，单位元"
           placeholder-class="ui-placeholder"
           data-field="cost"
-          bindinput="onManageField" />
+          cursor-spacing="24"
+          bindinput="onManageField"
+          bindfocus="onFieldFocus"
+          bindblur="onFieldBlur"
+          bindkeyboardheightchange="onKeyboardHeight" />
 
         <button
           class="ui-btn is-primary is-block sheet__save"

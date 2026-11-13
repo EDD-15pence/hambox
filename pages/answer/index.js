@@ -7,6 +7,7 @@
  * 同关键词再记是**覆盖**（后端 `keyword` 唯一），所以三个月后搜「奶茶」
  * 只有一条最新结论，不会翻出八条旧尝试。要翻历史去记录模块。
  */
+var auth = require('../../utils/auth');
 var nav = require('../../utils/nav');
 var theme = require('../../utils/theme');
 var api = require('../../utils/api');
@@ -18,6 +19,8 @@ Page({
     isDark: false,
     statusBarHeight: nav.STATUS_BAR_HEIGHT,
     navRight: nav.SAFE_RIGHT,
+    // 键盘高度补偿（§5.5 弹层键盘避让硬规则 2）
+    kb: 0,
     query: '',
     items: [],
     total: 0,
@@ -31,6 +34,7 @@ Page({
   },
 
   onLoad: function () {
+    if (!auth.guard('answer')) return;
     this.setData({
       isDark: theme.getTheme(),
       statusBarHeight: nav.STATUS_BAR_HEIGHT,
@@ -137,10 +141,20 @@ Page({
   },
 
   onCloseForm: function () {
-    this.setData({ form: null });
+    wx.hideKeyboard();
+    this.setData({ form: null, kb: 0 });
   },
 
   onNoop: function () {},
+
+  /** 键盘避让：拿不到高度就当 0，靠 cursor-spacing 兜底 */
+  onKbFocus: function (e) {
+    this.setData({ kb: (e.detail && e.detail.height) || 0 });
+  },
+
+  onKbBlur: function () {
+    this.setData({ kb: 0 });
+  },
 
   onFormField: function (e) {
     var field = e.currentTarget.dataset.field;

@@ -216,7 +216,7 @@
   </view>
 
   <!-- 分类管理 -->
-  <view wx:if="{{showCategoryModal}}" class="ui-mask" bindtap="onCloseCategoryModal">
+  <view wx:if="{{showCategoryModal}}" class="ui-mask" style="padding-bottom: {{kb}}px" bindtap="onCloseCategoryModal">
     <view class="ui-sheet" catchtap="stopPropagation">
       <view class="ui-sheet__header">
         <text class="ui-sheet__title">管理分类</text>
@@ -247,7 +247,10 @@
             placeholder="分类名称"
             placeholder-class="ui-placeholder"
             value="{{newCategoryName}}"
+            cursor-spacing="24"
             bindinput="onNewCategoryNameInput"
+            bindfocus="onKbFocus"
+            bindblur="onKbBlur"
             maxlength="10" />
           <picker mode="selector" range="{{iconOptions}}" bindchange="onNewCategoryIconChange">
             <view class="cat-add__icon">{{newCategoryIcon}}</view>

@@ -76,7 +76,7 @@
   <feedback-fab spacer="{{true}}" />
 
   <!-- ============ 弹层：补录 / 改一条 ============ -->
-  <view wx:if="{{sheet}}" class="ui-mask" bindtap="onSheetClose">
+  <view wx:if="{{sheet}}" class="ui-mask" style="padding-bottom: {{kb}}px" bindtap="onSheetClose">
     <view class="ui-sheet" catchtap="onNoop">
       <view class="ui-sheet__header">
         <text class="ui-sheet__title">{{sheet.type === 'add' ? '补一笔' : '改这一条'}}</text>
@@ -118,7 +118,11 @@
           placeholder="件数"
           placeholder-class="ui-placeholder"
           data-field="qty"
-          bindinput="onSheetField" />
+          cursor-spacing="24"
+          bindinput="onSheetField"
+          bindfocus="onFieldFocus"
+          bindblur="onFieldBlur"
+          bindkeyboardheightchange="onKeyboardHeight" />
 
         <text class="sheet__label">{{sheet.direction === 'out' ? '成交价（这一笔实际卖了多少钱）' : '进价（不填就按格子当前成本）'}}</text>
         <input
@@ -128,7 +132,11 @@
           placeholder="单价，单位元"
           placeholder-class="ui-placeholder"
           data-field="price"
-          bindinput="onSheetField" />
+          cursor-spacing="24"
+          bindinput="onSheetField"
+          bindfocus="onFieldFocus"
+          bindblur="onFieldBlur"
+          bindkeyboardheightchange="onKeyboardHeight" />
 
         <text class="sheet__label">发生时间</text>
         <view class="picker-row">
@@ -163,7 +171,11 @@
           placeholder="件数"
           placeholder-class="ui-placeholder"
           data-field="qty"
-          bindinput="onSheetField" />
+          cursor-spacing="24"
+          bindinput="onSheetField"
+          bindfocus="onFieldFocus"
+          bindblur="onFieldBlur"
+          bindkeyboardheightchange="onKeyboardHeight" />
 
         <text class="sheet__label">{{sheet.isIn ? '进价' : '成交价'}}</text>
         <input
@@ -173,7 +185,11 @@
           placeholder="单价，单位元"
           placeholder-class="ui-placeholder"
           data-field="price"
-          bindinput="onSheetField" />
+          cursor-spacing="24"
+          bindinput="onSheetField"
+          bindfocus="onFieldFocus"
+          bindblur="onFieldBlur"
+          bindkeyboardheightchange="onKeyboardHeight" />
 
         <text class="sheet__label">发生时间</text>
         <view class="picker-row">

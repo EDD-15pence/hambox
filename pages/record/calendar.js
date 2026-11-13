@@ -8,6 +8,7 @@
  * 格子只放日号 + 圆点：7 列在手机上每格不到 100rpx，塞标题会全变成省略号。
  * 标题留给详情页，日历只做索引（§11.2）。
  */
+var auth = require('../../utils/auth');
 var nav = require('../../utils/nav');
 var theme = require('../../utils/theme');
 var api = require('../../utils/api');
@@ -47,6 +48,7 @@ Page({
   },
 
   onLoad: function () {
+    if (!auth.guard('record')) return;
     var now = new Date();
     this.setData({
       isDark: theme.getTheme(),

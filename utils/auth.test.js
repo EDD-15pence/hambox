@@ -16,6 +16,9 @@ global.wx = {
   },
   removeStorageSync: function (key) {
     delete store[key];
+  },
+  redirectTo: function (opt) {
+    store.__redirect = opt && opt.url;
   }
 };
 
@@ -140,6 +143,32 @@ check('调试身份带 dev- 前缀', first.indexOf('dev-'), 0);
 reset();
 auth.setSession({ token: 't', allow: '*', expires_at: futureIso(24) });
 check('clear 不清调试身份', (auth.clear(), auth.getDevOpenid().indexOf('dev-')), 0);
+
+
+reset();
+auth.setSession({ token: 't', role: 'shop', allow: ['shop', 'feedback-submit'], expires_at: futureIso(24) });
+check('shop 能进店铺记', auth.can('shop'), true);
+check('shop 进不了仓储', auth.can('storage'), false);
+// quick 与 storage 是同一组数据，只藏 storage 等于没藏（§18.9.2）
+check('quick 跟随 storage 一起挡住', auth.can('quick'), false);
+check('shop 看不到反馈列表', auth.can('feedback'), false);
+check('shop 能提交反馈', auth.can('feedback-submit'), true);
+check('shop 进不了记录', auth.can('record'), false);
+check('shop 进不了设置页', auth.can('settings'), false);
+
+reset();
+auth.setSession({ token: 't', role: 'guest', allow: [], expires_at: futureIso(24) });
+check('guest 全挡：店铺记', auth.can('shop'), false);
+check('guest 全挡：亲属称呼', auth.can('relationship'), false);
+
+reset();
+auth.setSession({ token: 't', role: 'shop', allow: ['shop', 'feedback-submit'], expires_at: futureIso(24) });
+check('有权限时 guard 放行', auth.guard('shop'), true);
+check('没权限时 guard 拦住', auth.guard('storage'), false);
+check('拦住会退回首页', store.__redirect, '/pages/index/index');
+
+reset();
+check('没有身份时 guard 放行（真隔离在后端）', auth.guard('storage'), true);
 
 console.log(pass + ' ok, ' + fail + ' fail');
 process.exit(fail === 0 ? 0 : 1);

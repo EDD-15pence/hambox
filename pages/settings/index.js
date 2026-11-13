@@ -8,6 +8,7 @@
  * 不用改代码再上传一版。恢复默认就把覆盖整个删掉，回落到代码包里的常量。
  */
 var env = require('../../utils/env');
+var auth = require('../../utils/auth');
 var nav = require('../../utils/nav');
 var theme = require('../../utils/theme');
 var version = require('../../utils/version');
@@ -79,6 +80,7 @@ Page({
   },
 
   onLoad() {
+    if (!auth.guard('settings')) return;
     this.setData({
       isDark: theme.getTheme(),
       versionText: version.describe(),
@@ -103,13 +105,46 @@ Page({
       token: !!ov.token
     };
     var count = (custom.lan ? 1 : 0) + (custom.wan ? 1 : 0) + (custom.token ? 1 : 0);
+    // 身份（U-03）：openid 要能在这里看到并复制，否则没法填进后端 ADMIN_OPENIDS
+    var session = auth.getSession();
     this.setData({
       lan: ov.lan,
       wan: ov.wan,
       token: ov.token,
       custom: custom,
       routeLabel: env.getRouteLabel(),
-      dirtyText: count ? count + ' 项已改' : '未改'
+      dirtyText: count ? count + ' 项已改' : '未改',
+      role: session ? session.role : '',
+      roleText: this.roleText(session),
+      openid: session ? session.openid : '',
+      allowText: this.allowText(session)
+    });
+  },
+
+  roleText(session) {
+    if (!session) return '还没登录';
+    if (session.source === 'dev') return '调试身份（后端没有 appsecret）';
+    return session.role === 'admin' ? '管理员' : session.role === 'shop' ? '店铺' : '访客（默认拒绝）';
+  },
+
+  allowText(session) {
+    if (!session) return '';
+    if (session.allow === '*') return '全部工具';
+    if (!session.allow || !session.allow.length) return '一个都没有';
+    return session.allow.join(' / ');
+  },
+
+  onCopyOpenid() {
+    var openid = this.data.openid;
+    if (!openid) {
+      wx.showToast({ title: '还没登录，稍后再试', icon: 'none' });
+      return;
+    }
+    wx.setClipboardData({
+      data: openid,
+      success: function () {
+        wx.showToast({ title: '已复制，填进后端 ADMIN_OPENIDS', icon: 'none' });
+      }
     });
   },
 

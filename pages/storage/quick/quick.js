@@ -9,6 +9,7 @@ var api = require('../../../utils/api');
 var storageUtils = require('../../../utils/storage-utils');
 var theme = require('../../../utils/theme');
 var quickParse = require('../../../utils/quick-parse');
+var auth = require('../../utils/auth');
 var nav = require('../../../utils/nav');
 var speech = require('../../../utils/speech');
 var lexicon = require('../../../utils/lexicon');
@@ -85,6 +86,7 @@ Page({
   },
 
   onLoad: function (query) {
+    if (!auth.guard('storage')) return;
     var todayText = storageUtils.todayDate();
     var voiceAvailable = speech.isAvailable();
     // 从某个容器点「＋ 记一件」进来：位置预填成那个容器（冰箱冷藏 / 药箱…）

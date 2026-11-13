@@ -152,6 +152,23 @@ function isUnknown() {
 }
 
 /**
+ * 页面级守卫：没权限就退回首页，返回 `false` 让调用方直接 return。
+ *
+ * 只挡「直接跳转 / 分享路径 / 旧缓存」，**不是权限本身** —— 真隔离在后端
+ * 接口（§18.2 三层）。用法：`onLoad() { if (!auth.guard('storage')) return; ... }`
+ */
+function guard(key) {
+  if (can(key)) return true;
+  wx.redirectTo({
+    url: '/pages/index/index',
+    fail: function () {
+      wx.reLaunch({ url: '/pages/index/index' });
+    }
+  });
+  return false;
+}
+
+/**
  * 调试身份的稳定 id。
  *
  * **必须稳定**：如果每次随机，后端每次都会建一个新用户、权限永远重置。
@@ -174,6 +191,7 @@ module.exports = {
   getAllow: getAllow,
   needsRefresh: needsRefresh,
   can: can,
+  guard: guard,
   isUnknown: isUnknown,
   getDevOpenid: getDevOpenid,
   GROUP_OF: GROUP_OF

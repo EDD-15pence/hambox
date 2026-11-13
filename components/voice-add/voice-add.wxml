@@ -19,7 +19,7 @@
     </view>
   </view>
 
-  <view wx:if="{{visible}}" class="ui-mask" bindtap="onMaskTap">
+  <view wx:if="{{visible}}" class="ui-mask" style="padding-bottom: {{kb}}px" bindtap="onMaskTap">
     <view class="ui-sheet va-sheet" catchtap="noop">
     <view class="ui-sheet__header">
       <text class="ui-sheet__title">快速记一笔</text>
@@ -74,7 +74,10 @@
             data-field="name"
             placeholder="物品名称"
             placeholder-class="ui-placeholder"
-            bindinput="onFieldInput" />
+            cursor-spacing="24"
+            bindinput="onFieldInput"
+            bindfocus="onKbFocus"
+            bindblur="onKbBlur" />
         </view>
       </view>
 
@@ -86,7 +89,10 @@
             type="digit"
             value="{{draft.quantity}}"
             data-field="quantity"
-            bindinput="onFieldInput" />
+            cursor-spacing="24"
+            bindinput="onFieldInput"
+            bindfocus="onKbFocus"
+            bindblur="onKbBlur" />
           <picker range="{{units}}" value="{{unitIndex}}" bindchange="onUnitChange">
             <view class="ui-input va-picker">{{draft.unit}}</view>
           </picker>
@@ -111,7 +117,10 @@
             data-field="location"
             placeholder="存放位置"
             placeholder-class="ui-placeholder"
-            bindinput="onFieldInput" />
+            cursor-spacing="24"
+            bindinput="onFieldInput"
+            bindfocus="onKbFocus"
+            bindblur="onKbBlur" />
         </view>
       </view>
 

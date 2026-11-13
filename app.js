@@ -26,7 +26,7 @@ App({
     api.probe().then((route) => {
       this.globalData.apiRoute = route;
       // 探到路再登录：登录本身也是请求，路线没定下来会白等一轮
-      this.ensureSession();
+      this.sessionPromise = this.ensureSession();
     });
   },
 

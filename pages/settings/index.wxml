@@ -10,6 +10,22 @@
   <view class="page">
     <view class="card">
       <view class="row">
+        <text class="row__k">身份</text>
+        <text class="row__v">{{roleText}}</text>
+      </view>
+      <view class="row">
+        <text class="row__k">可见工具</text>
+        <text class="row__v">{{allowText}}</text>
+      </view>
+      <view class="row" bindtap="onCopyOpenid">
+        <text class="row__k">openid</text>
+        <text class="row__v row__v--mono">{{openid || '—'}}</text>
+      </view>
+      <text class="id-hint">点 openid 复制。要把谁提成管理员，就把他的 openid 填进后端 .env 的 ADMIN_OPENIDS，重启服务后重新进入小程序即可。</text>
+    </view>
+
+    <view class="card">
+      <view class="row">
         <text class="row__k">当前线路</text>
         <text class="row__v">{{routeLabel}}</text>
       </view>

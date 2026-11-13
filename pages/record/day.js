@@ -13,6 +13,7 @@
  *     「物品」该记规格还是价格，只有记的人自己知道。
  */
 
+var auth = require('../../utils/auth');
 var nav = require('../../utils/nav');
 var theme = require('../../utils/theme');
 var api = require('../../utils/api');
@@ -77,6 +78,8 @@ Page({
     isDark: false,
     statusBarHeight: nav.STATUS_BAR_HEIGHT,
     navRight: nav.SAFE_RIGHT,
+    // 键盘高度补偿（§5.5 弹层键盘避让硬规则 2）
+    kb: 0,
     date: '',
     dateLabel: '',
     items: [],
@@ -95,6 +98,7 @@ Page({
   },
 
   onLoad: function (options) {
+    if (!auth.guard('record')) return;
     var date = (options && options.date) || '';
     this.setData({
       isDark: theme.getTheme(),
@@ -188,7 +192,8 @@ Page({
   },
 
   onCloseCreate: function () {
-    this.setData({ creating: null });
+    wx.hideKeyboard();
+    this.setData({ creating: null, kb: 0 });
   },
 
   onCreateField: function (e) {
@@ -305,11 +310,21 @@ Page({
   },
 
   onCloseEdit: function () {
-    this.setData({ editing: null });
+    wx.hideKeyboard();
+    this.setData({ editing: null, kb: 0 });
   },
 
   /** 面板内部点击不该关面板（冒泡到遮罩会关） */
   onNoop: function () {},
+
+  /** 键盘避让：输入框拿不到高度时（部分安卓机型）就保持 0，不白屏也不挡死 */
+  onKbFocus: function (e) {
+    this.setData({ kb: (e.detail && e.detail.height) || 0 });
+  },
+
+  onKbBlur: function () {
+    this.setData({ kb: 0 });
+  },
 
   onEditField: function (e) {
     var field = e.currentTarget.dataset.field;
@@ -440,7 +455,8 @@ Page({
   },
 
   onCloseAnswer: function () {
-    this.setData({ answering: null });
+    wx.hideKeyboard();
+    this.setData({ answering: null, kb: 0 });
   },
 
   onAnswerField: function (e) {

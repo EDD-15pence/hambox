@@ -55,6 +55,8 @@ Component({
     raw: '',
     parsed: false,
     bars: [0, 1, 2, 3, 4],
+    // 键盘高度补偿（§5.5 弹层键盘避让硬规则 2）
+    kb: 0,
 
     draft: Object.assign({}, EMPTY_DRAFT),
     categories: [],
@@ -145,6 +147,14 @@ Component({
 
     onMaskTap: function () {
       this.onClose();
+    },
+
+    onKbFocus: function (e) {
+      this.setData({ kb: (e.detail && e.detail.height) || 0 });
+    },
+
+    onKbBlur: function () {
+      this.setData({ kb: 0 });
     },
 
     onClose: function () {
@@ -458,6 +468,7 @@ Component({
       this._fixes = [];
       this.setData({
         visible: false,
+        kb: 0,
         recording: false,
         recognizing: false,
         saving: false,

@@ -2,6 +2,7 @@
  * 智能仓储 - 物品列表页
  * 数据来自 storage-server 接口（局域网），本地只做筛选 / 排序 / 展示
  */
+var auth = require('../../utils/auth');
 var api = require('../../../utils/api');
 var storageUtils = require('../../../utils/storage-utils');
 var storageView = require('../../../utils/storage-view');
@@ -11,6 +12,8 @@ var theme = require('../../../utils/theme');
 Page({
   data: {
     isDark: false,
+    // 键盘高度补偿（§5.5 弹层键盘避让硬规则 2）
+    kb: 0,
     items: [],
     displayItems: [],
     categories: [],
@@ -42,6 +45,7 @@ Page({
   },
 
   onLoad: function () {
+    if (!auth.guard('storage')) return;
     this.setData({
       isDark: theme.getTheme(),
       statusBarHeight: nav.STATUS_BAR_HEIGHT,
@@ -382,7 +386,16 @@ Page({
   },
 
   onCloseCategoryModal: function () {
-    this.setData({ showCategoryModal: false });
+    wx.hideKeyboard();
+    this.setData({ showCategoryModal: false, kb: 0 });
+  },
+
+  onKbFocus: function (e) {
+    this.setData({ kb: (e.detail && e.detail.height) || 0 });
+  },
+
+  onKbBlur: function () {
+    this.setData({ kb: 0 });
   },
 
   onNewCategoryNameInput: function (e) {

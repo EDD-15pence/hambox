@@ -80,6 +80,8 @@ Page({
     items: [],
     summary: { inQty: 0, inAmount: '0', outQty: 0, outAmount: '0', gross: '0', grossNegative: false },
     sheet: null,
+    // 键盘避让（§5.5）：本页弹层不自动聚焦，只做高度补偿
+    kb: 0,
     saving: false
   },
 
@@ -239,7 +241,22 @@ Page({
 
   onSheetClose() {
     if (this.data.saving) return;
-    this.setData({ sheet: null });
+    wx.hideKeyboard();
+    this.setData({ sheet: null, kb: 0 });
+  },
+
+  onFieldFocus(e) {
+    this.setData({ kb: (e.detail && e.detail.height) || 0 });
+  },
+
+  onFieldBlur() {
+    this.setData({ kb: 0 });
+  },
+
+  /** 增强路径：键盘高度以 `bindkeyboardheightchange` 为准（含 safe-area 差异） */
+  onKeyboardHeight(e) {
+    const height = (e.detail && e.detail.height) || 0;
+    if (height !== this.data.kb) this.setData({ kb: height });
   },
 
   onNoop() {},

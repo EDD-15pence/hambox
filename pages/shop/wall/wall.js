@@ -56,6 +56,9 @@ Page({
     brands: [],
     summary: { inQty: 0, inAmount: '0', outQty: 0, outAmount: '0', gross: '0', grossNegative: false },
     sheet: null,
+    // 键盘避让（§5.5）：kb 是键盘高度补偿，sheetFocus 控制「入场动画结束后再聚焦」
+    kb: 0,
+    sheetFocus: false,
     saving: false
   },
 
@@ -77,6 +80,13 @@ Page({
 
   onPullDownRefresh() {
     this.loadWall(this.data.category).then(() => wx.stopPullDownRefresh());
+  },
+
+  onUnload() {
+    if (this._focusTimer) {
+      clearTimeout(this._focusTimer);
+      this._focusTimer = null;
+    }
   },
 
   onRetry() {
@@ -269,6 +279,7 @@ Page({
     const group = this.data.brands.find((item) => item.id === cell.brandId);
     wx.vibrateShort({ type: 'light' });
     this.setData({
+      sheetFocus: false,
       sheet: {
         type: 'sell',
         skuId,
@@ -278,11 +289,46 @@ Page({
         hint: cell.lastSaleText ? '上次成交价，讲价了直接改' : '填这次成交价'
       }
     });
+    this.focusAfterEnter();
+  },
+
+  /**
+   * 入场动画（`.ui-sheet` 的 `ui-sheet-in` 220ms）跑完再聚焦。
+   *
+   * 弹层还在 `translateY(100%)` 时拉起键盘，微信按此刻坐标算上推量，
+   * 输入框就落在键盘下面 —— 这就是「关掉键盘再打开才出现」的成因（§10-23）。
+   * 取 240ms 留一点余量；`onSheetClose` 会把定时器清掉，快速开关不会残留。
+   */
+  focusAfterEnter() {
+    if (this._focusTimer) clearTimeout(this._focusTimer);
+    this._focusTimer = setTimeout(() => {
+      this._focusTimer = null;
+      if (this.data.sheet) this.setData({ sheetFocus: true });
+    }, 240);
+  },
+
+  onFieldFocus(e) {
+    this.setData({ kb: (e.detail && e.detail.height) || 0 });
+  },
+
+  onFieldBlur() {
+    this.setData({ kb: 0 });
+  },
+
+  /** 增强路径：部分机型 `bindfocus` 给的高度不含 safe-area，这里以键盘回调为准 */
+  onKeyboardHeight(e) {
+    const height = (e.detail && e.detail.height) || 0;
+    if (height !== this.data.kb) this.setData({ kb: height });
   },
 
   onSheetClose() {
     if (this.data.saving) return;
-    this.setData({ sheet: null });
+    if (this._focusTimer) {
+      clearTimeout(this._focusTimer);
+      this._focusTimer = null;
+    }
+    wx.hideKeyboard();
+    this.setData({ sheet: null, sheetFocus: false, kb: 0 });
   },
 
   onNoop() {},

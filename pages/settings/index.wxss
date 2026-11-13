@@ -31,6 +31,24 @@
   font-weight: 500;
 }
 
+/* openid 又长又没语义，等宽 + 缩字号，能一眼看出复制到的是哪一段 */
+.row__v--mono {
+  flex: 1;
+  margin-left: var(--sp-3);
+  text-align: right;
+  font-size: var(--fs-caption);
+  color: var(--text-2);
+  word-break: break-all;
+}
+
+.id-hint {
+  display: block;
+  margin-top: var(--sp-2);
+  font-size: var(--fs-caption);
+  color: var(--text-3);
+  line-height: 1.5;
+}
+
 /* 表单 */
 .sfield {
   margin-top: var(--sp-4);

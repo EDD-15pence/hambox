@@ -113,6 +113,8 @@ function request(path, method, data) {
   return new Promise(function (resolve, reject) {
     var index = 0;
     var errors = [];
+    // 会话缺失时静默重登一次再重发：401 说明这次请求根本没被执行，重发是安全的
+    var sessionRetried = false;
 
     function go() {
       var ep = list[index];
@@ -127,7 +129,27 @@ function request(path, method, data) {
           env.markOk(ep.key);
           var body = res.data || {};
           if (res.statusCode === 401) {
-            reject(new Error('访问令牌不对：请核对后端 .env 的 API_TOKEN 与 utils/env.js'));
+            var message401 = body.message || '';
+            var isSessionIssue = /会话|登录/.test(message401);
+            if (isSessionIssue && !sessionRetried) {
+              sessionRetried = true;
+              var app = typeof getApp === 'function' ? getApp() : null;
+              if (app && app.ensureSession) {
+                app.ensureSession().then(function () {
+                  go();
+                }, function () {
+                  reject(new Error(message401 || '身份失效，请重新进入小程序'));
+                });
+                return;
+              }
+            }
+            reject(
+              new Error(
+                isSessionIssue
+                  ? message401
+                  : '访问令牌不对：请核对后端 .env 的 API_TOKEN 与 utils/env.js'
+              )
+            );
             return;
           }
           if (res.statusCode >= 200 && res.statusCode < 300 && body.code === 0) {

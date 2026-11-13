@@ -1,6 +1,7 @@
 const nav = require('../../utils/nav');
 const theme = require('../../utils/theme');
 const api = require('../../utils/api');
+const auth = require('../../utils/auth');
 const storageView = require('../../utils/storage-view');
 const version = require('../../utils/version');
 
@@ -93,6 +94,7 @@ Page({
     navRight: nav.SAFE_RIGHT,
     isDark: false,
     todayText: todayText(),
+    // 按 ACL 过滤后的可见卡片（U-04）。没拿到身份前先全给，见 utils/auth.js 头部
     tools: TOOLS,
     // 智能仓储卡片右上角：几件要提醒的（已过期 + 临期）
     storageBadge: 0,
@@ -116,7 +118,24 @@ Page({
     // 从其他页面切回来时同步主题，避免状态不一致
     const isDark = theme.getTheme();
     if (isDark !== this.data.isDark) this.setData({ isDark });
+    // 身份是异步拿到的：登录完成后重算一遍可见卡片（U-04）
+    const app = getApp();
+    const ready = (app && app.sessionPromise) || Promise.resolve(null);
+    ready.then(() => this.applyTools());
     this.refreshStorageBadge();
+  },
+
+  /**
+   * 按 ACL 过滤首页卡片（U-04）。
+   *
+   * 白名单语义：不在 allowlist 里的工具默认不显示，所以以后新增工具
+   * 不会自动出现在妹妹的首页上（§18.9.4）。`quick` 与 `storage` 是同一组，
+   * 归组逻辑在 `utils/auth.js` 的 `GROUP_OF`。
+   */
+  applyTools() {
+    const tools = TOOLS.filter((tool) => auth.can(tool.key));
+    if (tools.length === this.data.tools.length) return;
+    this.setData({ tools });
   },
 
   /**
@@ -125,6 +144,11 @@ Page({
    * 后端不可达时最长要等「外网 8s + 内网 3s」，反正是异步的，不挡渲染。
    */
   refreshStorageBadge() {
+    // 卡片都看不见了就别偷偷拉数据：角标数字本身就会暴露「家里有几件临期」（§18.9.2）
+    if (!auth.can('storage')) {
+      if (this.data.storageBadge !== 0) this.setData({ storageBadge: 0 });
+      return;
+    }
     if (this._badgeAt && Date.now() - this._badgeAt < BADGE_TTL) return;
     api.getOverview()
       .then((o) => {
@@ -170,6 +194,11 @@ Page({
     const key = e.currentTarget.dataset.tool;
     const tool = TOOLS.find((t) => t.key === key);
     if (!tool) return;
+    // 再校验一次：data 可能还是登录前的旧值，分享带参数也可能绕过过滤（U-04）
+    if (!auth.can(key)) {
+      wx.showToast({ title: '当前身份没有这个工具', icon: 'none' });
+      return;
+    }
     // 智能仓储有「容器 / 清单」两种模式，进上次停留的那一种
     const url = key === 'storage' ? storageView.entryUrl() : tool.path;
     wx.navigateTo({
@@ -181,11 +210,19 @@ Page({
     });
   },
 
+  /**
+   * 分享标题也按角色走（§18.9.8「一起遮」）：妹妹这一档不该在分享里
+   * 露出「找东西、查称呼」这些她根本看不到的能力。
+   */
+  shareTitle() {
+    return auth.can('storage') ? '汉堡盒 · 找东西、随手记、查称呼' : '汉堡盒 · 店铺记';
+  },
+
   onShareAppMessage() {
-    return { title: '汉堡盒 · 找东西、随手记、查称呼', path: '/pages/index/index' };
+    return { title: this.shareTitle(), path: '/pages/index/index' };
   },
 
   onShareTimeline() {
-    return { title: '汉堡盒 · 找东西、随手记、查称呼', query: '' };
+    return { title: this.shareTitle(), query: '' };
   },
 });

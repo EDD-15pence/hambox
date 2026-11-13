@@ -10,6 +10,7 @@
  * 用户只打字就能提交，`spot` 是可选补充。
  */
 var api = require('../../utils/api');
+var auth = require('../../utils/auth');
 var version = require('../../utils/version');
 
 // route -> 页面名。取不到的（新页面忘了登记）退回 route 末段，不至于留空。
@@ -124,6 +125,12 @@ Component({
       if (this._skipTapTimer) clearTimeout(this._skipTapTimer);
       var self = this;
       this._skipTapTimer = setTimeout(function () { self._skipTap = false; }, 600);
+      // 反馈列表限 admin（U-05）：别人长按不是「没反应」，而是直接进提交面板，
+      // 免得以为自己点坏了。真正的隔离在后端接口（U-03）
+      if (!auth.can('feedback')) {
+        this.onOpen();
+        return;
+      }
       wx.navigateTo({ url: '/pages/feedback/list' });
     },
 

@@ -86,7 +86,7 @@
   </view>
 
   <!-- 新建作品 / 物品 -->
-  <view wx:if="{{creating}}" class="ui-mask" bindtap="onCloseCreate">
+  <view wx:if="{{creating}}" class="ui-mask" style="padding-bottom: {{kb}}px" bindtap="onCloseCreate">
     <view class="ui-sheet day-sheet" catchtap="onNoop">
       <view class="ui-sheet__header">
         <text class="ui-sheet__title">{{creating.type === 'item' ? '记一件物品' : '记一件作品'}}</text>
@@ -99,7 +99,10 @@
         value="{{creating.title}}"
         data-field="title"
         maxlength="200"
-        bindinput="onCreateField" />
+        cursor-spacing="24"
+        bindinput="onCreateField"
+        bindfocus="onKbFocus"
+        bindblur="onKbBlur" />
 
       <text class="day-sheet__label">主图（可不填）</text>
       <view class="img-field">
@@ -120,7 +123,10 @@
           maxlength="16"
           data-index="{{index}}"
           data-part="k"
-          bindinput="onCreateMetaInput" />
+          cursor-spacing="24"
+          bindinput="onCreateMetaInput"
+          bindfocus="onKbFocus"
+          bindblur="onKbBlur" />
         <input
           class="ui-input kv-row__v"
           value="{{item.v}}"
@@ -129,7 +135,10 @@
           maxlength="60"
           data-index="{{index}}"
           data-part="v"
-          bindinput="onCreateMetaInput" />
+          cursor-spacing="24"
+          bindinput="onCreateMetaInput"
+          bindfocus="onKbFocus"
+          bindblur="onKbBlur" />
         <text class="kv-row__del" data-index="{{index}}" bindtap="onRemoveMetaRow">×</text>
       </view>
       <text class="kv-add" bindtap="onAddMetaRow">+ 加一行</text>
@@ -142,7 +151,10 @@
         placeholder-class="ui-placeholder"
         data-field="comment"
         maxlength="500"
-        bindinput="onCreateField" />
+        cursor-spacing="24"
+        bindinput="onCreateField"
+        bindfocus="onKbFocus"
+        bindblur="onKbBlur" />
 
       <text class="day-sheet__label">正文（可不填）</text>
       <textarea
@@ -153,7 +165,9 @@
         data-field="content"
         maxlength="2000"
         cursor-spacing="24"
-        bindinput="onCreateField" />
+        bindinput="onCreateField"
+        bindfocus="onKbFocus"
+        bindblur="onKbBlur" />
 
       <view class="day-sheet__foot">
         <button class="ui-btn day-sheet__cancel" bindtap="onCloseCreate">取消</button>
@@ -167,7 +181,7 @@
   </view>
 
   <!-- 编辑面板 -->
-  <view wx:if="{{editing}}" class="ui-mask" bindtap="onCloseEdit">
+  <view wx:if="{{editing}}" class="ui-mask" style="padding-bottom: {{kb}}px" bindtap="onCloseEdit">
     <view class="ui-sheet day-sheet" catchtap="onNoop">
       <view class="ui-sheet__header">
         <text class="ui-sheet__title">改这条{{editing.typeLabel ? '（' + editing.typeLabel + '）' : ''}}</text>
@@ -180,7 +194,10 @@
         value="{{editing.title}}"
         data-field="title"
         maxlength="200"
-        bindinput="onEditField" />
+        cursor-spacing="24"
+        bindinput="onEditField"
+        bindfocus="onKbFocus"
+        bindblur="onKbBlur" />
 
       <text class="day-sheet__label">主图（可不填）</text>
       <view class="img-field">
@@ -201,7 +218,10 @@
           maxlength="16"
           data-index="{{index}}"
           data-part="k"
-          bindinput="onEditMetaInput" />
+          cursor-spacing="24"
+          bindinput="onEditMetaInput"
+          bindfocus="onKbFocus"
+          bindblur="onKbBlur" />
         <input
           class="ui-input kv-row__v"
           value="{{item.v}}"
@@ -210,7 +230,10 @@
           maxlength="60"
           data-index="{{index}}"
           data-part="v"
-          bindinput="onEditMetaInput" />
+          cursor-spacing="24"
+          bindinput="onEditMetaInput"
+          bindfocus="onKbFocus"
+          bindblur="onKbBlur" />
         <text class="kv-row__del" data-index="{{index}}" bindtap="onEditRemoveMeta">×</text>
       </view>
       <text class="kv-add" bindtap="onEditAddMeta">+ 加一行</text>
@@ -223,7 +246,10 @@
         placeholder-class="ui-placeholder"
         data-field="comment"
         maxlength="500"
-        bindinput="onEditField" />
+        cursor-spacing="24"
+        bindinput="onEditField"
+        bindfocus="onKbFocus"
+        bindblur="onKbBlur" />
 
       <text class="day-sheet__label">正文（可不填）</text>
       <textarea
@@ -234,7 +260,9 @@
         data-field="content"
         maxlength="2000"
         cursor-spacing="24"
-        bindinput="onEditField" />
+        bindinput="onEditField"
+        bindfocus="onKbFocus"
+        bindblur="onKbBlur" />
 
       <text class="day-sheet__to-answer" bindtap="onOpenAnswer">记为版本答案 ›</text>
 
@@ -250,7 +278,7 @@
   </view>
 
   <!-- 记为版本答案：关键词 + 答案，预填自这条记录 -->
-  <view wx:if="{{answering}}" class="ui-mask" bindtap="onCloseAnswer">
+  <view wx:if="{{answering}}" class="ui-mask" style="padding-bottom: {{kb}}px" bindtap="onCloseAnswer">
     <view class="ui-sheet day-sheet" catchtap="onNoop">
       <view class="ui-sheet__header">
         <text class="ui-sheet__title">记为版本答案</text>
@@ -266,7 +294,10 @@
         placeholder-class="ui-placeholder"
         data-field="keyword"
         maxlength="128"
-        bindinput="onAnswerField" />
+        cursor-spacing="24"
+        bindinput="onAnswerField"
+        bindfocus="onKbFocus"
+        bindblur="onKbBlur" />
 
       <text class="day-sheet__label">答案</text>
       <textarea
@@ -277,7 +308,9 @@
         data-field="answer"
         maxlength="1000"
         cursor-spacing="24"
-        bindinput="onAnswerField" />
+        bindinput="onAnswerField"
+        bindfocus="onKbFocus"
+        bindblur="onKbBlur" />
 
       <view class="day-sheet__foot">
         <button class="ui-btn day-sheet__cancel" bindtap="onCloseAnswer">取消</button>
