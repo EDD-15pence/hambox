@@ -688,6 +688,193 @@ function deleteAnswer(id) {
   return request('/api/answers/' + encodeURIComponent(id), 'DELETE');
 }
 
+// ==============================
+// 店铺记（§17）
+// ==============================
+
+/**
+ * 钱一律用「分」在这一层进出，只在渲染前才换算成元。
+ * 后端存的就是分（整数），所以别在这一层偷偷转成元——转两次就少两个 0。
+ */
+function toViewShopBrand(row) {
+  return {
+    id: row.id,
+    name: row.name || '',
+    logo: row.logo || '',
+    tint: row.tint || '',
+    sort: row.sort || 0
+  };
+}
+
+function toViewShopSku(row) {
+  return {
+    id: row.id,
+    brandId: row.brand_id,
+    brandName: row.brand_name || '',
+    brandLogo: row.brand_logo || '',
+    brandTint: row.brand_tint || '',
+    model: row.model || '',
+    category: row.category || '',
+    costFen: row.cost_fen || 0,
+    lastSaleFen: row.last_sale_fen || 0,
+    quantity: row.quantity || 0,
+    lowStockAt: row.low_stock_at || 0,
+    enabled: row.enabled !== false
+  };
+}
+
+function toViewShopEvent(row) {
+  return {
+    id: row.id,
+    skuId: row.sku_id,
+    brandName: row.brand_name || '',
+    model: row.model || '',
+    category: row.category || '',
+    direction: row.direction,
+    qty: row.qty || 0,
+    unitCostFen: row.unit_cost_fen || 0,
+    unitPriceFen: row.unit_price_fen || 0,
+    amountFen: row.amount_fen || 0,
+    // 后端已经补了 Z（见 shop_service._iso_z），这里再兜一次没坏处
+    happenedAt: normalizeTimestamp(row.happened_at),
+    source: row.source || 'click',
+    note: row.note || ''
+  };
+}
+
+function toViewShopSummary(row) {
+  return {
+    day: row.day || '',
+    inQty: row.in_qty || 0,
+    inAmountFen: row.in_amount_fen || 0,
+    outQty: row.out_qty || 0,
+    outAmountFen: row.out_amount_fen || 0,
+    grossFen: row.gross_fen || 0,
+    eventCount: row.event_count || 0
+  };
+}
+
+/** 仓库墙：品类 tab + 品牌分组的格子 + 当天日报，一次拉齐 */
+function shopWall(category) {
+  var q = category ? '?category=' + encodeURIComponent(category) : '';
+  return request('/api/shop/wall' + q).then(function (data) {
+    return {
+      categories: data.categories || [],
+      brands: (data.brands || []).map(function (group) {
+        return {
+          brand: toViewShopBrand(group.brand),
+          skus: (group.skus || []).map(toViewShopSku)
+        };
+      }),
+      summary: toViewShopSummary(data.summary || {})
+    };
+  });
+}
+
+function shopSummary(day) {
+  var q = day ? '?day=' + encodeURIComponent(day) : '';
+  return request('/api/shop/summary' + q).then(toViewShopSummary);
+}
+
+function shopEvents(day) {
+  var q = day ? '?day=' + encodeURIComponent(day) : '';
+  return request('/api/shop/events' + q).then(function (data) {
+    return {
+      day: data.day || '',
+      items: (data.items || []).map(toViewShopEvent),
+      summary: toViewShopSummary(data.summary || {})
+    };
+  });
+}
+
+/**
+ * 一次点击 = 一条流水。**必须带 sku_id 与方向**，售卖还要带成交价。
+ * 走 POST 不重试（见 request 的 retryable）：超时可能已经写进去了。
+ */
+function createShopEvent(payload) {
+  var body = {
+    sku_id: payload.skuId,
+    direction: payload.direction,
+    qty: payload.qty || 1,
+    source: payload.source || 'click'
+  };
+  if (payload.unitPriceFen !== undefined && payload.unitPriceFen !== null) {
+    body.unit_price_fen = payload.unitPriceFen;
+  }
+  if (payload.unitCostFen !== undefined && payload.unitCostFen !== null) {
+    body.unit_cost_fen = payload.unitCostFen;
+  }
+  // 补录才传；不传就是「现在」，交给后端打时间
+  if (payload.happenedAt) body.happened_at = payload.happenedAt;
+  if (payload.note) body.note = payload.note;
+  return request('/api/shop/events', 'POST', body).then(function (data) {
+    return {
+      event: toViewShopEvent(data.event || {}),
+      sku: toViewShopSku(data.sku || {})
+    };
+  });
+}
+
+function updateShopEvent(id, patch) {
+  var body = {};
+  if (patch.qty !== undefined) body.qty = patch.qty;
+  if (patch.unitPriceFen !== undefined) body.unit_price_fen = patch.unitPriceFen;
+  if (patch.unitCostFen !== undefined) body.unit_cost_fen = patch.unitCostFen;
+  if (patch.happenedAt !== undefined) body.happened_at = patch.happenedAt;
+  if (patch.note !== undefined) body.note = patch.note;
+  if (patch.deleted !== undefined) body.deleted = patch.deleted;
+  return request('/api/shop/events/' + encodeURIComponent(id), 'PATCH', body).then(function (data) {
+    return {
+      event: toViewShopEvent(data.event || {}),
+      sku: data.sku ? toViewShopSku(data.sku) : null
+    };
+  });
+}
+
+function deleteShopEvent(id) {
+  return request('/api/shop/events/' + encodeURIComponent(id), 'DELETE');
+}
+
+/** 全部格子（补录要跨品类选机型，不能用墙那种按品类过滤的接口） */
+function listShopSkus(category, includeDisabled) {
+  var q = '?include_disabled=' + (includeDisabled ? 'true' : 'false');
+  if (category) q += '&category=' + encodeURIComponent(category);
+  return request('/api/shop/skus' + q).then(function (data) {
+    return (data.items || []).map(toViewShopSku);
+  });
+}
+
+function createShopSku(payload) {  return request('/api/shop/skus', 'POST', {
+    brand_id: payload.brandId,
+    model: (payload.model || '').trim(),
+    category: payload.category || '手机壳',
+    cost_fen: payload.costFen || 0,
+    low_stock_at: payload.lowStockAt || 0
+  }).then(toViewShopSku);
+}
+
+function updateShopSku(id, patch) {
+  var body = {};
+  if (patch.model !== undefined) body.model = patch.model;
+  if (patch.category !== undefined) body.category = patch.category;
+  if (patch.costFen !== undefined) body.cost_fen = patch.costFen;
+  if (patch.lastSaleFen !== undefined) body.last_sale_fen = patch.lastSaleFen;
+  if (patch.enabled !== undefined) body.enabled = patch.enabled;
+  return request('/api/shop/skus/' + encodeURIComponent(id), 'PATCH', body).then(toViewShopSku);
+}
+
+function deleteShopSku(id) {
+  return request('/api/shop/skus/' + encodeURIComponent(id), 'DELETE');
+}
+
+function createShopBrand(payload) {
+  return request('/api/shop/brands', 'POST', {
+    name: (payload.name || '').trim(),
+    logo: payload.logo || '',
+    tint: payload.tint || ''
+  }).then(toViewShopBrand);
+}
+
 module.exports = {
   getBaseUrl: env.getBaseUrl,
   probe: probe,
@@ -730,5 +917,16 @@ module.exports = {
   listAnswers: listAnswers,
   createAnswer: createAnswer,
   updateAnswer: updateAnswer,
-  deleteAnswer: deleteAnswer
+  deleteAnswer: deleteAnswer,
+  shopWall: shopWall,
+  shopSummary: shopSummary,
+  shopEvents: shopEvents,
+  createShopEvent: createShopEvent,
+  updateShopEvent: updateShopEvent,
+  deleteShopEvent: deleteShopEvent,
+  listShopSkus: listShopSkus,
+  createShopSku: createShopSku,
+  updateShopSku: updateShopSku,
+  deleteShopSku: deleteShopSku,
+  createShopBrand: createShopBrand
 };

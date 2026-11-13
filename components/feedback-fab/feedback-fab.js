@@ -26,7 +26,9 @@ var PAGE_TITLES = {
   'pages/prompt/index/index': 'Prompt 模板库',
   'pages/prompt/detail/index': 'Prompt 模板详情',
   'pages/flight/flight': '机票比价',
-  'pages/feedback/list': '反馈记录'
+  'pages/feedback/list': '反馈记录',
+  'pages/shop/wall/wall': '店铺记',
+  'pages/shop/events/events': '店铺流水'
 };
 
 Component({

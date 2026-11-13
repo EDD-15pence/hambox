@@ -66,6 +66,12 @@ page {
   /* 按下：同一组影子翻成 inset，元素不位移 */
   --shadow-raised-press: inset -6rpx -6rpx 12rpx rgba(255, 255, 255, 0.95),
                          inset 8rpx 8rpx 18rpx rgba(148, 163, 186, 0.55);
+  /* 网格卡片（首页工具格、格子墙）：语言同 --shadow-raised，但白高光收敛、
+     投影打薄。卡片间距只有 16~24rpx 时，32rpx 的模糊半径会让相邻两块的
+     影子在缝里连成一片脏灰，纯白高光 alpha=1 又像给卡片描了道白边（A-12）。
+     单张宽卡继续用 --shadow-raised，只有并排的才切到这个。 */
+  --shadow-card-grid: -6rpx -6rpx 12rpx rgba(255, 255, 255, 0.68),
+                      8rpx 8rpx 18rpx rgba(148, 163, 186, 0.40);
   /* 凹陷：输入框、搜索框、进度槽、列表行 */
   --shadow-sunken: inset -4rpx -4rpx 10rpx rgba(255, 255, 255, 0.95),
                    inset 8rpx 8rpx 18rpx rgba(148, 163, 186, 0.62);
@@ -154,6 +160,9 @@ page {
   --shadow-raised: inset 0 1rpx 0 rgba(255, 255, 255, 0.07),
                    0 8rpx 24rpx rgba(0, 0, 0, 0.38);
   --shadow-raised-press: inset 0 3rpx 12rpx rgba(0, 0, 0, 0.55);
+  /* 暗色的凸起本来就是「面比底亮一档 + 顶部细高光 + 单向弱投影」，
+     没有白边也没有双向污染，网格直接沿用，不必再降一版 */
+  --shadow-card-grid: var(--shadow-raised);
   --shadow-sunken: inset 0 3rpx 12rpx rgba(0, 0, 0, 0.55),
                    inset 0 -1rpx 0 rgba(255, 255, 255, 0.05);
   --shadow-sunken-sm: inset 0 2rpx 8rpx rgba(0, 0, 0, 0.50);

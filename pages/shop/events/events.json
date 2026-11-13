@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "店铺流水",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "feedback-fab": "/components/feedback-fab/feedback-fab"
+  }
+}

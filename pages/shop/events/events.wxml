@@ -1,0 +1,203 @@
+<view class="container {{isDark ? 'dark' : ''}}">
+  <view class="app-nav" style="padding-top:{{statusBarHeight}}px;padding-right:{{navRight}}px">
+    <view class="nav-left">
+      <text class="nav-back-icon" bindtap="onBack">‹</text>
+      <view class="app-nav__titles">
+        <text class="app-nav__title">流水</text>
+        <text class="app-nav__sub">{{dayText}} · {{summary.inQty + summary.outQty}} 笔</text>
+      </view>
+    </view>
+    <view class="app-nav__actions">
+      <text class="nav-text-btn" bindtap="onOpenAdd">＋ 补录</text>
+    </view>
+  </view>
+
+  <view class="bar">
+    <picker mode="date" value="{{day}}" bindchange="onPickDay">
+      <view class="bar__day">
+        <text class="bar__day-text">{{day}}</text>
+        <text class="bar__caret">切换</text>
+      </view>
+    </picker>
+    <view class="bar__stats">
+      <view class="bar__stat">
+        <text class="bar__label">进货</text>
+        <text class="bar__value">{{summary.inQty}} 件</text>
+        <text class="bar__sub">¥{{summary.inAmount}}</text>
+      </view>
+      <view class="bar__stat">
+        <text class="bar__label">售卖</text>
+        <text class="bar__value">{{summary.outQty}} 件</text>
+        <text class="bar__sub">¥{{summary.outAmount}}</text>
+      </view>
+      <view class="bar__stat">
+        <text class="bar__label">毛利</text>
+        <text class="bar__value {{summary.grossNegative ? 'is-loss' : 'is-gain'}}">¥{{summary.gross}}</text>
+        <text class="bar__sub">{{summary.outQty ? '按当时进价' : '还没开张'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="page-body">
+    <view wx:if="{{loading}}" class="ui-empty">
+      <text class="ui-empty__title">正在取流水</text>
+    </view>
+
+    <view wx:elif="{{error}}" class="ui-empty">
+      <text class="ui-empty__title">没拉到流水</text>
+      <text class="ui-empty__hint">{{error}}</text>
+      <button class="ui-btn is-block retry" bindtap="onRetry">重试</button>
+    </view>
+
+    <block wx:else>
+      <view wx:if="{{!items.length}}" class="ui-empty">
+        <text class="ui-empty__title">这一天没有流水</text>
+        <text class="ui-empty__hint">在货架上点 ＋/− 会自动记一笔；忘了点就用右上角「补录」</text>
+      </view>
+
+      <view
+        wx:for="{{items}}"
+        wx:key="id"
+        class="row {{item.isIn ? 'is-in' : 'is-out'}}"
+        data-id="{{item.id}}"
+        bindlongpress="onRowLongPress">
+        <text class="row__clock">{{item.clock}}</text>
+        <view class="row__main">
+          <text class="row__title">{{item.title}}</text>
+          <text class="row__meta">{{item.isIn ? '进货' : '售卖'}} {{item.qty}} 件 · 单价 ¥{{item.priceText}}{{item.manual ? ' · 补录' : ''}}</text>
+        </view>
+        <text class="row__amount {{item.isIn ? 'is-cost' : 'is-gain'}}">{{item.isIn ? '-' : '+'}}¥{{item.amountText}}</text>
+      </view>
+
+      <text wx:if="{{items.length}}" class="hint">长按一条可改数量、改时间或撤销</text>
+    </block>
+  </view>
+
+  <feedback-fab spacer="{{true}}" />
+
+  <!-- ============ 弹层：补录 / 改一条 ============ -->
+  <view wx:if="{{sheet}}" class="ui-mask" bindtap="onSheetClose">
+    <view class="ui-sheet" catchtap="onNoop">
+      <view class="ui-sheet__header">
+        <text class="ui-sheet__title">{{sheet.type === 'add' ? '补一笔' : '改这一条'}}</text>
+        <text class="nav-text-btn" bindtap="onSheetClose">关闭</text>
+      </view>
+
+      <!-- 补录 -->
+      <block wx:if="{{sheet.type === 'add'}}">
+        <text class="sheet__label">方向</text>
+        <view class="chips">
+          <text
+            class="chip {{sheet.direction === 'in' ? 'is-on' : ''}}"
+            data-direction="in"
+            bindtap="onPickDirection">进货</text>
+          <text
+            class="chip {{sheet.direction === 'out' ? 'is-on' : ''}}"
+            data-direction="out"
+            bindtap="onPickDirection">售卖</text>
+        </view>
+
+        <text class="sheet__label">机型</text>
+        <picker
+          mode="selector"
+          range="{{sheet.options}}"
+          range-key="label"
+          value="{{sheet.skuIndex}}"
+          bindchange="onPickSku">
+          <view class="ui-input picker">
+            <text class="picker__text">{{sheet.options[sheet.skuIndex].label}}</text>
+            <text class="picker__caret">选</text>
+          </view>
+        </picker>
+
+        <text class="sheet__label">数量</text>
+        <input
+          class="ui-input"
+          type="number"
+          value="{{sheet.qty}}"
+          placeholder="件数"
+          placeholder-class="ui-placeholder"
+          data-field="qty"
+          bindinput="onSheetField" />
+
+        <text class="sheet__label">{{sheet.direction === 'out' ? '成交价（这一笔实际卖了多少钱）' : '进价（不填就按格子当前成本）'}}</text>
+        <input
+          class="ui-input"
+          type="digit"
+          value="{{sheet.price}}"
+          placeholder="单价，单位元"
+          placeholder-class="ui-placeholder"
+          data-field="price"
+          bindinput="onSheetField" />
+
+        <text class="sheet__label">发生时间</text>
+        <view class="picker-row">
+          <picker mode="date" value="{{sheet.day}}" bindchange="onSheetDay">
+            <view class="ui-input picker picker--half">
+              <text class="picker__text">{{sheet.day}}</text>
+            </view>
+          </picker>
+          <picker mode="time" value="{{sheet.clock}}" bindchange="onSheetClock">
+            <view class="ui-input picker picker--half">
+              <text class="picker__text">{{sheet.clock}}</text>
+            </view>
+          </picker>
+        </view>
+
+        <button
+          class="ui-btn is-primary is-block sheet__save"
+          loading="{{saving}}"
+          disabled="{{saving}}"
+          bindtap="onSaveAdd">记下来</button>
+      </block>
+
+      <!-- 改一条 -->
+      <block wx:else>
+        <text class="sheet__sub">{{sheet.title}} · {{sheet.isIn ? '进货' : '售卖'}}</text>
+
+        <text class="sheet__label">数量</text>
+        <input
+          class="ui-input"
+          type="number"
+          value="{{sheet.qty}}"
+          placeholder="件数"
+          placeholder-class="ui-placeholder"
+          data-field="qty"
+          bindinput="onSheetField" />
+
+        <text class="sheet__label">{{sheet.isIn ? '进价' : '成交价'}}</text>
+        <input
+          class="ui-input"
+          type="digit"
+          value="{{sheet.price}}"
+          placeholder="单价，单位元"
+          placeholder-class="ui-placeholder"
+          data-field="price"
+          bindinput="onSheetField" />
+
+        <text class="sheet__label">发生时间</text>
+        <view class="picker-row">
+          <picker mode="date" value="{{sheet.day}}" bindchange="onSheetDay">
+            <view class="ui-input picker picker--half">
+              <text class="picker__text">{{sheet.day}}</text>
+            </view>
+          </picker>
+          <picker mode="time" value="{{sheet.clock}}" bindchange="onSheetClock">
+            <view class="ui-input picker picker--half">
+              <text class="picker__text">{{sheet.clock}}</text>
+            </view>
+          </picker>
+        </view>
+
+        <view class="sheet__foot">
+          <button class="ui-btn sheet__del" bindtap="onDeleteEvent">撤销</button>
+          <button
+            class="ui-btn is-primary sheet__ok"
+            loading="{{saving}}"
+            disabled="{{saving}}"
+            bindtap="onSaveEdit">保存</button>
+        </view>
+      </block>
+    </view>
+  </view>
+</view>

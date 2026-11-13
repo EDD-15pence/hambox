@@ -1,0 +1,273 @@
+/* ============================================================
+ * 店铺记 · 流水与补录（§17 / SH-05）
+ *
+ * 一行一笔账：左边时刻、中间机型、右边金额。进货是支出（`−`，深字），
+ * 售卖是收入（`+`，绿字）—— 符号本身就能说明方向，不靠颜色单独表达，
+ * 深色模式下也不会只剩一片绿。
+ * ============================================================ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: var(--bg-page);
+  color: var(--text-1);
+}
+
+.app-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.page-body {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0 var(--page-x);
+}
+
+/* ---------------- 日期 + 当日三数 ---------------- */
+
+.bar {
+  margin: var(--sp-2) var(--page-x) 0;
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  border-radius: var(--r-lg);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.bar__day {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-1) 0;
+}
+
+.bar__day-text {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.bar__caret {
+  padding: 4rpx var(--sp-2);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-tiny);
+  color: var(--primary-text);
+  background: var(--primary-weak);
+}
+
+.bar__stats {
+  display: flex;
+  margin-top: var(--sp-1);
+}
+
+.bar__stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+  position: relative;
+}
+
+.bar__stat + .bar__stat::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8rpx;
+  bottom: 8rpx;
+  width: 1rpx;
+  background: var(--divider);
+}
+
+.bar__label {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.bar__value {
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.bar__value.is-gain {
+  color: var(--success);
+}
+
+.bar__value.is-loss {
+  color: var(--danger);
+}
+
+.bar__sub {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------- 流水行 ---------------- */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.row__clock {
+  flex: none;
+  width: 74rpx;
+  font-size: var(--fs-caption);
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.row__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.row__title {
+  font-size: var(--fs-body);
+  color: var(--text-1);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.row__meta {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.row__amount {
+  flex: none;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.row__amount.is-cost {
+  color: var(--text-2);
+}
+
+.row__amount.is-gain {
+  color: var(--success);
+}
+
+.hint {
+  display: block;
+  margin: var(--sp-3) 0 var(--sp-4);
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.retry {
+  margin-top: var(--sp-3);
+}
+
+/* ---------------- 弹层 ---------------- */
+
+.sheet__sub {
+  display: block;
+  font-size: var(--fs-caption);
+  color: var(--text-2);
+}
+
+.sheet__label {
+  display: block;
+  margin: var(--sp-2) 0 6rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.sheet__save {
+  margin-top: var(--sp-3);
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: var(--r-md);
+}
+
+.sheet__foot {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.sheet__del {
+  flex: 0 0 200rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: var(--r-md);
+  color: var(--danger);
+  background: var(--danger-weak);
+}
+
+.sheet__ok {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: var(--r-md);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.chip {
+  flex: none;
+  padding: 10rpx var(--sp-3);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-caption);
+  color: var(--text-2);
+  background: var(--bg-sunken);
+}
+
+.chip.is-on {
+  color: var(--on-primary);
+  background: var(--primary);
+}
+
+/* picker 的外观要和 .ui-input 一致：它本身是个空壳，靠里面这层撑起来 */
+.picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.picker__text {
+  font-size: var(--fs-body);
+  color: var(--text-1);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.picker__caret {
+  flex: none;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.picker-row {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.picker--half {
+  width: 100%;
+}

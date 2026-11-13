@@ -16,7 +16,9 @@
   "pages/record/calendar",
   "pages/record/day",
   "pages/answer/index",
-  "pages/settings/index"
+  "pages/settings/index",
+  "pages/shop/wall/wall",
+  "pages/shop/events/events"
   ],
   "window": {
     "navigationStyle": "custom",

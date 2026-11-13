@@ -1,0 +1,244 @@
+<view class="container {{isDark ? 'dark' : ''}}">
+  <view class="app-nav" style="padding-top:{{statusBarHeight}}px;padding-right:{{navRight}}px">
+    <view class="nav-left">
+      <text class="nav-back-icon" bindtap="onBack">‹</text>
+      <view class="app-nav__titles">
+        <text class="app-nav__title">店铺记</text>
+        <text class="app-nav__sub">{{todayText}}</text>
+      </view>
+    </view>
+    <view class="app-nav__actions">
+      <text class="nav-text-btn" bindtap="onOpenEvents">流水 ›</text>
+    </view>
+  </view>
+
+  <!-- 今日日报：由流水聚合，不用手填 -->
+  <view wx:if="{{!error}}" class="today">
+    <view class="today__item">
+      <text class="today__label">进货</text>
+      <text class="today__value">{{summary.inQty}}<text class="today__unit"> 件</text></text>
+      <text class="today__sub">¥{{summary.inAmount}}</text>
+    </view>
+    <view class="today__item">
+      <text class="today__label">售卖</text>
+      <text class="today__value">{{summary.outQty}}<text class="today__unit"> 件</text></text>
+      <text class="today__sub">¥{{summary.outAmount}}</text>
+    </view>
+    <view class="today__item">
+      <text class="today__label">毛利</text>
+      <text class="today__value {{summary.grossNegative ? 'is-loss' : 'is-gain'}}">¥{{summary.gross}}</text>
+      <text class="today__sub">{{summary.outQty ? '按当时进价算' : '还没开张'}}</text>
+    </view>
+  </view>
+
+  <!-- 品类：顶层切换维度，品牌 → 机型在品类内分组 -->
+  <scroll-view class="tabs" scroll-x="true" show-scrollbar="{{false}}" enhanced="{{true}}">
+    <view class="tabs__inner">
+      <text
+        wx:for="{{categories}}"
+        wx:key="*this"
+        class="tab {{category === item ? 'is-on' : ''}}"
+        data-category="{{item}}"
+        bindtap="onPickCategory">{{item}}</text>
+    </view>
+  </scroll-view>
+
+  <view class="page-body">
+    <view wx:if="{{loading}}" class="ui-empty">
+      <text class="ui-empty__title">正在取货架</text>
+      <text class="ui-empty__hint">稍等一下</text>
+    </view>
+
+    <view wx:elif="{{error}}" class="ui-empty">
+      <text class="ui-empty__title">没拉到货架</text>
+      <text class="ui-empty__hint">{{error}}</text>
+      <button class="ui-btn is-block retry" bindtap="onRetry">重试</button>
+    </view>
+
+    <block wx:else>
+      <view wx:if="{{!brands.length}}" class="ui-empty">
+        <text class="ui-empty__title">{{category}}还没有格子</text>
+        <text class="ui-empty__hint">点下面「新增机型」，一个格子就是一个在卖的型号</text>
+      </view>
+
+      <view wx:for="{{brands}}" wx:key="id" class="brand">
+        <view class="brand__head">
+          <!-- 层叠写法：首字色块在底，logo 加载成功才盖上去。
+               这样「素材还没给」和「给了但是空图」都不会出现白框或破图 -->
+          <view class="brand__logo">
+            <text
+              wx:if="{{!item.logoLoaded}}"
+              class="brand__logo-text"
+              style="background:{{item.color}}">{{item.initial}}</text>
+            <image
+              wx:if="{{item.logoOk}}"
+              class="brand__logo-img"
+              src="{{item.logo}}"
+              mode="aspectFit"
+              data-brand="{{item.id}}"
+              bindload="onLogoLoad"
+              binderror="onLogoError" />
+          </view>
+          <text class="brand__name">{{item.name}}</text>
+          <text class="brand__count">{{item.skus.length}} 款</text>
+        </view>
+
+        <view class="cells">
+          <view
+            wx:for="{{item.skus}}"
+            wx:for-item="cell"
+            wx:key="id"
+            class="cell"
+            data-id="{{cell.id}}"
+            bindlongpress="onCellLongPress">
+            <text class="cell__model">{{cell.model}}</text>
+            <view class="cell__stock">
+              <text class="cell__label">库存</text>
+              <text class="cell__num {{cell.soldOut ? 'is-out' : ''}}">{{cell.quantity}}</text>
+            </view>
+            <view class="cell__ops">
+              <text class="cell__btn cell__btn--in" data-id="{{cell.id}}" catchtap="onBuy">＋</text>
+              <text
+                class="cell__btn cell__btn--out {{cell.soldOut ? 'is-off' : ''}}"
+                data-id="{{cell.id}}"
+                catchtap="onSellTap">−</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <text wx:if="{{brands.length}}" class="hint">点 ＋ 进货、点 − 售卖（先填成交价）· 长按格子可改成本价或删掉</text>
+    </block>
+  </view>
+
+  <view class="bottom">
+    <button class="ui-btn is-primary is-block bottom__add" bindtap="onOpenAdd">＋ 新增机型</button>
+  </view>
+
+  <feedback-fab spacer="{{true}}" />
+
+  <!-- ============ 弹层：售卖 / 管理格子 / 新增 ============ -->
+  <view wx:if="{{sheet}}" class="ui-mask" bindtap="onSheetClose">
+    <view class="ui-sheet" catchtap="onNoop">
+      <view class="ui-sheet__header">
+        <text class="ui-sheet__title">{{sheet.type === 'sell' ? '卖一件' : sheet.title}}</text>
+        <text class="nav-text-btn" bindtap="onSheetClose">关闭</text>
+      </view>
+
+      <!-- 售卖：只需要一个成交价 -->
+      <block wx:if="{{sheet.type === 'sell'}}">
+        <text class="sheet__sub">{{sheet.title}}</text>
+        <text class="sheet__label">{{sheet.hint}}</text>
+        <input
+          class="ui-input"
+          type="digit"
+          value="{{sheet.price}}"
+          placeholder="成交价，单位元"
+          placeholder-class="ui-placeholder"
+          focus="{{true}}"
+          bindinput="onPriceInput" />
+        <button
+          class="ui-btn is-primary is-block sheet__save"
+          loading="{{saving}}"
+          disabled="{{saving}}"
+          bindtap="onConfirmSell">确认卖出</button>
+      </block>
+
+      <!-- 管理格子 -->
+      <block wx:elif="{{sheet.type === 'manage'}}">
+        <text class="sheet__sub">{{sheet.brandName}} · 库存 {{sheet.quantity}}</text>
+
+        <text class="sheet__label">机型</text>
+        <input
+          class="ui-input"
+          value="{{sheet.model}}"
+          placeholder="机型名"
+          placeholder-class="ui-placeholder"
+          data-field="model"
+          maxlength="64"
+          bindinput="onManageField" />
+
+        <text class="sheet__label">品类</text>
+        <view class="chips">
+          <text
+            wx:for="{{categories}}"
+            wx:key="*this"
+            class="chip {{sheet.category === item ? 'is-on' : ''}}"
+            data-category="{{item}}"
+            bindtap="onPickManageCategory">{{item}}</text>
+        </view>
+
+        <text class="sheet__label">成本价（进货价，历史流水不受影响）</text>
+        <input
+          class="ui-input"
+          type="digit"
+          value="{{sheet.cost}}"
+          placeholder="成本价，单位元"
+          placeholder-class="ui-placeholder"
+          data-field="cost"
+          bindinput="onManageField" />
+
+        <view class="sheet__foot">
+          <button class="ui-btn sheet__del" bindtap="onDeleteSku">删掉</button>
+          <button
+            class="ui-btn is-primary sheet__ok"
+            loading="{{saving}}"
+            disabled="{{saving}}"
+            bindtap="onSaveManage">保存</button>
+        </view>
+      </block>
+
+      <!-- 新增机型 -->
+      <block wx:else>
+        <text class="sheet__label">品牌</text>
+        <scroll-view class="chips chips--scroll" scroll-x="true" show-scrollbar="{{false}}">
+          <view class="chips__inner">
+            <text
+              wx:for="{{sheet.brands}}"
+              wx:key="id"
+              class="chip {{sheet.brandId === item.id ? 'is-on' : ''}}"
+              data-brand="{{item.id}}"
+              bindtap="onPickAddBrand">{{item.name}}</text>
+            <text class="chip is-ghost" bindtap="onAddBrand">＋ 新品牌</text>
+          </view>
+        </scroll-view>
+
+        <text class="sheet__label">机型</text>
+        <input
+          class="ui-input"
+          value="{{sheet.model}}"
+          placeholder="机型名，填要适配的型号"
+          placeholder-class="ui-placeholder"
+          data-field="model"
+          maxlength="64"
+          bindinput="onManageField" />
+
+        <text class="sheet__label">品类</text>
+        <view class="chips">
+          <text
+            wx:for="{{categories}}"
+            wx:key="*this"
+            class="chip {{sheet.category === item ? 'is-on' : ''}}"
+            data-category="{{item}}"
+            bindtap="onPickAddCategory">{{item}}</text>
+        </view>
+
+        <text class="sheet__label">成本价（可以先不填，进货时再定）</text>
+        <input
+          class="ui-input"
+          type="digit"
+          value="{{sheet.cost}}"
+          placeholder="成本价，单位元"
+          placeholder-class="ui-placeholder"
+          data-field="cost"
+          bindinput="onManageField" />
+
+        <button
+          class="ui-btn is-primary is-block sheet__save"
+          loading="{{saving}}"
+          disabled="{{saving}}"
+          bindtap="onSaveAdd">加进来</button>
+      </block>
+    </view>
+  </view>
+</view>

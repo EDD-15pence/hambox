@@ -15,15 +15,17 @@
 }
 
 /* ---------- 工具网格 ---------- */
-/* 卡片间距 20rpx 略小于阴影模糊半径，但只用到 28rpx 的柔和外投影，
-   所以边缘不会互相污染（硬性下限见 AGENTS.md §5.4） */
+/* 间距 24rpx，比单张卡的投影模糊半径略大：卡片并排时影子不会在缝里连成脏灰。
+   （原来 16rpx + 32rpx 模糊，正是 A-12「日间阴影奇怪」的来源） */
 .grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--sp-2);
+  gap: var(--sp-3);
 }
 
-/* 凸起卡片：与页面同色，只有影子说明它存在 */
+/* 凸起卡片：与页面同色，只有影子说明它存在。
+   网格专用影子（--shadow-card-grid）把白高光从 alpha=1 收到 .68、
+   模糊从 32rpx 收到 18rpx，左上不再像描了道白边 */
 .tool-card {
   position: relative;
   display: flex;
@@ -31,7 +33,7 @@
   padding: var(--sp-3);
   border-radius: var(--r-lg);
   background: var(--bg-raised);
-  box-shadow: var(--shadow-raised);
+  box-shadow: var(--shadow-card-grid);
   transition: box-shadow var(--dur-fast) ease-out;
 }
 

@@ -47,6 +47,14 @@ const TOOLS = [
     path: '/pages/record/calendar',
   },
   {
+    key: 'shop',
+    icon: '🏪',
+    name: '店铺记',
+    desc: '点一下就记进货售卖',
+    tag: '新',
+    path: '/pages/shop/wall/wall',
+  },
+  {
     key: 'answer',
     icon: '🔍',
     name: '版本答案',
