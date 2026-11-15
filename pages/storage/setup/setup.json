@@ -1,6 +1,7 @@
 {
   "navigationBarTitleText": "收拾一下",
   "usingComponents": {
-    "conn-error": "/components/conn-error/conn-error"
+    "conn-error": "/components/conn-error/conn-error",
+    "room-wizard": "/components/room-wizard/room-wizard"
   }
 }

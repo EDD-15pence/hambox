@@ -1,8 +1,14 @@
 /**
- * 智能仓储 · 房间 / 容器整理（RM-03 / RM-04 / AGENTS.md §21.6）
+ * 智能仓储 · 房间 / 容器整理（RM-03 / RM-04 / RM-08 / AGENTS.md §21.6 / §21.12）
  *
- * 家里的收纳从「一层平铺的柜子」变成「房间 → 柜子」两层。
- * 这一页只做结构：房间分组、柜子搬家、加减房间、加减柜子。
+ * 家里的收纳从「一层平铺的柜子」变成「房间 → 柜子」两层。这一页有两种状态：
+ *
+ * - **向导态（默认）**：进页先走两步 —— 勾房间 → 按顺序给每个房间勾柜子。
+ *   1.3.17 只有「管理视图」，第一次用的人不知道该从哪下手；向导则被锁在首启引导里，
+ *   过了那一次就再也进不去（§21.12 一）。现在向导随时可走，逻辑与首启引导**同一份**
+ *   （`components/room-wizard`）。
+ * - **管理态**：房间卡片 + 上下移 + 改 + 删 + 柜子卡片，也就是 1.3.17 那套原样保留。
+ *   向导点「跳过」或走完就落到这里；再点导航的「管理」也能直接来。
  *
  * 三条刻意的设计：
  *
@@ -11,7 +17,7 @@
  * 2. **改容器不重写面板**：点柜子跳到容器墙并直接打开 S-09 的编辑面板，
  *    那里已经有名称/外观/层数/关键字/所属房间（RM-04 取「替换」而非并存）。
  * 3. **不做拖拽**：容器墙的拖拽已经因为抢滚动手势要临时关 `scroll-y`（§10-20），
- *    这一页再叠一层拖拽会打架，房间排序先用上下移按钮（§21.6 二期再说）。
+ *    这一页再叠一层拖拽会打架，房间排序先用上下移按钮。
  */
 var nav = require('../../../utils/nav');
 var theme = require('../../../utils/theme');
@@ -26,6 +32,12 @@ Page({
     navRight: nav.SAFE_RIGHT,
     isDark: false,
     baseUrl: '',
+
+    // 'wizard' 向导态（每次进入默认）| 'manage' 管理态
+    mode: 'wizard',
+    step: 1,
+    wizardRooms: [],
+    wizardContainers: [],
 
     loading: true,
     retrying: false,
@@ -42,14 +54,17 @@ Page({
     icons: roomUtil.ROOM_ICONS
   },
 
-  onLoad: function () {
+  onLoad: function (options) {
     // 页面守卫（§18）：仓储组之外的角色直接退回首页
     if (!auth.guard('storage')) return;
+    var query = options || {};
     this.setData({
       isDark: theme.getTheme(),
       statusBarHeight: nav.STATUS_BAR_HEIGHT,
       navRight: nav.SAFE_RIGHT,
-      baseUrl: api.getBaseUrl()
+      baseUrl: api.getBaseUrl(),
+      // 从别处带 `?mode=manage` 进来直接看管理态（目前只有调试/未来入口用）
+      mode: query.mode === 'manage' ? 'manage' : 'wizard'
     });
   },
 
@@ -66,6 +81,31 @@ Page({
 
   onToggleTheme: function () {
     this.setData({ isDark: theme.toggleTheme() });
+  },
+
+  // ==============================
+  // 向导态（RM-08）
+  // ==============================
+
+  onWizardStep: function (e) {
+    this.setData({ step: (e.detail && e.detail.step) || 1 });
+  },
+
+  /** 走完向导 → 落管理态（不是跳走，用户刚建完想看看结果） */
+  onWizardDone: function () {
+    wx.showToast({ title: '收拾好了', icon: 'none' });
+    this.setData({ mode: 'manage' });
+    this.load();
+  },
+
+  /** 跳过向导只切视图，**不动 `setup_done`**（那是首启页的事） */
+  onWizardSkip: function () {
+    this.setData({ mode: 'manage' });
+  },
+
+  /** 管理态里点「整理」回到向导，可以随时再过一遍 */
+  onReopenWizard: function () {
+    this.setData({ mode: 'wizard', step: 1 });
   },
 
   // ==============================
@@ -90,15 +130,15 @@ Page({
         containers.setDefs(defs);
         var counts = roomUtil.countByContainer(items, containers.resolve);
 
-        var grouped = roomUtil.groupContainers(
-          containers.getDefs(),
-          rooms.map(roomUtil.fromServer)
-        );
+        var roomObjs = (rooms || []).map(roomUtil.fromServer);
+        var grouped = roomUtil.groupContainers(containers.getDefs(), roomObjs);
 
         self.setData({
           loading: false,
           retrying: false,
           error: '',
+          wizardContainers: defs || [],
+          wizardRooms: roomObjs,
           groups: grouped.groups.map(function (g) { return self.decorateGroup(g, counts); }),
           ungrouped: self.decorateCabs(grouped.ungrouped, counts),
           ungroupedCount: grouped.ungroupedCount,

@@ -333,6 +333,8 @@ function buildCard(container, items, order, slots) {
     id: container.id,
     name: container.name,
     icon: container.icon,
+    // 所属房间（RM-07）：墙面按它分区。空串 = 未分组，和「房间被删了」是同一件事
+    roomId: container.roomId || '',
     skin: container.skin || 'door2',
     desc: container.desc,
     cols: cols,

@@ -15,13 +15,18 @@
  */
 
 /**
- * 引导页预置的 8 个房间（§21.9 第 4 项：预置供勾选，不是空白表单）。
+ * 预设房间 9 个（§21.9 第 4 项：预置供勾选，不是空白表单）。
  * `id` 与后端 `app/constants.py` 的 `PRESET_ROOMS` 一一对应，固定不变 ——
- * 这样「勾了厨房」在库里有确定标识，不靠名字猜。
+ * 这样「勾了厨房」在库里有确定标识，不靠名字猜。**两份是手工对齐的，改一处必须改另一处。**
+ *
+ * RM-09（§21.12 四）：「卧室」拆成「主卧 + 次卧」。`bedroom` 的 id 不变只改名字，
+ * 新房用 `bedroom2`。**已经建过「卧室」的库不会被改名** —— 名字是用户数据，
+ * 预设不许覆盖，所以不做静默迁移（用户自己去管理视图改）。
  */
 var PRESET_ROOMS = [
   { id: 'kitchen', name: '厨房', icon: '🍳' },
-  { id: 'bedroom', name: '卧室', icon: '🛏️' },
+  { id: 'bedroom', name: '主卧', icon: '🛏️' },
+  { id: 'bedroom2', name: '次卧', icon: '🛌' },
   { id: 'study', name: '书房', icon: '📚' },
   { id: 'bathroom', name: '卫生间', icon: '🚿' },
   { id: 'living', name: '客厅', icon: '🛋️' },
@@ -56,6 +61,9 @@ var ROOM_ICONS = ['🚪', '🍳', '🛏️', '📚', '🚿', '🛋️', '🍽️
 
 /** 未分组的展示名：房间被删之后容器会回到这里 */
 var UNGROUPED_TITLE = '未分组';
+
+/** 「未归位」不是房间：它是没写位置的东西，墙上单独一段放最后 */
+var UNPLACED_TITLE = '未归位';
 
 /** 后端一行 → 页面用的房间对象 */
 function fromServer(row) {
@@ -158,6 +166,266 @@ function duplicateNames(containers) {
   return Object.keys(dup);
 }
 
+// ==============================
+// 墙面分区（RM-07 / §21.12 二）
+// ==============================
+
+/**
+ * 把墙上那一排柜子卡片按房间切开，给容器墙直接渲染。
+ *
+ * 为什么不复用 `groupContainers()`：那个吃的是「容器定义」，这个吃的是
+ * 「画好的墙卡片」（带 preview / tile / empty），两边数据结构不同。
+ * 但**分组口径必须一致** —— 都按 `sortOrder`、「未归位」单列、「未分组」殿后。
+ *
+ * 三种特殊情况：
+ * - **搜索中（bare）**：不分房间，整面墙平铺成一段、不画分区头。
+ *   按房间过滤会让人「搜不到就以为东西丢了」（§21.12 二）。
+ * - **空房间**：照样给一段（`empty: true`），模板画「这个房间还没有柜子 + ＋柜子」。
+ *   刚建完房间的人需要看到「柜子没进去」。
+ * - **`unplaced`（未归位）**：它不是真柜子、也不是任何房间的，单独一段放最末。
+ *
+ * @param {Array} wall 容器墙卡片（`containers.groupByContainer().wall`）
+ * @param {Array} rooms 房间对象
+ * @param {{bare?: boolean}} opts bare=true 表示搜索中，分一段平铺
+ * @returns {{sections: Array, total: number}}
+ */
+function wallSections(wall, rooms, opts) {
+  var options = opts || {};
+  var cards = wall || [];
+
+  if (options.bare) {
+    return {
+      sections: [{
+        key: 'bare',
+        roomId: '',
+        name: '',
+        icon: '',
+        count: cards.length,
+        cards: cards,
+        empty: false,
+        bare: true,
+        ungrouped: false
+      }],
+      total: cards.length
+    };
+  }
+
+  var roomList = (rooms || []).slice().sort(function (a, b) {
+    return (a.sortOrder || 0) - (b.sortOrder || 0);
+  });
+
+  var buckets = {};
+  roomList.forEach(function (room) { buckets[room.id] = []; });
+
+  var ungrouped = [];
+  var unplaced = null;
+
+  cards.forEach(function (card) {
+    if (!card) return;
+    if (card.id === 'unplaced') { unplaced = card; return; }
+    var roomId = card.roomId || '';
+    if (roomId && buckets[roomId]) buckets[roomId].push(card);
+    else ungrouped.push(card);
+  });
+
+  var sections = roomList.map(function (room) {
+    var own = buckets[room.id] || [];
+    return {
+      key: 'room:' + room.id,
+      roomId: room.id,
+      name: room.name,
+      icon: room.icon,
+      count: own.length,
+      cards: own,
+      empty: !own.length,
+      bare: false,
+      // 空房间要一个「＋柜子」的落点，跳新建容器时带上房间
+      addRoomId: room.id,
+      ungrouped: false
+    };
+  });
+
+  if (ungrouped.length) {
+    sections.push({
+      key: 'ungrouped',
+      roomId: '',
+      name: UNGROUPED_TITLE,
+      icon: '📦',
+      hint: '这些柜子还没分到房间',
+      count: ungrouped.length,
+      cards: ungrouped,
+      empty: false,
+      bare: false,
+      ungrouped: true
+    });
+  }
+
+  if (unplaced) {
+    sections.push({
+      key: 'unplaced',
+      roomId: '',
+      name: UNPLACED_TITLE,
+      icon: '📦',
+      hint: '没写位置或认不出位置的东西',
+      count: unplaced.count || 0,
+      cards: [unplaced],
+      empty: false,
+      bare: false,
+      ungrouped: true,
+      isUnplaced: true
+    });
+  }
+
+  return { sections: sections, total: cards.length };
+}
+
+// ==============================
+// 向导（RM-08 / §21.12 三）
+// ==============================
+
+/**
+ * 步 1 的房间 chips：预设 9 个 + 已建的自建房间，**已建的默认打勾**。
+ *
+ * 为什么要把「已建的自建房间」也塞进来：用户建过一个「玄关」，
+ * 向导里看不到它就等于「这个房间在向导里不存在」，也就永远没法在里面加柜子。
+ *
+ * 去重口径：**预设按 `id`、自建按 `name`**。命中就标 `existing`，
+ * 后面提交时不再 POST（否则撞 409 或建出第二个同名房间）。
+ *
+ * @param {Array} presets 预设房间（`PRESET_ROOMS`）
+ * @param {Array} existingRooms 已建房间（`fromServer()` 之后的）
+ * @returns {Array}
+ */
+function wizardRoomChips(presets, existingRooms) {
+  var existing = existingRooms || [];
+  var used = {};
+
+  function findExisting(preset) {
+    for (var i = 0; i < existing.length; i++) {
+      var room = existing[i];
+      if (!room) continue;
+      if (room.id === preset.id) return room;
+    }
+    for (var j = 0; j < existing.length; j++) {
+      var byName = existing[j];
+      if (byName && byName.name === preset.name) return byName;
+    }
+    return null;
+  }
+
+  var chips = (presets || []).map(function (p) {
+    var hit = findExisting(p);
+    if (hit) used[hit.id] = true;
+    return {
+      id: hit ? hit.id : p.id,
+      presetId: p.id,
+      name: hit ? hit.name : p.name,
+      icon: (hit && hit.icon) || p.icon,
+      // 已经建过：默认勾上（表示「这个房间我要，别重复建」）
+      checked: !!hit,
+      existing: !!hit,
+      existingId: hit ? hit.id : '',
+      custom: false
+    };
+  });
+
+  // 已建但不在预设里的自建房间：追加在后面，也默认勾上
+  existing.forEach(function (room) {
+    if (!room || used[room.id]) return;
+    chips.push({
+      id: room.id,
+      presetId: '',
+      name: room.name,
+      icon: room.icon || DEFAULT_ROOM_ICON,
+      checked: true,
+      existing: true,
+      existingId: room.id,
+      custom: true
+    });
+  });
+
+  return chips;
+}
+
+/**
+ * 步 2 某个房间的柜子候选：预设 8 种 + 这个房间已有的柜子。
+ *
+ * **已有的默认勾上并带「已有」角标**（`existing + existingId`）：
+ * 勾着只是表示「保留它」，提交时不会新建；用户改层数才会 PATCH。
+ *
+ * 命中口径（`name + roomId`）：柜子名等于「容器名」或「房间+容器名」都算同一个，
+ * 这样不管是按预设名建的还是按 `suggestKey()` 建的都能认出来。
+ *
+ * @param {Array} presets 预设容器（`PRESET_CONTAINERS`）
+ * @param {string} roomName 房间名（拼关键字用）
+ * @param {Array} existingContainers 后端容器行（含 name / room_id / rows / is_builtin / keys）
+ * @param {string} roomId 房间 id，空串表示这个房间还没建出来
+ * @returns {Array}
+ */
+function wizardCabOptions(presets, roomName, existingContainers, roomId) {
+  var own = (existingContainers || []).filter(function (c) {
+    return c && c.id !== 'unplaced' && (c.room_id || '') === (roomId || '');
+  });
+
+  var taken = {};
+  var opts = (presets || []).map(function (p, i) {
+    var joined = suggestKey(roomName, p.name);
+    var hit = null;
+    for (var k = 0; k < own.length; k++) {
+      var name = String(own[k].name || '').trim();
+      if (name === p.name || name === joined) { hit = own[k]; break; }
+    }
+    if (hit) taken[hit.id] = true;
+    return {
+      key: 'p' + i,
+      label: p.name,
+      icon: p.icon,
+      skin: p.skin,
+      cols: p.cols,
+      rows: hit ? (hit.rows || 0) : (p.rows || 0),
+      originRows: hit ? (hit.rows || 0) : null,
+      name: hit ? hit.name : joined,
+      count: 1,
+      on: !!hit,
+      existing: !!hit,
+      existingId: hit ? hit.id : ''
+    };
+  });
+
+  // 这个房间还有预设之外的柜子（改过名的、自定义的）：也要列出来并预勾，
+  // 否则它们不出现在向导里，用户会以为「向导里没有 = 不存在」
+  own.forEach(function (c) {
+    if (taken[c.id]) return;
+    opts.push({
+      key: 'x' + c.id,
+      label: c.name,
+      icon: c.icon || '🗄️',
+      skin: c.skin || 'door2',
+      cols: c.cols || 3,
+      rows: c.rows || 0,
+      originRows: c.rows || 0,
+      name: c.name,
+      count: 1,
+      on: true,
+      existing: true,
+      existingId: c.id,
+      extra: true
+    });
+  });
+
+  return opts;
+}
+
+/**
+ * 「个数 = 几个独立柜子」的命名：第 2 个起加空格 + 序号。
+ * 不引入 `count` 字段（§21.4），所以必须靠名字区分两条记录。
+ */
+function cabNameAt(baseName, n) {
+  var base = String(baseName || '').trim();
+  if (!base) return '';
+  return n <= 1 ? base : base + ' ' + n;
+}
+
 /**
  * 每个容器里放了几件：`location` 归位到容器的规则与墙上一致（最长关键字优先）。
  *
@@ -214,10 +482,15 @@ module.exports = {
   DEFAULT_ROOM_ICON: DEFAULT_ROOM_ICON,
   ROOM_ICONS: ROOM_ICONS,
   UNGROUPED_TITLE: UNGROUPED_TITLE,
+  UNPLACED_TITLE: UNPLACED_TITLE,
   fromServer: fromServer,
   suggestKey: suggestKey,
   groupContainers: groupContainers,
   duplicateNames: duplicateNames,
   countByContainer: countByContainer,
-  moveShift: moveShift
+  moveShift: moveShift,
+  wallSections: wallSections,
+  wizardRoomChips: wizardRoomChips,
+  wizardCabOptions: wizardCabOptions,
+  cabNameAt: cabNameAt
 };

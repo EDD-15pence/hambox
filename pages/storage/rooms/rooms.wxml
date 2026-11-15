@@ -3,35 +3,54 @@
     <view class="nav-left">
       <text class="nav-back-icon" bindtap="onBack">‹</text>
       <view class="app-nav__titles">
-        <text class="app-nav__title">整理收纳</text>
-        <text class="app-nav__sub">房间 › 柜子</text>
+        <text class="app-nav__title">{{mode === 'wizard' ? (step === 1 ? '选房间' : '每个房间放什么') : '整理收纳'}}</text>
+        <text class="app-nav__sub">{{mode === 'wizard' ? '第 ' + step + ' / 2 步' : '房间 › 柜子'}}</text>
       </view>
     </view>
     <view class="app-nav__actions">
-      <text class="nav-text-btn" bindtap="onCreateRoom">＋ 房间</text>
+      <text wx:if="{{mode === 'wizard'}}" class="nav-text-btn" bindtap="onWizardSkip">跳过</text>
+      <text wx:else class="nav-text-btn" bindtap="onReopenWizard">向导</text>
+      <text wx:if="{{mode !== 'wizard'}}" class="nav-text-btn" bindtap="onCreateRoom">＋ 房间</text>
       <text class="nav-text-btn" bindtap="onToggleTheme">{{isDark ? '日间' : '夜间'}}</text>
     </view>
   </view>
 
-  <scroll-view class="page-scroll" scroll-y>
+  <!-- 后端不可达：整页只剩排查卡 -->
+  <view wx:if="{{error && !groups.length}}" class="page-scroll">
     <view class="page-body">
-      <view wx:if="{{loading && !groups.length}}" class="ui-empty">
-        <text class="ui-empty__title">正在取房间</text>
-        <text class="ui-empty__hint">稍等一下</text>
-      </view>
-
       <conn-error
-        wx:elif="{{error && !groups.length}}"
         message="{{error}}"
         base-url="{{baseUrl}}"
         retrying="{{retrying}}"
         bind:retry="onRetry" />
+    </view>
+  </view>
 
-      <block wx:else>
-        <view wx:if="{{error}}" class="ui-notice" bindtap="onRetry">
-          <text class="ui-notice__text">这次没刷新成功 · {{error}}</text>
-          <text class="ui-notice__action">重试</text>
-        </view>
+  <view wx:elif="{{loading && !groups.length}}" class="page-scroll">
+    <view class="page-body">
+      <view class="ui-empty">
+        <text class="ui-empty__title">正在取房间</text>
+        <text class="ui-empty__hint">稍等一下</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 向导态（RM-08）：每次进入默认走这里，逻辑与首启引导同一份 -->
+  <room-wizard
+    wx:elif="{{mode === 'wizard'}}"
+    id="wz"
+    existing-rooms="{{wizardRooms}}"
+    existing-containers="{{wizardContainers}}"
+    bind:stepchange="onWizardStep"
+    bind:done="onWizardDone"
+    bind:skip="onWizardSkip" />
+
+  <scroll-view wx:else class="page-scroll" scroll-y>
+    <view class="page-body">
+      <view wx:if="{{error}}" class="ui-notice" bindtap="onRetry">
+        <text class="ui-notice__text">这次没刷新成功 · {{error}}</text>
+        <text class="ui-notice__action">重试</text>
+      </view>
 
         <view class="tip">
           <text class="tip__text">房间只是分组：删房间、搬柜子都不会丢东西，东西还是靠位置归位。</text>
@@ -135,7 +154,6 @@
         </view>
 
         <view class="bottom-space"></view>
-      </block>
     </view>
   </scroll-view>
 

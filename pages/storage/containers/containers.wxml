@@ -119,89 +119,114 @@
         <text wx:if="{{keyword}}" class="ui-search__clear" bindtap="onClearSearch">清空</text>
       </view>
 
-      <view class="wall {{picking ? 'is-picking' : ''}}">
-        <view
-          wx:for="{{wall}}" wx:key="id"
-          class="cab {{item.empty ? 'is-empty' : ''}} {{dragOver === item.id ? 'is-drop' : ''}}"
-          data-id="{{item.id}}"
-          bindtap="onOpenContainer"
-          hover-class="cab--pressed"
-          hover-stay-time="60">
-
-          <!-- 物件本身：不同的收纳画不同的样子 -->
-          <view class="cab__stage">
-            <!-- 冰箱：上冷冻下冷藏的双门 -->
-            <view wx:if="{{item.skin === 'fridge'}}" class="obj obj--fridge">
-              <view class="fridge__door fridge__door--freezer"></view>
-              <view class="fridge__door fridge__door--chill">
-                <view class="fridge__drawer"></view>
-              </view>
-              <view class="fridge__handle"></view>
-              <view class="fridge__led"></view>
-            </view>
-
-            <!-- 对开柜 / 玻璃门柜 -->
-            <view wx:elif="{{item.skin === 'door2' || item.skin === 'glass'}}" class="obj obj--{{item.skin}}">
-              <!-- 玻璃门柜：先铺一层淡淡的 emoji，再盖上透光的门 -->
-              <view wx:if="{{item.skin === 'glass'}}" class="glass__inside">
-                <text class="glass__ghost" wx:for="{{item.preview}}" wx:for-item="pe" wx:key="k">{{pe.e}}</text>
-              </view>
-              <view class="cab2__panel cab2__panel--l">
-                <view class="cab2__knob"></view>
-              </view>
-              <view class="cab2__panel cab2__panel--r">
-                <view class="cab2__knob"></view>
-              </view>
-              <view wx:if="{{item.skin === 'glass'}}" class="glass__shine"></view>
-            </view>
-
-            <!-- 药箱 -->
-            <view wx:elif="{{item.skin === 'medical'}}" class="obj obj--medical">
-              <view class="medical__handle"></view>
-              <view class="medical__lid"></view>
-              <view class="medical__cross">
-                <view class="cross__h"></view>
-                <view class="cross__v"></view>
-              </view>
-            </view>
-
-            <!-- 开放置物架 -->
-            <view wx:elif="{{item.skin === 'rack'}}" class="obj obj--rack">
-              <view class="rack__post rack__post--l"></view>
-              <view class="rack__post rack__post--r"></view>
-              <view class="rack__board rack__board--1"></view>
-              <view class="rack__board rack__board--2"></view>
-              <view class="rack__board rack__board--3"></view>
-            </view>
-
-            <!-- 纸箱（未归位 / 自定义选了纸箱） -->
-            <view wx:else class="obj obj--carton">
-              <view class="carton__flap"></view>
-              <view class="carton__tape"></view>
-              <view class="carton__seam"></view>
-            </view>
-
-            <view class="cab__ground"></view>
+      <!-- 墙面按房间分区（RM-07）：搜索时是一段平铺、没有分区头 -->
+      <block wx:for="{{wallSections}}" wx:for-item="sec" wx:key="key">
+        <view wx:if="{{!sec.bare}}" class="wall-sec">
+          <text class="wall-sec__icon">{{sec.icon}}</text>
+          <view class="wall-sec__titles">
+            <text class="wall-sec__name">{{sec.name}}</text>
+            <text wx:if="{{sec.hint}}" class="wall-sec__hint">{{sec.hint}}</text>
           </view>
-
-          <view class="cab__info">
-            <view class="cab__line">
-              <text class="cab__name">{{item.name}}</text>
-              <text wx:if="{{item.hitCount}}" class="cab__hit">{{item.hitCount}} 命中</text>
-              <text class="cab__count num">{{item.count}}</text>
-            </view>
-            <view class="cab__foot">
-              <view class="cab__preview">
-                <text class="cab__emoji" wx:for="{{item.preview}}" wx:for-item="pe" wx:key="k">{{pe.e}}</text>
-              </view>
-              <text wx:if="{{item.empty}}" class="cab__empty">空着</text>
-              <text wx:elif="{{item.expired > 0}}" class="cab__flag is-danger">{{item.expired}} 过期</text>
-              <text wx:elif="{{item.warning > 0}}" class="cab__flag is-warning">{{item.warning}} 临期</text>
-            </view>
-          </view>
+          <text class="wall-sec__count">{{sec.isUnplaced ? sec.count + ' 件' : sec.count + ' 个柜子'}}</text>
         </view>
 
-      </view>
+        <view class="wall {{picking ? 'is-picking' : ''}}">
+          <view
+            wx:for="{{sec.cards}}"
+            wx:key="id"
+            class="cab {{item.empty ? 'is-empty' : ''}} {{dragOver === item.id ? 'is-drop' : ''}}"
+            data-id="{{item.id}}"
+            bindtap="onOpenContainer"
+            hover-class="cab--pressed"
+            hover-stay-time="60">
+
+            <!-- 物件本身：不同的收纳画不同的样子 -->
+            <view class="cab__stage">
+              <!-- 冰箱：上冷冻下冷藏的双门 -->
+              <view wx:if="{{item.skin === 'fridge'}}" class="obj obj--fridge">
+                <view class="fridge__door fridge__door--freezer"></view>
+                <view class="fridge__door fridge__door--chill">
+                  <view class="fridge__drawer"></view>
+                </view>
+                <view class="fridge__handle"></view>
+                <view class="fridge__led"></view>
+              </view>
+
+              <!-- 对开柜 / 玻璃门柜 -->
+              <view wx:elif="{{item.skin === 'door2' || item.skin === 'glass'}}" class="obj obj--{{item.skin}}">
+                <!-- 玻璃门柜：先铺一层淡淡的 emoji，再盖上透光的门 -->
+                <view wx:if="{{item.skin === 'glass'}}" class="glass__inside">
+                  <text class="glass__ghost" wx:for="{{item.preview}}" wx:for-item="pe" wx:key="k">{{pe.e}}</text>
+                </view>
+                <view class="cab2__panel cab2__panel--l">
+                  <view class="cab2__knob"></view>
+                </view>
+                <view class="cab2__panel cab2__panel--r">
+                  <view class="cab2__knob"></view>
+                </view>
+                <view wx:if="{{item.skin === 'glass'}}" class="glass__shine"></view>
+              </view>
+
+              <!-- 药箱 -->
+              <view wx:elif="{{item.skin === 'medical'}}" class="obj obj--medical">
+                <view class="medical__handle"></view>
+                <view class="medical__lid"></view>
+                <view class="medical__cross">
+                  <view class="cross__h"></view>
+                  <view class="cross__v"></view>
+                </view>
+              </view>
+
+              <!-- 开放置物架 -->
+              <view wx:elif="{{item.skin === 'rack'}}" class="obj obj--rack">
+                <view class="rack__post rack__post--l"></view>
+                <view class="rack__post rack__post--r"></view>
+                <view class="rack__board rack__board--1"></view>
+                <view class="rack__board rack__board--2"></view>
+                <view class="rack__board rack__board--3"></view>
+              </view>
+
+              <!-- 纸箱（未归位 / 自定义选了纸箱） -->
+              <view wx:else class="obj obj--carton">
+                <view class="carton__flap"></view>
+                <view class="carton__tape"></view>
+                <view class="carton__seam"></view>
+              </view>
+
+              <view class="cab__ground"></view>
+            </view>
+
+            <view class="cab__info">
+              <view class="cab__line">
+                <text class="cab__name">{{item.name}}</text>
+                <text wx:if="{{item.hitCount}}" class="cab__hit">{{item.hitCount}} 命中</text>
+                <text class="cab__count num">{{item.count}}</text>
+              </view>
+              <view class="cab__foot">
+                <view class="cab__preview">
+                  <text class="cab__emoji" wx:for="{{item.preview}}" wx:for-item="pe" wx:key="k">{{pe.e}}</text>
+                </view>
+                <text wx:if="{{item.empty}}" class="cab__empty">空着</text>
+                <text wx:elif="{{item.expired > 0}}" class="cab__flag is-danger">{{item.expired}} 过期</text>
+                <text wx:elif="{{item.warning > 0}}" class="cab__flag is-warning">{{item.warning}} 临期</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 空房间不藏起来：刚建完房间的人需要看到「柜子没进去」（§21.12 二） -->
+          <view wx:if="{{sec.empty}}" class="wall-sec__empty">
+            <text class="wall-sec__empty-text">这个房间还没有柜子</text>
+          </view>
+          <view
+            wx:if="{{sec.empty}}"
+            class="cab cab--add"
+            data-room="{{sec.addRoomId}}"
+            bindtap="onAddCabFromWall">
+            <text class="cab__plus">＋</text>
+            <text class="cab__addtext">柜子</text>
+          </view>
+        </view>
+      </block>
 
       <!-- 在途记录入口 -->
       <view class="pending-add">

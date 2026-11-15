@@ -1,0 +1,137 @@
+<!-- 房间 / 柜子两步向导（RM-08）：首启引导与整理页共用同一份 -->
+<view class="wz">
+  <scroll-view class="wz__scroll" scroll-y>
+    <view class="wz__body">
+      <!-- ==================== 步 1：勾房间 ==================== -->
+      <block wx:if="{{step === 1}}">
+        <view class="lead">
+          <text class="lead__title">你家有哪些房间？</text>
+          <text class="lead__desc">勾上就建，已经建过的默认打着勾。不想现在弄就点右上「跳过」——直接进管理视图，已经有的柜子一个都不会动。</text>
+        </view>
+
+        <view class="picks">
+          <view
+            wx:for="{{chips}}"
+            wx:key="name"
+            class="pick {{item.checked ? 'is-on' : ''}}"
+            data-index="{{index}}"
+            bindtap="onToggleRoom"
+            hover-class="pick--active"
+            hover-stay-time="60">
+            <text class="pick__icon">{{item.icon}}</text>
+            <text class="pick__name">{{item.name}}</text>
+            <text wx:if="{{item.custom && !item.existing}}" class="pick__x" data-index="{{index}}" catchtap="onRemoveCustom">×</text>
+            <text wx:elif="{{item.existing}}" class="pick__tag">已有</text>
+            <text wx:elif="{{item.checked}}" class="pick__tick">✓</text>
+          </view>
+        </view>
+
+        <view class="custom">
+          <input
+            class="ui-input custom__input"
+            value="{{manualName}}"
+            placeholder="还有别的房间？比如玄关"
+            placeholder-class="ui-placeholder"
+            maxlength="12"
+            cursor-spacing="24"
+            bindinput="onManualInput"
+            bindconfirm="onAddCustom" />
+          <text class="custom__add" bindtap="onAddCustom">添加</text>
+        </view>
+      </block>
+
+      <!-- ==================== 步 2：勾柜子 ==================== -->
+      <block wx:else>
+        <view class="lead">
+          <text class="lead__title">每个房间放什么？</text>
+          <text class="lead__desc">按房间一个个来。点一个加一个，有几个一样的就调「个数」。</text>
+        </view>
+
+        <view wx:for="{{rooms}}" wx:for-item="room" wx:for-index="ri" wx:key="name" class="room">
+          <view class="room__head">
+            <text class="room__icon">{{room.icon}}</text>
+            <text class="room__name">{{room.name}}</text>
+            <text wx:if="{{room.existing}}" class="room__tag">已建</text>
+          </view>
+
+          <view class="cabs-pick">
+            <view
+              wx:for="{{room.containers}}"
+              wx:for-item="cab"
+              wx:for-index="ci"
+              wx:key="key"
+              class="cab-pick {{cab.on ? 'is-on' : ''}}"
+              data-ri="{{ri}}"
+              data-ci="{{ci}}"
+              bindtap="onToggleCab">
+              <text class="cab-pick__icon">{{cab.icon}}</text>
+              <text class="cab-pick__name">{{cab.label}}</text>
+              <text wx:if="{{cab.existing}}" class="cab-pick__tag">已有</text>
+            </view>
+          </view>
+
+          <!-- 已勾选的柜子：个数 / 层数 / 名字 -->
+          <block wx:for="{{room.containers}}" wx:for-item="cab" wx:for-index="ci" wx:key="key">
+            <view wx:if="{{cab.on}}" class="cfg">
+              <!-- 已有柜子不给改名：改名是管理视图的事，这里让名字看着像能改会很坑 -->
+              <input
+                class="ui-input cfg__name"
+                value="{{cab.name}}"
+                placeholder="柜子名字"
+                placeholder-class="ui-placeholder"
+                maxlength="12"
+                cursor-spacing="24"
+                disabled="{{cab.existing}}"
+                data-ri="{{ri}}"
+                data-ci="{{ci}}"
+                bindinput="onCabName" />
+
+              <view class="cfg__row">
+                <!-- 已有柜子不能再改个数（改个数 = 新建，那是另一件事） -->
+                <view wx:if="{{!cab.existing}}" class="cfg__step">
+                  <text class="cfg__label">几个</text>
+                  <view class="step">
+                    <text class="step__btn" data-ri="{{ri}}" data-ci="{{ci}}" data-field="count" data-delta="-1" catchtap="onStep">−</text>
+                    <text class="step__num num">{{cab.count}}</text>
+                    <text class="step__btn" data-ri="{{ri}}" data-ci="{{ci}}" data-field="count" data-delta="1" catchtap="onStep">＋</text>
+                  </view>
+                </view>
+                <view class="cfg__step">
+                  <text class="cfg__label">几层（0 = 自动）</text>
+                  <view class="step">
+                    <text class="step__btn" data-ri="{{ri}}" data-ci="{{ci}}" data-field="rows" data-delta="-1" catchtap="onStep">−</text>
+                    <text class="step__num num">{{cab.rows}}</text>
+                    <text class="step__btn" data-ri="{{ri}}" data-ci="{{ci}}" data-field="rows" data-delta="1" catchtap="onStep">＋</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </block>
+
+          <text wx:if="{{!room.containers.length}}" class="room__empty">这个房间先空着也行</text>
+        </view>
+
+        <view class="note">
+          <text class="note__text">之后想加房间、搬柜子、改层数，都在这份整理的「管理」里。</text>
+        </view>
+      </block>
+
+      <view class="wz__space"></view>
+    </view>
+  </scroll-view>
+
+  <view class="wz__bottom">
+    <text wx:if="{{saving}}" class="wz__progress">{{progressText}}</text>
+    <button
+      wx:if="{{step === 1}}"
+      class="ui-btn is-primary is-block"
+      bindtap="onNext">下一步</button>
+    <block wx:else>
+      <button class="ui-btn is-block wz__prev" bindtap="onPrev">上一步</button>
+      <button
+        class="ui-btn is-primary is-block wz__next"
+        disabled="{{saving}}"
+        bindtap="onFinish">{{saving ? '正在建…' : '完成'}}</button>
+    </block>
+  </view>
+</view>

@@ -105,6 +105,8 @@ Page({
     // 'wall' 容器墙 | 'inside' 某个容器内部
     view: 'wall',
     wall: [],
+    // 墙面按房间切好的分段（RM-07）；搜索时是一段平铺、没有分区头
+    wallSections: [],
     active: null,
     total: 0,
     warning: 0,
@@ -266,6 +268,7 @@ Page({
 
     this.setData({
       wall: search.wall,
+      wallSections: this.buildSections(search.wall),
       hitTotal: search.hitTotal,
       total: grouped.total,
       warning: grouped.warning,
@@ -276,6 +279,18 @@ Page({
       pendingCount: pending.length,
       xferTargets: xferTargetsFor(card ? card.id : '')
     });
+  },
+
+  /**
+   * 墙面按房间切段（RM-07 / §21.12 二）。
+   *
+   * 复用 `utils/rooms.js` 的 `wallSections()`，不在这里再写一份分组 ——
+   * 整理页和墙面一旦各写一套，「未分组殿后」「房间顺序」迟早对不上。
+   * **搜索中不分房间**：按房间过滤会让人搜不到就以为东西丢了。
+   */
+  buildSections: function (wall) {
+    var searching = !!(this.data.keyword || '').trim();
+    return roomUtil.wallSections(wall, this.data.rooms, { bare: searching }).sections;
   },
 
   /** 在途物品借一下 emoji 映射，和容器里的块长得一样 */
@@ -317,7 +332,14 @@ Page({
   /** 只在内存里重算，不再请求接口 */
   applyKeyword: function (keyword) {
     var search = containers.applyKeyword(this._rawWall || [], keyword);
-    var patch = { keyword: keyword, wall: search.wall, hitTotal: search.hitTotal };
+    var patch = {
+      keyword: keyword,
+      wall: search.wall,
+      wallSections: roomUtil.wallSections(search.wall, this.data.rooms, {
+        bare: !!String(keyword || '').trim()
+      }).sections,
+      hitTotal: search.hitTotal
+    };
 
     // 正停在某个柜子里：同步换成带命中标记的那一份（否则点进去看不到高亮）
     if (this.data.active) {
@@ -590,6 +612,15 @@ Page({
 
   onEditActive: function () {
     if (this.data.active) this.openEditor('edit', this.data.active.id);
+  },
+
+  /**
+   * 空房间分区里的「＋柜子」（RM-07）：直接在墙上开新建面板、房间预填。
+   * 不跳整理页 —— 人已经在这面墙上了，再跳一层纯属绕路。
+   */
+  onAddCabFromWall: function (e) {
+    var roomId = e.currentTarget.dataset.room || '';
+    this.openEditor('create', null, { roomId: roomId });
   },
 
   onCloseEditor: function () {

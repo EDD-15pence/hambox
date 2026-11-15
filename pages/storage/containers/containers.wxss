@@ -255,6 +255,82 @@
   margin-top: var(--sp-3);
 }
 
+/* ---------- 墙面分区头（RM-07） ---------- */
+/* 一排柜子按房间切开；分段头只做「这是哪个房间」，不做吸顶
+   （scroll-view 里 sticky 在低端机上手势和重绘都容易抖，§10-20） */
+.wall-sec {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-6);
+  padding: 0 2rpx;
+}
+
+.wall-sec__icon {
+  font-size: var(--fs-body);
+  line-height: 1;
+}
+
+.wall-sec__titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.wall-sec__name {
+  display: block;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.wall-sec__hint {
+  display: block;
+  margin-top: 2rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.wall-sec__count {
+  flex-shrink: 0;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+/* 空房间：一句话占位 + 一个「＋柜子」格子，不让房间凭空消失 */
+.wall-sec__empty {
+  grid-column: 1 / -1;
+  padding: var(--sp-3) 0 var(--sp-1);
+  text-align: center;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.wall-sec__empty-text {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.cab--add {
+  align-items: center;
+  justify-content: center;
+  min-height: 180rpx;
+  border: 1rpx dashed var(--divider);
+  background: transparent;
+  box-shadow: none;
+}
+
+.cab__plus {
+  font-size: 40rpx;
+  line-height: 1;
+  color: var(--text-3);
+}
+
+.cab__addtext {
+  margin-top: 6rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
 .cab {
   display: flex;
   flex-direction: column;
