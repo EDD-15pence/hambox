@@ -23,6 +23,8 @@ var PAGE_TITLES = {
   'pages/storage/edit/edit': '添加物品',
   'pages/storage/quick/quick': '快速记录',
   'pages/storage/containers/containers': '按容器看',
+  'pages/storage/rooms/rooms': '整理收纳',
+  'pages/storage/setup/setup': '首启整理',
   'pages/voice-log/voice-log': '识别日志',
   'pages/prompt/index/index': 'Prompt 模板库',
   'pages/prompt/detail/index': 'Prompt 模板详情',

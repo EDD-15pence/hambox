@@ -78,7 +78,9 @@ Component({
       this.setData({ todayText: storageUtils.todayDate() });
       lexicon.load()
         .then(function (lex) { self._lexicon = lex; })
-        .catch(function () { self._lexicon = { names: [], locations: [] }; });
+        .catch(function () {
+          self._lexicon = { names: [], locations: [], parseLocations: [] };
+        });
       this.loadCategories();
     },
 
@@ -256,7 +258,11 @@ Component({
       }
 
       var fixed = lexicon.correct(text, this._lexicon);
-      var result = quickParse.parseQuickInput(fixed.text, { today: this.data.todayText });
+      var result = quickParse.parseQuickInput(fixed.text, {
+        today: this.data.todayText,
+        // 动态位置词（RM-05）：与 quick 页同一套词表
+        locations: (this._lexicon && this._lexicon.parseLocations) || []
+      });
 
       // 日志要对比"插件原文 / 纠错后 / 解析值 / 用户最终保存值"，先把前三个留住
       this._rawText = text;

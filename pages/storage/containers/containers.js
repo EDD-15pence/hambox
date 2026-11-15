@@ -21,6 +21,8 @@ var api = require('../../../utils/api');
 var nav = require('../../../utils/nav');
 var theme = require('../../../utils/theme');
 var containers = require('../../../utils/containers');
+var roomUtil = require('../../../utils/rooms');
+var storageUtils = require('../../../utils/storage-utils');
 var storageView = require('../../../utils/storage-view');
 var itemEmoji = require('../../../utils/item-emoji');
 
@@ -115,8 +117,8 @@ Page({
     showSearch: false,
     keyword: '',
     hitTotal: 0,
-    // 整理态：画出空容器、卡片上出现「编辑」
-    organizing: false,
+    // 房间列表（RM-04）：编辑面板里的「放在哪个房间」用它
+    rooms: [],
     // 在途
     pending: [],
     pendingCount: 0,
@@ -143,8 +145,14 @@ Page({
     xferTargets: []
   },
 
-  onLoad: function () {
+  onLoad: function (options) {
     if (!auth.guard('storage')) return;
+    // 从整理页跳进来：带 `edit=<id>` 直接开编辑面板，带 `create=1&room=<id>` 直接新建。
+    // 面板只有一份（S-09），整理页不重写一遍（§21.6 RM-04）
+    var query = options || {};
+    this._pendingEditor = query.edit
+      ? { mode: 'edit', id: query.edit }
+      : (query.create ? { mode: 'create', roomId: query.room || '' } : null);
     this.setData({
       isDark: theme.getTheme(),
       statusBarHeight: nav.STATUS_BAR_HEIGHT,
@@ -174,11 +182,27 @@ Page({
     var self = this;
     this.setData({ loading: !this.data.loadError, retrying: !!this.data.loadError });
 
-    return Promise.all([api.listContainers(), api.listItems(), api.listPending()])
+    return Promise.all([
+      api.listContainers(),
+      api.listItems(),
+      api.listPending(),
+      // 房间拉不到只是少了面板里的房间选项，不该让整面墙报错
+      api.listRooms().catch(function () { return []; })
+    ])
       .then(function (result) {
         var defs = result[0];
         var items = result[1];
         var pending = result[2];
+        var rooms = result[3] || [];
+
+        // 首启引导（RM-02）：三个条件都满足才问，且只问一次（§21.5）
+        if (!self._setupChecked) {
+          self._setupChecked = true;
+          if (storageUtils.needsSetup(defs, rooms)) {
+            wx.redirectTo({ url: '/pages/storage/setup/setup' });
+            return;
+          }
+        }
 
         // 容器定义用后端那份；万一后端还是旧的（没这个接口）就用内置兜底
         containers.setDefs(defs);
@@ -188,9 +212,23 @@ Page({
         self._order = collectOrder(defs);
         self._slots = collectSlots(defs);
 
-        self.setData({ loading: false, retrying: false, loadError: '' });
+        self.setData({
+          loading: false,
+          retrying: false,
+          loadError: '',
+          rooms: rooms.map(roomUtil.fromServer)
+        });
         self.resetPendingSelect();
         self.render();
+
+        // 带着参数进来的一次性动作：拉完数据再开面板，否则面板里没有容器上下文
+        if (self._pendingEditor) {
+          var pendingEditor = self._pendingEditor;
+          self._pendingEditor = null;
+          self.openEditor(pendingEditor.mode, pendingEditor.id, {
+            roomId: pendingEditor.roomId
+          });
+        }
       })
       .catch(function (err) {
         self.setData({
@@ -204,12 +242,11 @@ Page({
   /** 只重算视图，不发请求。搜索、拖拽、整理态切换都走这里 */
   render: function () {
     var pending = this._pending || [];
-    var inOrganize = this.data.organizing;
-    // 有在途要归位、或者在整理，就把空容器也画出来 —— 否则没地方可以拖/可以点
+    // 有在途要归位、或者正在挑落点时，把空容器也画出来 —— 否则没地方可以拖
     var grouped = containers.groupByContainer(this._items || [], {
       order: this._order || {},
       slots: this._slots || {},
-      showEmpty: inOrganize || pending.length > 0 || !!this.data.picking
+      showEmpty: pending.length > 0 || !!this.data.picking
     });
 
     // 留一份没被搜索过滤的墙，改关键词时不用重新请求
@@ -317,11 +354,6 @@ Page({
       this.placePendings(ids, id);
       return;
     }
-    // 整理态点卡片是「编辑这个容器」，不是进去
-    if (this.data.organizing) {
-      this.openEditor('edit', id);
-      return;
-    }
     var card = null;
     for (var i = 0; i < this.data.wall.length; i++) {
       if (this.data.wall[i].id === id) { card = this.data.wall[i]; break; }
@@ -340,11 +372,6 @@ Page({
     // 多选态下先退出多选，别一路返回把页面关掉
     if (this.data.pendingSelect) {
       this.onCancelPendingSelect();
-      return;
-    }
-    if (this.data.organizing) {
-      this.setData({ organizing: false });
-      this.render();
       return;
     }
     if (this.data.view === 'inside') {
@@ -499,22 +526,23 @@ Page({
   // 整理态 / 容器编辑（S-09）
   // ==============================
 
-  onToggleOrganize: function () {
-    var next = !this.data.organizing;
-    this.setData({ organizing: next });
-    this.render();
-    if (next) {
-      wx.showToast({ title: '点柜子改名字和层数', icon: 'none' });
-    }
-  },
-
   /**
    * 打开编辑面板
    * @param {string} mode 'create' | 'edit'
    * @param {string} id 编辑时的容器 id
    */
-  openEditor: function (mode, id) {
+  /**
+   * 打开编辑面板
+   * @param {string} mode 'create' | 'edit'
+   * @param {string} id 编辑时的容器 id
+   * @param {{roomId?: string}} [opts] 新建时预填的房间（从整理页的「＋柜子」进来）
+   */
+  openEditor: function (mode, id, opts) {
+    var extra = opts || {};
     if (mode === 'create') {
+      var roomId = extra.roomId || '';
+      // 从某个房间的「＋柜子」进来时，名字和关键字先按「房间+柜子」拼好，
+      // 但容器名还不知道，等用户填完名字再补 —— 这里只把房间带过去
       this.setData({
         editor: {
           mode: 'create',
@@ -525,6 +553,7 @@ Page({
           cols: 3,
           rows: 0,
           keysText: '',
+          roomId: roomId,
           deletable: false,
           builtin: false
         }
@@ -542,14 +571,21 @@ Page({
         cols: c.cols || 4,
         rows: c.rows || 0,
         keysText: (c.keys || []).join('、'),
+        roomId: c.roomId || '',
         deletable: c.deletable !== false,
         builtin: !!c.isBuiltin
       }
     });
   },
 
-  onAddContainer: function () {
-    this.openEditor('create');
+  /** 编辑面板里选「放在哪个房间」：空串 = 未分组 */
+  onPickRoom: function (e) {
+    this.setData({ 'editor.roomId': e.currentTarget.dataset.room || '' });
+  },
+
+  /** 整理：进房间 / 容器树页面（RM-04 取「替换」，原编辑面板从那边进） */
+  onOpenRooms: function () {
+    wx.navigateTo({ url: '/pages/storage/rooms/rooms' });
   },
 
   onEditActive: function () {
@@ -607,13 +643,26 @@ Page({
       .map(function (k) { return k.trim(); })
       .filter(function (k) { return !!k; });
 
+    // 新建容器时把「房间 + 容器」写进首个关键字（§21.9 第 3 项）：
+    // 两个房间都有衣柜时，位置说「卧室衣柜」才能落到对的那个。
+    // 用户自己写了关键字就不动他写的
+    if (editor.mode === 'create' && !keys.length && editor.roomId) {
+      var room = null;
+      (this.data.rooms || []).forEach(function (r) {
+        if (r.id === editor.roomId) room = r;
+      });
+      var suggested = roomUtil.suggestKey(room && room.name, name);
+      if (suggested) keys = [suggested];
+    }
+
     var payload = {
       name: name,
       icon: editor.icon,
       skin: editor.skin,
       cols: Number(editor.cols) || 1,
       rows: Number(editor.rows) || 0,
-      keys: keys
+      keys: keys,
+      room_id: editor.roomId || ''
     };
 
     var self = this;

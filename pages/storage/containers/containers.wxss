@@ -1072,45 +1072,9 @@
   pointer-events: none;
 }
 
-/* 整理态卡片右上角的小「改」*/
-.cab__edit {
-  position: absolute;
-  top: 4rpx;
-  right: 4rpx;
-  z-index: 3;
-  padding: 2rpx 12rpx;
-  border-radius: var(--r-pill);
-  background: var(--primary);
-  color: var(--on-primary);
-  font-size: var(--fs-tiny);
-}
-
 .cab__empty {
   font-size: var(--fs-tiny);
   color: var(--text-3);
-}
-
-/* 新建容器：墙上最后一个格子 */
-.wall-new {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 300rpx;
-  border: 2rpx dashed var(--border);
-  border-radius: var(--r-lg);
-  color: var(--text-3);
-}
-
-.wall-new__plus {
-  font-size: 48rpx;
-  line-height: 1;
-  color: var(--primary);
-}
-
-.wall-new__text {
-  margin-top: var(--sp-1);
-  font-size: var(--fs-caption);
 }
 
 /* ---------------- 在路上 ---------------- */

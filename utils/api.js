@@ -159,7 +159,11 @@ function request(path, method, data) {
             resolve(body.data);
             return;
           }
-          reject(new Error(body.message || ('请求失败（' + res.statusCode + '）')));
+          // 把状态码一起挂到 Error 上：调用方偶尔需要区分「已经存在（409）」
+          // 和真正的失败，靠 message 文本匹配太脆
+          var bizErr = new Error(body.message || ('请求失败（' + res.statusCode + '）'));
+          bizErr.statusCode = res.statusCode;
+          reject(bizErr);
         },
         fail: function (err) {
           env.markFail(ep.key);
@@ -454,6 +458,32 @@ function updateContainer(id, patch) {
 
 function deleteContainer(id) {
   return request('/api/containers/' + encodeURIComponent(id), 'DELETE');
+}
+
+// ==============================
+// 房间（RM-01 / §21.4）
+// ==============================
+
+/**
+ * 全部房间。和容器一样**原样返回服务端的行**（snake_case），
+ * 映射成页面对象的工作交给 `utils/rooms.js`。
+ */
+function listRooms() {
+  return request('/api/rooms').then(function (data) {
+    return data.items || [];
+  });
+}
+
+function createRoom(payload) {
+  return request('/api/rooms', 'POST', payload);
+}
+
+function updateRoom(id, patch) {
+  return request('/api/rooms/' + encodeURIComponent(id), 'PATCH', patch);
+}
+
+function deleteRoom(id) {
+  return request('/api/rooms/' + encodeURIComponent(id), 'DELETE');
 }
 
 /**
@@ -1109,6 +1139,10 @@ module.exports = {
   updateContainer: updateContainer,
   deleteContainer: deleteContainer,
   saveSlots: saveSlots,
+  listRooms: listRooms,
+  createRoom: createRoom,
+  updateRoom: updateRoom,
+  deleteRoom: deleteRoom,
   listPending: listPending,
   createPending: createPending,
   updatePending: updatePending,

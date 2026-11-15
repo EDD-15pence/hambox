@@ -163,6 +163,9 @@ function fromServer(row) {
     rows: row.rows || 0,
     keys: keys,
     zones: zones,
+    // 所属房间（RM-01）：空串 = 未分组。房间名不在这里冗余存，
+    // 页面要显示「厨房 · 2 个柜子」时用 utils/rooms.js 的 groupContainers 拼
+    roomId: row.room_id || '',
     sortOrder: row.sort_order || 0,
     isBuiltin: !!row.is_builtin,
     deletable: row.deletable !== false,

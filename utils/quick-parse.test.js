@@ -25,6 +25,11 @@ function parse(text) {
   return P.parseQuickInput(text, { today: TODAY });
 }
 
+/** 带动态位置词表（RM-05）：模拟后端容器 / 房间结构 */
+function parseWith(text, locations) {
+  return P.parseQuickInput(text, { today: TODAY, locations: locations });
+}
+
 // 1. 标准四要素
 var r = parse('可乐 生产日期9月1日 保质期9个月 放厨房柜子');
 check('名称', r.name, '可乐');
@@ -202,6 +207,62 @@ check('定语位置·位置', r.location, '冰箱冷藏');
 r = parse('三袋薯片 保质期半年 放在客厅茶几');
 check('茶几不误判·分类', r.categoryId, 'food');
 check('茶几·位置', r.location, '客厅茶几');
+
+
+// ==============================
+// 31. 动态位置词（RM-05 / AGENTS.md §21.7）
+// ==============================
+// 这组用例存在的理由：容器和房间都是用户自己建的，写死的 30 个静态词
+// 永远认不出「阳台柜」「卧室衣柜」。以前只有说了「放」才解析得对，
+// 现在没有「放」也要认出来。
+
+var DYN = ['阳台柜', '卧室衣柜', '书房书柜', '储物间的纸箱', '厨房'];
+
+// 位置在前、名称在后，且**没有「放」**——这是以前必然失败的那一类
+r = parseWith('阳台柜 两盒药', DYN);
+check('动态词·位置', r.location, '阳台柜');
+check('动态词·名称不含位置', r.name, '药');  // 数量已单独抽进 quantity
+check('动态词·不缺位置', r.missing.indexOf('location'), -1);
+
+// 拼接词优先：两个房间都有「衣柜」时靠它区分
+r = parseWith('卧室衣柜 三件毛衣 保质期一年', DYN);
+check('拼接词·位置', r.location, '卧室衣柜');
+check('拼接词·名称', r.name, '三件毛衣');
+
+// 4 字容器名（比静态词长，合并扫描时最长优先）
+r = parseWith('书房书柜 一套教材', DYN);
+check('长容器名·位置', r.location, '书房书柜');
+check('长容器名·名称', r.name, '一套教材');
+
+// 静态兜底还在：没有动态词表时老行为不变（首次使用 / 后端不可达）
+r = parse('三袋薯片 保质期半年 放在客厅茶几');
+check('静态兜底·位置', r.location, '客厅茶几');
+
+// 动态词表里有 2 字房间名：厨房不是「放」也能认
+r = parseWith('厨房 两瓶酱油 保质期一年半', DYN);
+check('房间名·位置', r.location, '厨房');
+check('房间名·名称', r.name, '酱油');
+
+// 有关键词时动态词表不参与：位置以「放」后面为准
+r = parseWith('两盒感冒药 放阳台柜', DYN);
+check('关键词优先·位置', r.location, '阳台柜');
+check('关键词优先·名称', r.name, '感冒药');
+
+// 位置在句尾、后面紧跟标点：整段都是位置
+r = parseWith('两盒药 阳台柜', DYN);
+check('句尾动态词·位置', r.location, '阳台柜');
+check('句尾动态词·名称', r.name, '药');
+
+// 单字容器名不许进词表：否则「药」「柜」会把任意文本切开
+check('单字被过滤', P.locationWordsOf(['药', '柜', '阳台柜']), ['阳台柜']);
+
+// lexicon 的 {word,count} 结构也收（调用方不用先 map）
+check('对象结构也收', P.locationWordsOf([{ word: '卧室衣柜', count: 3 }]), ['卧室衣柜']);
+
+// 定语结构仍然只切位置本身（老用例 29 的等价场景，动态词版本）
+r = parseWith('提醒我卧室衣柜的毛衣快过期了', DYN);
+check('动态定语·位置', r.location, '卧室衣柜');
+check('动态定语·名称', r.name, '毛衣');
 
 console.log(failures === 0 ? '\nALL PASS' : '\n' + failures + ' 项失败');
 process.exit(failures === 0 ? 0 : 1);

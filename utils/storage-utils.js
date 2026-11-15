@@ -154,6 +154,51 @@ function getStatusBanner(items) {
   };
 }
 
+
+// ==============================
+// 首启引导状态（RM-02 / AGENTS.md §21.5）
+// ==============================
+
+/** 引导是否问过：三态而不是布尔（§21.9 连带结论 2） */
+var SETUP_KEY = 'storage_setup_done_v1';
+
+/**
+ * unset（没问过）/ done（走完引导）/ skipped（主动跳过）。
+ * done 与 skipped 都**不再自动弹**，区别只在 skipped 没建房间。
+ */
+function getSetupState() {
+  try {
+    var value = wx.getStorageSync(SETUP_KEY);
+    return value === 'done' || value === 'skipped' ? value : 'unset';
+  } catch (e) {
+    return 'unset';
+  }
+}
+
+function setSetupState(state) {
+  try {
+    wx.setStorageSync(SETUP_KEY, state === 'done' ? 'done' : 'skipped');
+  } catch (e) { /* 存不下就算了，下次最多再问一遍 */ }
+}
+
+/**
+ * 要不要进首启引导。**三个条件缺一不可**（§21.5）：
+ *   1. 本地没问过（unset）；
+ *   2. 后端容器全是内置的（说明用户从没改过）；
+ *   3. 房间表为空。
+ *
+ * 只判后端 → 换设备会重弹；只判本地 → 清缓存会重弹。三个一起判才不烦人。
+ *
+ * @param {Array} containers GET /api/containers 的行（含 is_builtin）
+ * @param {Array} rooms GET /api/rooms 的行
+ */
+function needsSetup(containers, rooms) {
+  if (getSetupState() !== 'unset') return false;
+  if (!containers || !containers.length) return false;
+  if ((rooms || []).length) return false;
+  return containers.every(function (c) { return !!c && c.is_builtin === true; });
+}
+
 // ==============================
 // 导出
 // ==============================
@@ -178,5 +223,11 @@ module.exports = {
   sortItems: sortItems,
 
   // Banner
-  getStatusBanner: getStatusBanner
+  getStatusBanner: getStatusBanner,
+
+  // 首启引导状态
+  SETUP_KEY: SETUP_KEY,
+  getSetupState: getSetupState,
+  setSetupState: setSetupState,
+  needsSetup: needsSetup
 };

@@ -1,0 +1,327 @@
+/* ============================================================
+ * 智能仓储 · 首启引导（RM-02 / §21.5）
+ *
+ * 两步、无插画、无进度条（§21.8 明确不做）。视觉上就两件事：
+ * 「可多选的方块」+「每个柜子几个/几层」。全部走 v2 令牌。
+ * ============================================================ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
+  background: var(--bg-page);
+  color: var(--text-1);
+}
+
+.app-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.page-scroll {
+  flex: 1;
+  box-sizing: border-box;
+  min-height: 0;
+}
+
+.page-body {
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--sp-2) var(--page-x) 0;
+}
+
+/* ---------------- 引导语 ---------------- */
+
+.lead {
+  padding: var(--sp-2) var(--sp-1) var(--sp-3);
+}
+
+.lead__title {
+  display: block;
+  font-size: var(--fs-h1);
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.lead__desc {
+  display: block;
+  margin-top: var(--sp-1);
+  font-size: var(--fs-caption);
+  line-height: 1.6;
+  color: var(--text-3);
+}
+
+/* ---------------- 步 1：房间方块 ---------------- */
+
+.picks {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -6rpx;
+}
+
+.pick {
+  position: relative;
+  box-sizing: border-box;
+  width: calc(25% - 12rpx);
+  margin: 6rpx;
+  padding: var(--sp-2) 0;
+  border-radius: var(--r-md);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-card-grid);
+  text-align: center;
+}
+
+.pick--active {
+  box-shadow: var(--shadow-raised-press);
+}
+
+.pick.is-on {
+  background: var(--primary-weak);
+  box-shadow: var(--shadow-raised-press);
+}
+
+.pick__icon {
+  display: block;
+  font-size: 40rpx;
+  line-height: 1.2;
+}
+
+.pick__name {
+  display: block;
+  margin-top: 2rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-2);
+}
+
+.pick.is-on .pick__name {
+  color: var(--primary-text);
+  font-weight: 500;
+}
+
+/* 勾选标记：右上角一个小圆，位置固定，不随文字长短跳动 */
+.pick__tick,
+.pick__x {
+  position: absolute;
+  top: 4rpx;
+  right: 8rpx;
+  width: 30rpx;
+  height: 30rpx;
+  border-radius: 50%;
+  font-size: 20rpx;
+  line-height: 30rpx;
+  text-align: center;
+}
+
+.pick__tick {
+  color: var(--on-primary);
+  background: var(--primary-strong);
+}
+
+.pick__x {
+  color: var(--text-2);
+  background: var(--bg-sunken);
+}
+
+/* ---------------- 自定义房间 ---------------- */
+
+.custom {
+  display: flex;
+  align-items: center;
+  margin-top: var(--sp-3);
+}
+
+.custom__input {
+  flex: 1;
+}
+
+.custom__add {
+  margin-left: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  font-size: var(--fs-caption);
+  color: var(--primary-text);
+  background: var(--primary-weak);
+  box-shadow: var(--shadow-raised-press);
+}
+
+/* ---------------- 步 2：每个房间一张卡 ---------------- */
+
+.room {
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-2) var(--sp-2) var(--sp-3);
+  border-radius: var(--r-lg);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.room__head {
+  display: flex;
+  align-items: center;
+  padding: var(--sp-1) 0 var(--sp-2);
+}
+
+.room__icon {
+  width: 48rpx;
+  font-size: 36rpx;
+  line-height: 1;
+  text-align: center;
+}
+
+.room__name {
+  margin-left: var(--sp-2);
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.cabs-pick {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.cab-pick {
+  box-sizing: border-box;
+  width: calc(25% - 12rpx);
+  margin: 6rpx;
+  padding: var(--sp-1) 0;
+  border-radius: var(--r-sm);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+  text-align: center;
+}
+
+.cab-pick.is-on {
+  background: var(--primary-weak);
+  box-shadow: var(--shadow-raised-press);
+}
+
+.cab-pick__icon {
+  display: block;
+  font-size: 32rpx;
+  line-height: 1.2;
+}
+
+.cab-pick__name {
+  display: block;
+  font-size: 20rpx;
+  color: var(--text-3);
+}
+
+.cab-pick.is-on .cab-pick__name {
+  color: var(--primary-text);
+}
+
+/* 已选柜子的配置行：名字 + 两个步进器 */
+.cfg {
+  margin-top: var(--sp-2);
+  padding: var(--sp-2);
+  border-radius: var(--r-md);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+}
+
+.cfg__name {
+  width: 100%;
+}
+
+.cfg__row {
+  display: flex;
+  margin-top: var(--sp-2);
+}
+
+.cfg__step {
+  flex: 1;
+}
+
+.cfg__label {
+  display: block;
+  margin-bottom: var(--sp-1);
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  width: 180rpx;
+  border-radius: var(--r-pill);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-card-grid);
+}
+
+.step__btn {
+  width: 56rpx;
+  height: 56rpx;
+  line-height: 56rpx;
+  text-align: center;
+  font-size: var(--fs-body);
+  color: var(--primary-text);
+}
+
+.step__num {
+  flex: 1;
+  text-align: center;
+  font-size: var(--fs-caption);
+  color: var(--text-1);
+}
+
+.room__empty {
+  display: block;
+  margin-top: var(--sp-2);
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.note {
+  margin: var(--sp-2) 0 var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+}
+
+.note__text {
+  font-size: var(--fs-tiny);
+  line-height: 1.6;
+  color: var(--text-3);
+}
+
+.bottom-space {
+  height: 160rpx;
+}
+
+/* ---------------- 底部按钮 ---------------- */
+
+.bottom {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: var(--sp-2) var(--page-x) calc(var(--sp-2) + env(safe-area-inset-bottom));
+  background: var(--bg-page);
+}
+
+.bottom__prev {
+  width: 200rpx;
+  margin-right: var(--sp-2);
+}
+
+.bottom__next {
+  flex: 1;
+}
+
+.bottom__progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  transform: translateY(-120%);
+  text-align: center;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}

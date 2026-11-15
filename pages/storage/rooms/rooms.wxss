@@ -1,0 +1,275 @@
+/* ============================================================
+ * 智能仓储 · 房间 / 容器整理（RM-03 / §21.6）
+ *
+ * 结构是一层「房间卡片」里面包一排柜子。房间自己是凹陷的底板，
+ * 柜子是凸起的小块 —— 一眼能看出「这些属于同一个房间」。
+ * 全部走 v2 令牌，深色自动跟随。
+ * ============================================================ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
+  background: var(--bg-page);
+  color: var(--text-1);
+}
+
+.app-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.page-scroll {
+  flex: 1;
+  box-sizing: border-box;
+  min-height: 0;
+}
+
+.page-body {
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--sp-2) var(--page-x) 0;
+}
+
+/* ---------------- 顶部提示 ---------------- */
+
+.tip {
+  margin-top: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+}
+
+.tip__text {
+  font-size: var(--fs-caption);
+  line-height: 1.6;
+  color: var(--text-3);
+}
+
+/* ---------------- 房间卡片 ---------------- */
+
+.group {
+  margin-top: var(--sp-3);
+  padding: var(--sp-2) var(--sp-2) var(--sp-3);
+  border-radius: var(--r-lg);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.group__head {
+  display: flex;
+  align-items: center;
+  padding: var(--sp-1) var(--sp-1) var(--sp-2);
+}
+
+.group__icon {
+  width: 56rpx;
+  font-size: 40rpx;
+  line-height: 1;
+  text-align: center;
+}
+
+.group__title {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-left: var(--sp-2);
+  min-width: 0;
+}
+
+.group__name {
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.group__sub {
+  margin-top: 2rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.group__ops {
+  display: flex;
+  align-items: center;
+}
+
+/* 上下移和改删都是小方块：点得到（≥ 56rpx），又不抢标题的注意力 */
+.op {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56rpx;
+  height: 56rpx;
+  margin-left: var(--sp-1);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-caption);
+  color: var(--text-2);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+}
+
+.op--danger {
+  color: var(--danger);
+}
+
+.group__warn {
+  display: block;
+  margin: 0 var(--sp-1) var(--sp-2);
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-tiny);
+  line-height: 1.5;
+  color: var(--warning);
+  background: var(--warning-weak);
+}
+
+.group__warn.is-hint {
+  color: var(--text-3);
+  background: var(--bg-sunken);
+}
+
+/* ---------------- 柜子小块 ---------------- */
+
+.cabs {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0 var(--sp-1);
+}
+
+.cab {
+  position: relative;
+  box-sizing: border-box;
+  width: calc(33.333% - 12rpx);
+  margin: 6rpx;
+  padding: var(--sp-2) var(--sp-1);
+  border-radius: var(--r-md);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-card-grid);
+  text-align: center;
+}
+
+.cab--active {
+  box-shadow: var(--shadow-raised-press);
+}
+
+.cab--add {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+}
+
+.cab__icon {
+  font-size: 44rpx;
+  line-height: 1.1;
+}
+
+.cab__name {
+  display: block;
+  margin-top: var(--sp-1);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  color: var(--text-1);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cab__meta {
+  display: block;
+  margin-top: 2rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.cab__plus {
+  font-size: 36rpx;
+  line-height: 1;
+  color: var(--text-3);
+}
+
+.cab__addtext {
+  margin-top: var(--sp-1);
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+/* 内置容器的小角标：只提示「系统自带，可改不可删」，不抢视觉 */
+.cab__tag {
+  position: absolute;
+  top: 6rpx;
+  right: 8rpx;
+  padding: 0 6rpx;
+  border-radius: var(--r-sm);
+  font-size: 18rpx;
+  line-height: 26rpx;
+  color: var(--text-3);
+  background: var(--bg-sunken);
+}
+
+.group__empty {
+  padding: var(--sp-2) 0 var(--sp-1);
+  text-align: center;
+}
+
+.group__empty-text {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.bottom-space {
+  height: 120rpx;
+}
+
+/* ---------------- 房间编辑面板 ---------------- */
+
+.field {
+  margin-top: var(--sp-3);
+}
+
+.field__label {
+  display: block;
+  margin-bottom: var(--sp-1);
+  font-size: var(--fs-caption);
+  color: var(--text-3);
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.chip {
+  min-width: 88rpx;
+  margin: 0 var(--sp-1) var(--sp-1) 0;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-caption);
+  text-align: center;
+  color: var(--text-2);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+}
+
+.chip--icon {
+  min-width: 80rpx;
+  font-size: 36rpx;
+  line-height: 1.2;
+}
+
+.chip.is-on {
+  color: var(--primary-text);
+  background: var(--primary-weak);
+  box-shadow: var(--shadow-raised-press);
+}
+
+.save-btn {
+  margin-top: var(--sp-4);
+  margin-bottom: var(--sp-2);
+}

@@ -16,14 +16,38 @@
  *   4. 多个候选编辑距离相同时放弃，不能二选一时不猜。
  *   5. 原文已经精确命中的片段直接占用，不再参与纠错，也不会被删字。
  *
+ * 位置词的来源（RM-05 / AGENTS.md §21.7）：
+ *   历史 item.location ∪ 容器名 ∪ 容器 keys ∪ 房间名 ∪「房间+容器」拼接词。
+ * 在这之前词库只统计物品文本，于是出现了自相矛盾的现状 —— **归位认容器名、
+ * 解析不认容器名**：用户新建的「阳台柜」在墙上是真实存在的，但语音说
+ * 「阳台柜 两盒药」（没有「放」字）永远解析不出位置。
+ *
+ * 两套词表，别混：
+ *   - `locations`（纠错用，长度 ≥ 3）：容器名、keys、拼接词都进，
+ *     ASR 把「阳台柜」听成「杨台柜」时能纠回来；
+ *   - `parseLocations`（解析用，长度 ≥ 2）：「厨房 / 卧室 / 书房」这类 2 字房间名
+ *     **只进这一套**。`MIN_LEN` 不能降到 2（牛奶/牛肉、可乐/可口 会大面积误纠）。
+ *
  * 纯函数 + Storage 缓存，不依赖页面。
  */
 var api = require('./api');
 
-var STORAGE_KEY = 'storage_lexicon_v1';
+// v2：词库结构变了（多了 parseLocations、locations 收了容器词）。
+// 旧缓存直接不认，不做兼容 —— 结构不同的缓存混用只会更难查
+var STORAGE_KEY = 'storage_lexicon_v2';
 var TTL = 24 * 60 * 60 * 1000;
+// 纠错词表门槛，**不许降**（降到 2 会让 2 字词大面积误纠，见文件头）
 var MIN_LEN = 3;
+// 解析词表门槛：房间名全是 2 字，只能靠这一套收
+var PARSE_MIN_LEN = 2;
 var MAX_LEN = 12;
+// 解析词表硬上限（§21.7 坑 3）：20 个容器 × 3~5 个 keys + 房间拼接能到 200 词
+var MAX_PARSE_WORDS = 200;
+// 结构词（容器名 / keys / 房间拼接）的权重：比历史文本高，保证 200 上限截断时
+// 先丢冷门历史词、而不是把刚建好的柜子名丢掉
+var STRUCT_WEIGHT = 3;
+
+var EMPTY_LEXICON = { names: [], locations: [], parseLocations: [], builtAt: 0 };
 
 /** 编辑距离（只算 Levenshtein，词都很短，直接 DP） */
 function editDistance(a, b) {
@@ -51,33 +75,73 @@ function editDistance(a, b) {
   return prev[t.length];
 }
 
-/** items（name/location）→ 词表，按出现次数排序 */
-function buildLexicon(items) {
+/**
+ * 物品 + 容器 + 房间 → 词表。
+ *
+ * @param {Array} items      GET /api/items 的行（name / location）
+ * @param {Array} containers GET /api/containers 的行（name / keys / room_id）
+ * @param {Array} rooms      GET /api/rooms 的行（id / name）
+ * @returns {{names:Array, locations:Array, parseLocations:Array, builtAt:number}}
+ */
+function buildLexicon(items, containers, rooms) {
   var nameMap = {};
   var locMap = {};
+  var parseMap = {};
 
-  function bump(map, word) {
+  function add(map, word, weight, minLen) {
     var w = String(word || '').trim();
-    if (w.length < MIN_LEN || w.length > MAX_LEN) return;
-    map[w] = (map[w] || 0) + 1;
+    if (!w || w.length < minLen || w.length > MAX_LEN) return;
+    map[w] = (map[w] || 0) + (weight || 1);
   }
 
   (items || []).forEach(function (it) {
-    bump(nameMap, it && it.name);
-    bump(locMap, it && it.location);
+    if (!it) return;
+    add(nameMap, it.name, 1, MIN_LEN);
+    add(locMap, it.location, 1, MIN_LEN);
+    add(parseMap, it.location, 1, PARSE_MIN_LEN);
   });
 
-  function toList(map) {
-    return Object.keys(map)
-      .map(function (w) { return { word: w, count: map[w] }; })
-      .sort(function (a, b) { return b.count - a.count; });
-  }
+  var roomById = {};
+  (rooms || []).forEach(function (room) {
+    if (!room || !room.id) return;
+    roomById[room.id] = room;
+    // 房间名只进解析词表：厨房 / 卧室 / 书房 全是 2 字
+    add(parseMap, room.name, STRUCT_WEIGHT, PARSE_MIN_LEN);
+  });
+
+  (containers || []).forEach(function (row) {
+    if (!row) return;
+    var name = String(row.name || '').trim();
+    add(locMap, name, STRUCT_WEIGHT, MIN_LEN);
+    add(parseMap, name, STRUCT_WEIGHT, PARSE_MIN_LEN);
+    (row.keys || []).forEach(function (k) {
+      add(locMap, k, STRUCT_WEIGHT, MIN_LEN);
+      add(parseMap, k, STRUCT_WEIGHT, PARSE_MIN_LEN);
+    });
+    // 「卧室衣柜」这种拼接词：两个房间各有一个「衣柜」时靠它区分（§21.7 坑 2）。
+    // 容器名里已经带房间名的（阳台 + 阳台柜）不再拼，否则会长出「阳台阳台柜」
+    var room = roomById[row.room_id];
+    var roomName = room ? String(room.name || '').trim() : '';
+    if (roomName && name && name.indexOf(roomName) === -1) {
+      var joined = roomName + name;
+      add(locMap, joined, STRUCT_WEIGHT, MIN_LEN);
+      add(parseMap, joined, STRUCT_WEIGHT, PARSE_MIN_LEN);
+    }
+  });
 
   return {
     names: toList(nameMap),
     locations: toList(locMap),
+    parseLocations: toList(parseMap).slice(0, MAX_PARSE_WORDS),
     builtAt: Date.now()
   };
+}
+
+/** { 词: 次数 } → [{ word, count }]，按次数降序 */
+function toList(map) {
+  return Object.keys(map)
+    .map(function (w) { return { word: w, count: map[w] }; })
+    .sort(function (a, b) { return b.count - a.count; });
 }
 
 function readCache() {
@@ -95,10 +159,15 @@ function writeCache(lex) {
 }
 
 /**
- * 取词库：优先用缓存，过期后重新拉 items 统计。
- * 网络失败时退回旧缓存（哪怕是过期的），没有就返回空词库。
+ * 取词库：优先用缓存，过期后重新拉 items + containers + rooms。
+ *
+ * 三路并发（§21.7）。失败策略要分清楚：
+ * - **items 拉不到**通常意味着后端整体不可达，此时**不要**用空数组重建，
+ *   否则会把历史词库整个清掉、纠错能力一夜归零 → 退回旧缓存；
+ * - containers / rooms 拉不到只是少几组结构词，用空数组降级即可。
+ *
  * @param {{force?: boolean}} [opts]
- * @returns {Promise<{names:Array, locations:Array, builtAt:number}>}
+ * @returns {Promise<{names:Array, locations:Array, parseLocations:Array, builtAt:number}>}
  */
 function load(opts) {
   var force = !!(opts && opts.force);
@@ -109,26 +178,36 @@ function load(opts) {
     return Promise.resolve(cached);
   }
 
-  return api.listItems()
-    .then(function (items) {
-      var lex = buildLexicon(items);
+  return Promise.all([
+    api.listItems().catch(function () { return null; }),
+    api.listContainers().catch(function () { return []; }),
+    api.listRooms().catch(function () { return []; })
+  ])
+    .then(function (res) {
+      if (!res[0]) return cached || EMPTY_LEXICON;
+      var lex = buildLexicon(res[0], res[1] || [], res[2] || []);
       writeCache(lex);
       return lex;
     })
     .catch(function () {
-      return cached || { names: [], locations: [], builtAt: 0 };
+      return cached || EMPTY_LEXICON;
     });
 }
 
 /**
  * 把用户刚确认保存的名称/位置增量写进缓存，
  * 让它下一次录同一句话时就能被纠对，不用等 24 小时刷新。
+ *
+ * **容器感知**（§21.7）：位置正好等于某个已存在的容器词组时，这一组的次数 +1
+ * 而不是新增一条 —— 下次排序它更靠前，200 词上限截断时不会被丢掉。
  */
 function remember(lex, name, location) {
   if (!lex) return lex;
-  function add(list, word) {
+  if (!lex.parseLocations) lex.parseLocations = [];
+
+  function bump(list, word, minLen) {
     var w = String(word || '').trim();
-    if (w.length < MIN_LEN || w.length > MAX_LEN) return;
+    if (!w || w.length < minLen || w.length > MAX_LEN) return;
     for (var i = 0; i < list.length; i++) {
       if (list[i].word === w) {
         list[i].count += 1;
@@ -137,8 +216,16 @@ function remember(lex, name, location) {
     }
     list.push({ word: w, count: 1 });
   }
-  add(lex.names, name);
-  add(lex.locations, location);
+
+  bump(lex.names, name, MIN_LEN);
+  bump(lex.locations, location, MIN_LEN);
+  bump(lex.parseLocations, location, PARSE_MIN_LEN);
+
+  lex.parseLocations.sort(function (a, b) { return b.count - a.count; });
+  if (lex.parseLocations.length > MAX_PARSE_WORDS) {
+    lex.parseLocations.length = MAX_PARSE_WORDS;
+  }
+
   writeCache(lex);
   return lex;
 }
@@ -253,5 +340,7 @@ module.exports = {
   correct: correct,
   editDistance: editDistance,
   MIN_LEN: MIN_LEN,
+  PARSE_MIN_LEN: PARSE_MIN_LEN,
+  MAX_PARSE_WORDS: MAX_PARSE_WORDS,
   STORAGE_KEY: STORAGE_KEY
 };

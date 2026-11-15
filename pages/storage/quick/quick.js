@@ -168,7 +168,9 @@ Page({
     var self = this;
     lexicon.load()
       .then(function (lex) { self._lexicon = lex; })
-      .catch(function () { self._lexicon = { names: [], locations: [] }; });
+      .catch(function () {
+        self._lexicon = { names: [], locations: [], parseLocations: [] };
+      });
   },
 
   /**
@@ -308,7 +310,12 @@ Page({
       });
       return;
     }
-    var result = quickParse.parseQuickInput(raw, { today: this.data.todayText });
+    // 动态位置词（RM-05）：容器名 / keys / 房间名 / 房间+容器，让
+    // 「阳台柜 两盒药」这种没说「放」的口语也能解析出位置
+    var result = quickParse.parseQuickInput(raw, {
+      today: this.data.todayText,
+      locations: (this._lexicon && this._lexicon.parseLocations) || []
+    });
     // 口语里说了位置就听话里的，没说才用从容器带过来的预填值
     var location = result.location || this._presetLocation || '';
     // 留住"解析成了什么"，保存时和用户改后的值对比，写进识别日志

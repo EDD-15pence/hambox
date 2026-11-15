@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "收拾一下",
+  "usingComponents": {
+    "conn-error": "/components/conn-error/conn-error"
+  }
+}

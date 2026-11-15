@@ -391,31 +391,41 @@ function cutLocation(rest, tail, from) {
   return (rest.slice(0, at) + ' ' + rest.slice(at + tail.length)).replace(/\s+/g, ' ').trim();
 }
 
-/** 存放位置：'放/放在/存入' 之后的一段；没有关键词就扫位置词表 */
-function extractLocation(rest) {
-  var KW = /(放在|放到|放进|放入|存入|收纳在|收纳于|存放于|收在|置于|搁在|放|存)\s*/;
-  var kw = KW.exec(rest);
-  if (kw) {
-    var tail = trimLocationTail(rest.slice(kw.index + kw[0].length));
-    if (tail) {
-      return {
-        location: tail,
-        rest: cutLocation(rest, tail, kw.index)
-      };
-    }
-  }
+/**
+ * 动态位置词表（RM-05 / §21.7）转成纯字符串数组。
+ *
+ * 传进来的可能是 `['卧室衣柜']`，也可能是 lexicon 的 `[{word, count}]` ——
+ * 两种都收，调用方不必先 map 一遍（少一个「忘了转」的坑）。
+ */
+function locationWordsOf(list) {
+  var out = [];
+  var seen = {};
+  (list || []).forEach(function (item) {
+    var word = item && typeof item === 'object' ? item.word : item;
+    var w = String(word || '').trim();
+    // 长度 ≥ 2：有人会把容器命名成「柜」「药」，单字进词表会把任意文本乱切
+    if (w.length < 2 || seen[w]) return;
+    seen[w] = true;
+    out.push(w);
+  });
+  return out;
+}
 
-  // 无关键词：找位置词，允许相邻词合并（冰箱 + 冷藏 → 冰箱冷藏）
+/**
+ * 在 text 里找出所有位置词的区间，重叠/相邻的合并成一段，返回**最后一段**。
+ * 为什么取最后一段：口语里位置通常落在句尾（`…保质期21天 冰箱冷藏`）。
+ */
+function scanLocationSpan(text, words) {
   var ranges = [];
-  for (var i = 0; i < LOCATION_WORDS.length; i++) {
-    var w = LOCATION_WORDS[i];
-    var idx = rest.indexOf(w);
+  for (var i = 0; i < words.length; i++) {
+    var w = words[i];
+    var idx = text.indexOf(w);
     while (idx !== -1) {
       ranges.push({ start: idx, end: idx + w.length });
-      idx = rest.indexOf(w, idx + 1);
+      idx = text.indexOf(w, idx + 1);
     }
   }
-  if (!ranges.length) return { location: '', rest: rest };
+  if (!ranges.length) return null;
 
   ranges.sort(function (a, b) { return a.start - b.start; });
   var merged = [];
@@ -428,14 +438,51 @@ function extractLocation(rest) {
       merged.push({ start: cur.start, end: cur.end });
     }
   }
+  return merged[merged.length - 1];
+}
 
-  var span = merged[merged.length - 1];
+/**
+ * 存放位置：'放/放在/存入' 之后的一段；没有关键词就扫位置词表。
+ *
+ * @param {string} rest 已剥掉日期/数量/语气词的剩余文本
+ * @param {Array} dynamicLocations 动态词表（容器名 / keys / 房间名 / 房间+容器）
+ */
+function extractLocation(rest, dynamicLocations) {
+  var KW = /(放在|放到|放进|放入|存入|收纳在|收纳于|存放于|收在|置于|搁在|放|存)\s*/;
+  var kw = KW.exec(rest);
+  if (kw) {
+    // 有关键词时位置就是「放」后面那一段，**动态词表不参与** ——
+    // 用户已经把位置说清楚了，不必再猜（§21.7：关键词优先级不变）
+    var tail = trimLocationTail(rest.slice(kw.index + kw[0].length));
+    if (tail) {
+      return {
+        location: tail,
+        rest: cutLocation(rest, tail, kw.index)
+      };
+    }
+  }
+
+  // 无关键词：动态词 + 静态词一起扫，允许相邻词合并（冰箱 + 冷藏 → 冰箱冷藏）。
+  // 动态词通常更长（「卧室衣柜」4 字 vs「衣柜」2 字），合并时天然最长优先
+  var words = locationWordsOf(dynamicLocations).concat(LOCATION_WORDS);
+  var span = scanLocationSpan(rest, words);
+  if (!span) return { location: '', rest: rest };
+
   var tailText = trimLocationTail(rest.slice(span.start));
   if (!tailText) return { location: '', rest: rest };
 
+  // 位置词后面是空格 = 口语分句，位置到此为止：
+  //   「阳台柜 两盒药」→ 位置「阳台柜」、名称「两盒药」
+  // 后面直接接字 = 定语或延续，交给 trimLocationTail 判断能吃到哪：
+  //   「冰箱冷藏的牛奶快过期了」→ 位置「冰箱冷藏」
+  var after = rest.charAt(span.end);
+  var cutEnd = (after === ' ' || after === '') ? span.end : span.start + tailText.length;
+  var location = rest.slice(span.start, cutEnd).trim();
+  if (!location) return { location: '', rest: rest };
+
   return {
-    location: tailText,
-    rest: cutLocation(rest, tailText, span.start)
+    location: location,
+    rest: cutLocation(rest, location, span.start)
   };
 }
 
@@ -501,7 +548,7 @@ function parseQuickInput(text, opts) {
   var qty = extractQuantity(rest);
   rest = qty.rest;
 
-  var loc = extractLocation(rest);
+  var loc = extractLocation(rest, opts && opts.locations);
   rest = loc.rest;
 
   var name = cleanupName(rest);
@@ -564,6 +611,7 @@ module.exports = {
   extractProduceDate: extractProduceDate,
   extractQuantity: extractQuantity,
   extractLocation: extractLocation,
+  locationWordsOf: locationWordsOf,
   cleanupName: cleanupName,
   CATEGORY_KEYWORDS: CATEGORY_KEYWORDS,
   CATEGORY_NAMES: CATEGORY_NAMES,

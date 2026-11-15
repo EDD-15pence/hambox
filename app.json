@@ -8,6 +8,8 @@
   "pages/storage/edit/edit",
   "pages/storage/quick/quick",
   "pages/storage/containers/containers",
+  "pages/storage/rooms/rooms",
+  "pages/storage/setup/setup",
   "pages/voice-log/voice-log",
   "pages/prompt/index/index",
   "pages/prompt/detail/index",
