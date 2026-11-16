@@ -2,7 +2,7 @@
   <view class="app-nav" style="padding-top:{{statusBarHeight}}px;padding-right:{{navRight}}px">
     <view class="nav-left">
       <text class="nav-back-icon" bindtap="onBack">‹</text>
-      <text class="app-nav__title">{{view === 'inside' ? active.name : '家里的收纳'}}</text>
+      <text class="app-nav__title">{{view === 'inside' ? active.name : '容器墙'}}</text>
     </view>
     <view class="app-nav__actions">
       <text class="nav-text-btn {{showSearch ? 'is-on' : ''}}" bindtap="onToggleSearch">搜索</text>
@@ -10,7 +10,7 @@
         wx:if="{{view === 'inside'}}"
         class="nav-text-btn"
         bindtap="onEditActive">编辑</text>
-      <text wx:else class="nav-text-btn" bindtap="onOpenRooms">整理</text>
+      <text wx:else class="nav-text-btn" bindtap="onOpenRooms">房间</text>
       <text class="nav-text-btn" bindtap="onToggleTheme">{{isDark ? '日间' : '夜间'}}</text>
     </view>
   </view>
@@ -449,7 +449,7 @@
               data-room="{{item.id}}"
               catchtap="onPickRoom">{{item.icon}} {{item.name}}</text>
           </view>
-          <text wx:if="{{!rooms.length}}" class="field__hint">还没有房间，去「整理」里先建一个。</text>
+          <text wx:if="{{!rooms.length}}" class="field__hint">还没有房间，去「房间」页先建一个。</text>
         </view>
 
         <view class="field">

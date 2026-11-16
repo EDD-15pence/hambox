@@ -518,7 +518,7 @@ Page({
         if (self._fromContainer) {
           setTimeout(function () {
             wx.navigateBack({
-              fail: function () { wx.redirectTo({ url: '/pages/storage/containers/containers' }); }
+              fail: function () { wx.redirectTo({ url: '/pages/storage/rooms/rooms' }); }
             });
           }, 700);
         }

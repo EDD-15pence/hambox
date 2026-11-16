@@ -1,7 +1,6 @@
 {
-  "navigationBarTitleText": "整理收纳",
+  "navigationBarTitleText": "家里的收纳",
   "usingComponents": {
-    "conn-error": "/components/conn-error/conn-error",
-    "room-wizard": "/components/room-wizard/room-wizard"
+    "conn-error": "/components/conn-error/conn-error"
   }
 }

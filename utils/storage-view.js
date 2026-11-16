@@ -1,20 +1,20 @@
 /**
- * 智能仓储的两种视图模式（S-06）
+ * 智能仓储的视图记忆与入口（S-06）
  *
- * 同一份物品数据有两种看法：
- *   - containers：按地方看（冰箱 / 药箱 / 储物柜…），默认
- *   - list：按清单看（搜索、分类、排序）
+ * 1.3.19 起入口结构（用户拍板：「进入仓储应该是房间页，展示每个房间的容器」）：
+ *   - **房间页（rooms）是默认入口**：按房间分组展示所有柜子，点柜子看里面
+ *   - 容器墙（containers）与清单（list）从房间页导航进，两者仍是平级 segment
  *
- * 两页是平级的，切换用 redirectTo 互相替换，**不要 navigateTo**——
- * 来回切三次会堆六层页面栈，返回键要按六下才能回首页。
- *
- * 这里统一管三件事：上次用的模式、切换前停在哪个容器、清单页的筛选状态。
+ * 这里统一管三件事：上次用的模式（list 模式直接进清单页）、切换前停在哪个容器、
+ * 清单页的筛选状态。容器墙与清单互切用 redirectTo，不要 navigateTo——
+ * 来回切三次会堆六层页面栈。
  */
 
 var MODE_KEY = 'storage_view_mode';
 var ACTIVE_KEY = 'storage_active_container';
 var LIST_KEY = 'storage_list_state';
 
+var URL_ROOMS = '/pages/storage/rooms/rooms';
 var URL_CONTAINERS = '/pages/storage/containers/containers';
 var URL_LIST = '/pages/storage/list/list';
 
@@ -39,7 +39,7 @@ function remove(key) {
   } catch (e) {}
 }
 
-/** 'containers' | 'list'，默认按容器看 */
+/** 'list' | 其他。1.3.19 起「按地方看」的默认页是房间页，不再是容器墙 */
 function getMode() {
   return read(MODE_KEY, 'containers') === 'list' ? 'list' : 'containers';
 }
@@ -48,9 +48,9 @@ function setMode(mode) {
   write(MODE_KEY, mode === 'list' ? 'list' : 'containers');
 }
 
-/** 首页点「智能仓储」时该进哪一页 */
+/** 首页点「智能仓储」时该进哪一页：清单模式进清单页，否则进房间页 */
 function entryUrl() {
-  return getMode() === 'list' ? URL_LIST : URL_CONTAINERS;
+  return getMode() === 'list' ? URL_LIST : URL_ROOMS;
 }
 
 function urlForMode(mode) {
@@ -89,6 +89,7 @@ function loadListState() {
 }
 
 module.exports = {
+  URL_ROOMS: URL_ROOMS,
   getMode: getMode,
   setMode: setMode,
   entryUrl: entryUrl,

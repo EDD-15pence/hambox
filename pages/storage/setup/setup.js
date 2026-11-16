@@ -95,7 +95,8 @@ Page({
   },
 
   goWall: function () {
-    wx.redirectTo({ url: '/pages/storage/containers/containers' });
+    // 1.3.19 起仓储默认入口是房间页，走完引导落回那里（函数名保留，别顺手改调用处）
+    wx.redirectTo({ url: '/pages/storage/rooms/rooms' });
   },
 
   onBack: function () {

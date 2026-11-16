@@ -1,21 +1,19 @@
 /**
- * 智能仓储 · 房间 / 容器整理（RM-03 / RM-04 / RM-08 / AGENTS.md §21.6 / §21.12）
+ * 智能仓储 · 房间页（默认入口，1.3.19 起）
  *
- * 家里的收纳从「一层平铺的柜子」变成「房间 → 柜子」两层。这一页有两种状态：
+ * 用户拍板（1.3.19）：「进入智能仓储应该是房间页，然后展示每个房间的容器」。
+ * 这一页就是仓储的主页：按房间分组展示所有柜子，点柜子看里面。
  *
- * - **向导态（默认）**：进页先走两步 —— 勾房间 → 按顺序给每个房间勾柜子。
- *   1.3.17 只有「管理视图」，第一次用的人不知道该从哪下手；向导则被锁在首启引导里，
- *   过了那一次就再也进不去（§21.12 一）。现在向导随时可走，逻辑与首启引导**同一份**
- *   （`components/room-wizard`）。
- * - **管理态**：房间卡片 + 上下移 + 改 + 删 + 柜子卡片，也就是 1.3.17 那套原样保留。
- *   向导点「跳过」或走完就落到这里；再点导航的「管理」也能直接来。
+ * 1.3.18 曾在这页叠过「每次进入都先弹向导」（RM-08），用户真机反馈
+ * 「向导出现的逻辑我不清楚」→ 1.3.19 收回：**向导只在首启引导（setup 页）出现**，
+ * 这页不再有任何向导入口；`components/room-wizard` 归 setup 页专用。
  *
  * 三条刻意的设计：
  *
  * 1. **删房间不删东西**：容器回到「未分组」，物品靠 `location` 文本归位，
  *    一件都不会丢 —— 和「删容器 → 东西进未归位」同一套原则（§21.3 ①）。
- * 2. **改容器不重写面板**：点柜子跳到容器墙并直接打开 S-09 的编辑面板，
- *    那里已经有名称/外观/层数/关键字/所属房间（RM-04 取「替换」而非并存）。
+ * 2. **点柜子 = 看里面**：跳容器墙并直接打开该柜子的内部视图（`?open=`）；
+ *    改名 / 换肤 / 层数从容器内部页的「编辑」按钮进（S-09 面板只有一份）。
  * 3. **不做拖拽**：容器墙的拖拽已经因为抢滚动手势要临时关 `scroll-y`（§10-20），
  *    这一页再叠一层拖拽会打架，房间排序先用上下移按钮。
  */
@@ -25,6 +23,7 @@ var api = require('../../../utils/api');
 var auth = require('../../../utils/auth');
 var containers = require('../../../utils/containers');
 var roomUtil = require('../../../utils/rooms');
+var storageUtils = require('../../../utils/storage-utils');
 
 Page({
   data: {
@@ -32,12 +31,6 @@ Page({
     navRight: nav.SAFE_RIGHT,
     isDark: false,
     baseUrl: '',
-
-    // 'wizard' 向导态（每次进入默认）| 'manage' 管理态
-    mode: 'wizard',
-    step: 1,
-    wizardRooms: [],
-    wizardContainers: [],
 
     loading: true,
     retrying: false,
@@ -54,58 +47,38 @@ Page({
     icons: roomUtil.ROOM_ICONS
   },
 
-  onLoad: function (options) {
+  onLoad: function () {
     // 页面守卫（§18）：仓储组之外的角色直接退回首页
     if (!auth.guard('storage')) return;
-    var query = options || {};
     this.setData({
       isDark: theme.getTheme(),
       statusBarHeight: nav.STATUS_BAR_HEIGHT,
       navRight: nav.SAFE_RIGHT,
-      baseUrl: api.getBaseUrl(),
-      // 从别处带 `?mode=manage` 进来直接看管理态（目前只有调试/未来入口用）
-      mode: query.mode === 'manage' ? 'manage' : 'wizard'
+      baseUrl: api.getBaseUrl()
     });
   },
 
   onShow: function () {
     var isDark = theme.getTheme();
     if (isDark !== this.data.isDark) this.setData({ isDark: isDark });
-    // 从容器编辑面板回来要重新拉：柜子可能换了房间、改了名字
+    // 从容器内部 / 编辑面板回来要重新拉：柜子可能换了房间、改了名字
     this.load();
   },
 
   onBack: function () {
-    wx.navigateBack({ delta: 1 });
+    wx.navigateBack({
+      delta: 1,
+      fail: function () { wx.reLaunch({ url: '/pages/index/index' }); }
+    });
   },
 
   onToggleTheme: function () {
     this.setData({ isDark: theme.toggleTheme() });
   },
 
-  // ==============================
-  // 向导态（RM-08）
-  // ==============================
-
-  onWizardStep: function (e) {
-    this.setData({ step: (e.detail && e.detail.step) || 1 });
-  },
-
-  /** 走完向导 → 落管理态（不是跳走，用户刚建完想看看结果） */
-  onWizardDone: function () {
-    wx.showToast({ title: '收拾好了', icon: 'none' });
-    this.setData({ mode: 'manage' });
-    this.load();
-  },
-
-  /** 跳过向导只切视图，**不动 `setup_done`**（那是首启页的事） */
-  onWizardSkip: function () {
-    this.setData({ mode: 'manage' });
-  },
-
-  /** 管理态里点「整理」回到向导，可以随时再过一遍 */
-  onReopenWizard: function () {
-    this.setData({ mode: 'wizard', step: 1 });
+  /** 去容器墙（搜索 / 在路上 / 未归位 / 清单都在那边） */
+  onOpenWall: function () {
+    wx.navigateTo({ url: '/pages/storage/containers/containers' });
   },
 
   // ==============================
@@ -126,6 +99,16 @@ Page({
         var defs = res[1];
         var items = res[2];
 
+        // 首启引导（RM-02）：本页是默认入口，三条件判断放这里，只问一次（§21.5）。
+        // 与 containers 页的判断并存：从分享链接等路径直接进容器墙时那边也守着。
+        if (!self._setupChecked) {
+          self._setupChecked = true;
+          if (storageUtils.needsSetup(defs, rooms)) {
+            wx.redirectTo({ url: '/pages/storage/setup/setup' });
+            return;
+          }
+        }
+
         // 容器定义写进共享单例：这一页的 resolve() 与墙上必须用同一套关键字
         containers.setDefs(defs);
         var counts = roomUtil.countByContainer(items, containers.resolve);
@@ -137,8 +120,6 @@ Page({
           loading: false,
           retrying: false,
           error: '',
-          wizardContainers: defs || [],
-          wizardRooms: roomObjs,
           groups: grouped.groups.map(function (g) { return self.decorateGroup(g, counts); }),
           ungrouped: self.decorateCabs(grouped.ungrouped, counts),
           ungroupedCount: grouped.ungroupedCount,
@@ -175,14 +156,14 @@ Page({
   },
 
   // ==============================
-  // 容器：点开 = 编辑（复用 S-09 面板）
+  // 容器：点开 = 看里面（编辑从容器内部页的「编辑」按钮进）
   // ==============================
 
   onOpenContainer: function (e) {
     var id = e.currentTarget.dataset.id;
     if (!id) return;
     wx.navigateTo({
-      url: '/pages/storage/containers/containers?edit=' + encodeURIComponent(id)
+      url: '/pages/storage/containers/containers?open=' + encodeURIComponent(id)
     });
   },
 

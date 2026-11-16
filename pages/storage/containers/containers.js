@@ -149,8 +149,9 @@ Page({
 
   onLoad: function (options) {
     if (!auth.guard('storage')) return;
-    // 从整理页跳进来：带 `edit=<id>` 直接开编辑面板，带 `create=1&room=<id>` 直接新建。
-    // 面板只有一份（S-09），整理页不重写一遍（§21.6 RM-04）
+    // 从房间页跳进来：带 `open=<id>` 直接看柜子里面（房间页点柜子 = 看里面）；
+    // 带 `edit=<id>` 直接开编辑面板；带 `create=1&room=<id>` 直接新建。
+    // 面板只有一份（S-09），房间页不重写一遍（§21.6 RM-04）
     var query = options || {};
     this._pendingEditor = query.edit
       ? { mode: 'edit', id: query.edit }
@@ -161,8 +162,9 @@ Page({
       navRight: nav.SAFE_RIGHT,
       baseUrl: api.getBaseUrl()
     });
-    // 从清单模式切回来时，回到切换前停留的那个柜子（只恢复一次）
-    this._restoreActiveId = storageView.loadActiveContainer();
+    // `open=<id>` 优先：从房间页点柜子直达柜子内部；
+    // 其次是从清单模式切回来时，回到切换前停留的那个柜子（只恢复一次）
+    this._restoreActiveId = query.open || storageView.loadActiveContainer();
     // 在清单页搜了「可乐」再切过来，墙上直接把可乐所在的柜子点亮
     var listState = storageView.loadListState();
     if (listState && listState.keyword) {
@@ -605,9 +607,14 @@ Page({
     this.setData({ 'editor.roomId': e.currentTarget.dataset.room || '' });
   },
 
-  /** 整理：进房间 / 容器树页面（RM-04 取「替换」，原编辑面板从那边进） */
+  /** 房间：回房间页（1.3.19 起 rooms 是仓储默认入口，这页是它的下一层）。
+   *  用 navigateBack 而不是 navigateTo：从房间页点「容器」进来时返回正好落回去，
+   *  不会在栈里叠出第二个房间页；栈底直接进来的（清单切过来）fail 时再 redirectTo */
   onOpenRooms: function () {
-    wx.navigateTo({ url: '/pages/storage/rooms/rooms' });
+    wx.navigateBack({
+      delta: 1,
+      fail: function () { wx.redirectTo({ url: '/pages/storage/rooms/rooms' }); }
+    });
   },
 
   onEditActive: function () {
