@@ -143,6 +143,8 @@ Page({
     drag: null,
     pdrag: null,
     dragOver: '',
+    // 非空 = 数据来自本地缓存（后端没连上）
+    offlineText: '',
     // 拖拽时浮出的「换柜子」胶囊，render 时按当前容器算
     xferTargets: []
   },
@@ -165,10 +167,20 @@ Page({
     // `open=<id>` 优先：从房间页点柜子直达柜子内部；
     // 其次是从清单模式切回来时，回到切换前停留的那个柜子（只恢复一次）
     this._restoreActiveId = query.open || storageView.loadActiveContainer();
-    // 在清单页搜了「可乐」再切过来，墙上直接把可乐所在的柜子点亮
-    var listState = storageView.loadListState();
-    if (listState && listState.keyword) {
-      this.setData({ keyword: listState.keyword, showSearch: true });
+    if (query.open) {
+      // 房间页点柜子 = 看里面。两个配套：
+      // ① 墙默认不画空柜子，目标柜可能不在 wall 里 → 这一轮强制画全，否则会落在墙上
+      // ② 记下来源，柜内点返回直接回房间页，别又退回一面墙
+      this._fromRooms = true;
+      this._forceShowEmpty = true;
+    }
+    // 在清单页搜了「可乐」再切过来，墙上直接把可乐所在的柜子点亮。
+    // 但 `?open=` 是「点某个柜子看里面」，带着旧搜索词会把目标柜过滤掉、又落回墙上
+    if (!query.open) {
+      var listState = storageView.loadListState();
+      if (listState && listState.keyword) {
+        this.setData({ keyword: listState.keyword, showSearch: true });
+      }
     }
     // 首次拉取交给 onShow（onLoad 之后必然触发），避免进页面连发两轮
   },
@@ -220,6 +232,8 @@ Page({
           loading: false,
           retrying: false,
           loadError: '',
+          // 断网时退回本地缓存（§10-2），顶部标出来
+          offlineText: api.cache.offlineTextOf([defs, items, pending, rooms]),
           rooms: rooms.map(roomUtil.fromServer)
         });
         self.resetPendingSelect();
@@ -250,8 +264,11 @@ Page({
     var grouped = containers.groupByContainer(this._items || [], {
       order: this._order || {},
       slots: this._slots || {},
-      showEmpty: pending.length > 0 || !!this.data.picking
+      // `_forceShowEmpty`：从房间页 `?open=` 进来那一次要能找到目标柜（哪怕是空的），
+      // 画完立刻清掉，避免整面墙一直挂着所有空柜子
+      showEmpty: pending.length > 0 || !!this.data.picking || !!this._forceShowEmpty
     });
+    this._forceShowEmpty = false;
 
     // 留一份没被搜索过滤的墙，改关键词时不用重新请求
     this._rawWall = grouped.wall;
@@ -399,6 +416,14 @@ Page({
       return;
     }
     if (this.data.view === 'inside') {
+      // 从房间页点柜子进来的：返回就回房间页，别让用户先退到一面墙再退一层
+      if (this._fromRooms) {
+        wx.navigateBack({
+          delta: 1,
+          fail: function () { wx.redirectTo({ url: '/pages/storage/rooms/rooms' }); }
+        });
+        return;
+      }
       this.setData({ view: 'wall', active: null });
       return;
     }

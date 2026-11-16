@@ -41,6 +41,12 @@
         <text class="ui-notice__action">重试</text>
       </view>
 
+      <!-- 断网：显示的是本地缓存的旧数据，必须让人看出来（§10-2） -->
+      <view wx:if="{{offlineText}}" class="ui-notice is-offline" bindtap="onRetry">
+        <text class="ui-notice__text">{{offlineText}}</text>
+        <text class="ui-notice__action">重试</text>
+      </view>
+
         <view class="tip">
           <text class="tip__text">房间只是分组：删房间、搬柜子都不会丢东西，东西还是靠位置归位。</text>
         </view>

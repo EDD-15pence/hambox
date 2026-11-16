@@ -10,6 +10,8 @@
 
 var env = require('./env');
 var auth = require('./auth');
+// 读数据的本地缓存（§10-2）：成功即写、断网退回，页面靠 `__cachedAt` 标「离线数据」
+var apiCache = require('./api-cache');
 
 var TIMEOUT = 8000;
 // 内网不通时没必要等满 8 秒：同一 WiFi 下 3 秒还没响应基本就是不在家
@@ -315,22 +317,25 @@ function toViewCategory(row) {
  * 数据量是家庭仓储级别，一次全量拉到本地做筛选/排序，和原来的本地逻辑保持一致。
  */
 function listItems() {
-  var collected = [];
+  // 翻页拼装整体走缓存：中途断网不该只拿到半份物品
+  return apiCache.withCache('items', function () {
+    var collected = [];
 
-  function step(page) {
-    var query = '?page=' + page + '&limit=100&sort=created';
-    return request('/api/items' + query).then(function (data) {
-      (data.items || []).forEach(function (row) {
-        collected.push(toViewItem(row));
+    function step(page) {
+      var query = '?page=' + page + '&limit=100&sort=created';
+      return request('/api/items' + query).then(function (data) {
+        (data.items || []).forEach(function (row) {
+          collected.push(toViewItem(row));
+        });
+        if (data.items && data.items.length > 0 && collected.length < data.total) {
+          return step(page + 1);
+        }
+        return collected;
       });
-      if (data.items && data.items.length > 0 && collected.length < data.total) {
-        return step(page + 1);
-      }
-      return collected;
-    });
-  }
+    }
 
-  return step(1);
+    return step(1);
+  });
 }
 
 function getItem(id) {
@@ -354,8 +359,11 @@ function deleteItem(id) {
 // ==============================
 
 function listCategories() {
-  return request('/api/categories').then(function (data) {
-    return (data.items || []).map(toViewCategory);
+  // 与物品一起加载：只缓存物品不缓存分类，断网时 Promise.all 仍会整页失败
+  return apiCache.withCache('categories', function () {
+    return request('/api/categories').then(function (data) {
+      return (data.items || []).map(toViewCategory);
+    });
   });
 }
 
@@ -443,8 +451,10 @@ function uploadImage(filePath) {
  * 多一层 camelCase 转换只会让「容器字段」有两套叫法。
  */
 function listContainers() {
-  return request('/api/containers').then(function (data) {
-    return data.items || [];
+  return apiCache.withCache('containers', function () {
+    return request('/api/containers').then(function (data) {
+      return data.items || [];
+    });
   });
 }
 
@@ -469,8 +479,10 @@ function deleteContainer(id) {
  * 映射成页面对象的工作交给 `utils/rooms.js`。
  */
 function listRooms() {
-  return request('/api/rooms').then(function (data) {
-    return data.items || [];
+  return apiCache.withCache('rooms', function () {
+    return request('/api/rooms').then(function (data) {
+      return data.items || [];
+    });
   });
 }
 
@@ -521,8 +533,10 @@ function toViewPending(row) {
 }
 
 function listPending() {
-  return request('/api/pending').then(function (data) {
-    return (data.items || []).map(toViewPending);
+  return apiCache.withCache('pending', function () {
+    return request('/api/pending').then(function (data) {
+      return (data.items || []).map(toViewPending);
+    });
   });
 }
 
@@ -1116,6 +1130,7 @@ function suggestionDelete(id) {
 }
 
 module.exports = {
+  cache: apiCache,
   getBaseUrl: env.getBaseUrl,
   probe: probe,
   request: request,

@@ -35,6 +35,8 @@ Page({
     loading: true,
     retrying: false,
     error: '',
+    // 非空 = 这份数据来自本地缓存（后端没连上），顶部显示「离线数据 · X 前更新」
+    offlineText: '',
 
     groups: [],
     ungrouped: [],
@@ -120,6 +122,8 @@ Page({
           loading: false,
           retrying: false,
           error: '',
+          // 断网时三个列表会各自退回缓存（§10-2）：不能装作是最新数据
+          offlineText: api.cache.offlineTextOf([rooms, defs, items]),
           groups: grouped.groups.map(function (g) { return self.decorateGroup(g, counts); }),
           ungrouped: self.decorateCabs(grouped.ungrouped, counts),
           ungroupedCount: grouped.ungroupedCount,

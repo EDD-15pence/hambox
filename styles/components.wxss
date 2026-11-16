@@ -596,6 +596,18 @@
   color: var(--warning);
 }
 
+/* 离线数据提示（§10-2）：显示的是本地缓存的旧数据。不是错误，
+   所以走中性色 —— 别跟「这次没刷新成功」那种真错误抢注意力，
+   但也不能省掉：让人以为看到的是实时数据才是更糟的事 */
+.ui-notice.is-offline {
+  background: var(--bg-sunken);
+}
+
+.ui-notice.is-offline .ui-notice__text,
+.ui-notice.is-offline .ui-notice__action {
+  color: var(--text-2);
+}
+
 /* ============================================================
  * 搜索框：凹陷输入槽 + 右侧清空
  *

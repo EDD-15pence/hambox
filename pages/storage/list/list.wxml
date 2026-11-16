@@ -56,6 +56,12 @@
       <text class="ui-notice__action">重试</text>
     </view>
 
+    <!-- 断网：显示的是本地缓存的旧数据（§10-2） -->
+    <view wx:if="{{offlineText}}" class="ui-notice is-offline" bindtap="onRetry">
+      <text class="ui-notice__text">{{offlineText}}</text>
+      <text class="ui-notice__action">重试</text>
+    </view>
+
     <!-- 顶部统计：三个凹陷槽，点一下按状态筛选 -->
     <view class="stats">
       <view

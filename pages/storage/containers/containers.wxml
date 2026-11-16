@@ -49,6 +49,12 @@
         <text class="ui-notice__action">重试</text>
       </view>
 
+      <!-- 断网：显示的是本地缓存的旧数据（§10-2） -->
+      <view wx:if="{{offlineText}}" class="ui-notice is-offline" bindtap="onRetry">
+        <text class="ui-notice__text">{{offlineText}}</text>
+        <text class="ui-notice__action">重试</text>
+      </view>
+
       <!-- 在路上：买了还没到的，拖到柜子里就算放好了；也可以多选一次放完 -->
       <view wx:if="{{pendingCount > 0}}" class="pending">
         <view class="pending__head">

@@ -28,6 +28,8 @@ Page({
     loading: true,
     retrying: false,
     loadError: '',
+    // 非空 = 数据来自本地缓存（后端没连上）
+    offlineText: '',
     baseUrl: '',
     banner: { show: false, expiredCount: 0, warningCount: 0 },
     // 顶部三个统计块
@@ -107,7 +109,13 @@ Page({
 
     return Promise.all([api.listItems(), api.listCategories()])
       .then(function (results) {
-        self.setData({ loading: false, retrying: false, loadError: '' });
+        self.setData({
+          loading: false,
+          retrying: false,
+          loadError: '',
+          // 断网时物品 / 分类各自退回缓存（§10-2）
+          offlineText: api.cache.offlineTextOf(results)
+        });
         self.render(results[0], results[1], sortBy);
       })
       .catch(function (err) {
