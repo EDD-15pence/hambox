@@ -33,10 +33,158 @@
   padding: var(--sp-2) var(--page-x) 0;
 }
 
+/* ---------------- 搜索（常驻顶部） ---------------- */
+
+.search {
+  display: flex;
+  align-items: center;
+  height: 72rpx;
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-pill);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-sunken-sm);
+}
+
+.search__icon {
+  flex: none;
+  margin-right: var(--sp-2);
+  font-size: var(--fs-caption);
+  line-height: 1;
+  opacity: 0.55;
+}
+
+.search__input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  font-size: var(--fs-body);
+  color: var(--text-1);
+}
+
+.search__ph {
+  color: var(--text-3);
+  font-size: var(--fs-caption);
+}
+
+/* 清空按钮：32rpx 的字放进 56rpx 的点击区 */
+.search__clear {
+  flex: none;
+  width: 56rpx;
+  height: 56rpx;
+  margin-right: -12rpx;
+  font-size: var(--fs-caption);
+  line-height: 56rpx;
+  text-align: center;
+  color: var(--text-3);
+}
+
+/* ---------------- 搜索结果 ---------------- */
+
+.sr__head {
+  display: flex;
+  align-items: baseline;
+  margin: var(--sp-3) var(--sp-1) var(--sp-1);
+}
+
+.sr__count {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.sr__hint {
+  flex: 1;
+  margin-left: var(--sp-2);
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.sr {
+  display: flex;
+  align-items: center;
+  margin-top: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.sr--active {
+  box-shadow: var(--shadow-raised-press);
+}
+
+.sr__icon {
+  flex: none;
+  width: 56rpx;
+  font-size: 34rpx;
+  line-height: 1;
+  text-align: center;
+}
+
+.sr__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  margin-left: var(--sp-2);
+}
+
+.sr__name {
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: var(--text-1);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sr__meta {
+  margin-top: 2rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sr__qty {
+  flex: none;
+  margin-left: var(--sp-2);
+  font-size: var(--fs-caption);
+  color: var(--text-2);
+}
+
+.sr__more {
+  margin-top: var(--sp-2);
+  text-align: center;
+}
+
+.sr__more-text {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+/* ---------------- 新建房间（页面最下面） ---------------- */
+
+.add-room {
+  margin-top: var(--sp-4);
+}
+
+/* 页面底部的轻量入口：清单页要留着，但不该跟「新建房间」抢注意力 */
+.foot-links {
+  margin-top: var(--sp-3);
+  text-align: center;
+}
+
+.foot-link {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
 /* ---------------- 顶部提示 ---------------- */
 
 .tip {
-  margin-top: var(--sp-1);
+  margin-top: var(--sp-3);
   padding: var(--sp-2) var(--sp-3);
   border-radius: var(--r-md);
   background: var(--bg-sunken);

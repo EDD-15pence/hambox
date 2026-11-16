@@ -8,7 +8,7 @@
     <view class="app-nav__actions">
       <text class="nav-text-btn {{showSearch ? 'is-on' : ''}}" bindtap="onToggleSearch">搜索</text>
       <text class="nav-text-btn" bindtap="onOpenCategoryModal">分类</text>
-      <text class="nav-text-btn" bindtap="onToggleTheme">{{isDark ? '日间' : '夜间'}}</text>
+      <text class="nav-icon-btn" bindtap="onToggleTheme">{{isDark ? '☀️' : '🌙'}}</text>
     </view>
   </view>
 

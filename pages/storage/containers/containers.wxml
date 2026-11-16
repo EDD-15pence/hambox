@@ -11,7 +11,7 @@
         class="nav-text-btn"
         bindtap="onEditActive">编辑</text>
       <text wx:else class="nav-text-btn" bindtap="onOpenRooms">房间</text>
-      <text class="nav-text-btn" bindtap="onToggleTheme">{{isDark ? '日间' : '夜间'}}</text>
+      <text class="nav-icon-btn" bindtap="onToggleTheme">{{isDark ? '☀️' : '🌙'}}</text>
     </view>
   </view>
 

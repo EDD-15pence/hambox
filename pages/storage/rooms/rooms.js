@@ -16,6 +16,13 @@
  *    改名 / 换肤 / 层数从容器内部页的「编辑」按钮进（S-09 面板只有一份）。
  * 3. **不做拖拽**：容器墙的拖拽已经因为抢滚动手势要临时关 `scroll-y`（§10-20），
  *    这一页再叠一层拖拽会打架，房间排序先用上下移按钮。
+ *
+ * 1.3.21 布局调整（用户真机反馈）：
+ * - 导航只留「返回 + 标题 + 主题图标」：原来「容器 / ＋ 房间 / 夜间」三个文字按钮
+ *   把标题挤成「家里…」。主题换成图标，新建房间挪到页面最下面。
+ * - 去掉「容器」按钮，**搜索框常驻页面顶部**：找东西是这个页面最高频的动作，
+ *   不该先点一次「搜索」才出现输入框。搜的是物品（名字 / 位置 / 备注），
+ *   直接列结果、点一条就进它所在的柜子 —— 不经过容器墙。
  */
 var nav = require('../../../utils/nav');
 var theme = require('../../../utils/theme');
@@ -38,10 +45,17 @@ Page({
     // 非空 = 这份数据来自本地缓存（后端没连上），顶部显示「离线数据 · X 前更新」
     offlineText: '',
 
+    // 搜索（常驻顶部）：输入即搜物品，不经过容器墙
+    keyword: '',
+    results: [],
+    resultCount: 0,
+    resultMore: 0,
+
     groups: [],
     ungrouped: [],
     ungroupedCount: 0,
     total: 0,
+    roomCount: 0,
 
     // 房间编辑面板：null = 关着
     editor: null,
@@ -76,11 +90,6 @@ Page({
 
   onToggleTheme: function () {
     this.setData({ isDark: theme.toggleTheme() });
-  },
-
-  /** 去容器墙（搜索 / 在路上 / 未归位 / 清单都在那边） */
-  onOpenWall: function () {
-    wx.navigateTo({ url: '/pages/storage/containers/containers' });
   },
 
   // ==============================
@@ -118,6 +127,13 @@ Page({
         var roomObjs = (rooms || []).map(roomUtil.fromServer);
         var grouped = roomUtil.groupContainers(containers.getDefs(), roomObjs);
 
+        // 搜索是本页的最高频动作（找东西），物品留一份在内存里，输入即筛不请求
+        self._items = items || [];
+        // 命中结果要写「厨房 · 冰箱」，柜子只带 roomId，房间名在这页才拼得出来
+        var roomNames = {};
+        grouped.groups.forEach(function (g) { roomNames[g.id] = g.name; });
+        self._roomNames = roomNames;
+
         self.setData({
           loading: false,
           retrying: false,
@@ -127,8 +143,12 @@ Page({
           groups: grouped.groups.map(function (g) { return self.decorateGroup(g, counts); }),
           ungrouped: self.decorateCabs(grouped.ungrouped, counts),
           ungroupedCount: grouped.ungroupedCount,
-          total: grouped.total
+          total: grouped.total,
+          roomCount: (rooms || []).length
         });
+
+        // 从柜内返回时关键词还在：数据换了（可能刚改过名字）要把结果重算一遍
+        if (self.data.keyword) self.applySearch(self.data.keyword);
       })
       .catch(function (err) {
         self.setData({
@@ -157,6 +177,83 @@ Page({
 
   onRetry: function () {
     this.load();
+  },
+
+  // ==============================
+  // 搜索（常驻顶部，输入即筛）
+  // ==============================
+
+  onSearchInput: function (e) {
+    var value = (e.detail && e.detail.value) || '';
+    // 输入框的 value 绑的是原始输入（别 trim 回写，否则打不出空格）
+    this.setData({ keyword: value });
+    this.applySearch(value);
+  },
+
+  onClearSearch: function () {
+    this.setData({ keyword: '', results: [], resultCount: 0, resultMore: 0 });
+  },
+
+  /**
+   * 在内存里的物品上过一遍。走 `storageUtils.filterItems` 而不是自己写 ——
+   * 清单页搜的也是这个名字 / 位置 / 备注三路，两处口径必须一致。
+   */
+  applySearch: function (keyword) {
+    var kw = String(keyword || '').trim();
+    if (!kw) {
+      this.setData({ results: [], resultCount: 0, resultMore: 0 });
+      return;
+    }
+
+    var items = this._items || [];
+    var roomNames = this._roomNames || {};
+    var matched = storageUtils.filterItems(items, kw, 'all');
+
+    // 名称直接命中的排前面：搜「牛奶」时叫「牛奶」的不该排在备注里提到牛奶的后面
+    var lower = kw.toLowerCase();
+    matched = matched.slice().sort(function (a, b) {
+      var an = (a.name || '').toLowerCase().indexOf(lower) !== -1 ? 0 : 1;
+      var bn = (b.name || '').toLowerCase().indexOf(lower) !== -1 ? 0 : 1;
+      if (an !== bn) return an - bn;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+
+    var LIMIT = 40;
+    var rows = matched.slice(0, LIMIT).map(function (it) {
+      var cabId = containers.resolve(it.location);
+      var cab = containers.getContainer(cabId) || {};
+      var roomName = roomNames[cab.roomId] || '';
+      return {
+        id: it.id,
+        name: it.name || '未命名',
+        emoji: cab.icon || '📦',
+        // 「厨房 · 冰箱」，没有房间就只写柜子；柜子都认不出就是「未归位」
+        cabText: roomName ? roomName + ' · ' + (cab.name || '') : (cab.name || '未归位'),
+        locationText: it.location || '没写位置',
+        quantityText: (it.quantity === undefined || it.quantity === null ? 1 : it.quantity) + (it.unit || ''),
+        cabId: cabId
+      };
+    });
+
+    this.setData({
+      results: rows,
+      resultCount: matched.length,
+      resultMore: Math.max(0, matched.length - rows.length)
+    });
+  },
+
+  /** 清单页：排序 / 分类只有那边有，入口放在页面最下面，不占导航 */
+  onOpenList: function () {
+    wx.navigateTo({ url: '/pages/storage/list/list' });
+  },
+
+  /** 点搜索结果 = 进它所在的柜子（和点柜子同一条路，不经过容器墙） */
+  onOpenResult: function (e) {
+    var cabId = e.currentTarget.dataset.cab;
+    if (!cabId) return;
+    wx.navigateTo({
+      url: '/pages/storage/containers/containers?open=' + encodeURIComponent(cabId)
+    });
   },
 
   // ==============================

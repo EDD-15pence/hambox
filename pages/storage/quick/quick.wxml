@@ -6,7 +6,7 @@
     </view>
     <view class="app-nav__actions">
       <text class="nav-text-btn" bindtap="onGoList">物品列表</text>
-      <text class="nav-text-btn" bindtap="onToggleTheme">{{isDark ? '日间' : '夜间'}}</text>
+      <text class="nav-icon-btn" bindtap="onToggleTheme">{{isDark ? '☀️' : '🌙'}}</text>
     </view>
   </view>
 

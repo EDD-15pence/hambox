@@ -4,13 +4,12 @@
       <text class="nav-back-icon" bindtap="onBack">‹</text>
       <view class="app-nav__titles">
         <text class="app-nav__title">家里的收纳</text>
-        <text class="app-nav__sub">房间 › 柜子</text>
+        <!-- 不再是「房间 › 柜子」那种路径：这一页本来就是房间，写数量更有用 -->
+        <text class="app-nav__sub">{{roomCount}} 个房间 · {{total}} 个柜子</text>
       </view>
     </view>
     <view class="app-nav__actions">
-      <text class="nav-text-btn" bindtap="onOpenWall">容器</text>
-      <text class="nav-text-btn" bindtap="onCreateRoom">＋ 房间</text>
-      <text class="nav-text-btn" bindtap="onToggleTheme">{{isDark ? '日间' : '夜间'}}</text>
+      <text class="nav-icon-btn" bindtap="onToggleTheme">{{isDark ? '☀️' : '🌙'}}</text>
     </view>
   </view>
 
@@ -36,6 +35,19 @@
 
   <scroll-view wx:else class="page-scroll" scroll-y>
     <view class="page-body">
+      <!-- 搜索常驻：找东西是这一页最高频的动作，不该先点一次「搜索」才出现输入框 -->
+      <view class="search">
+        <text class="search__icon">🔍</text>
+        <input
+          class="search__input"
+          value="{{keyword}}"
+          placeholder="搜物品：名字 / 位置 / 备注"
+          placeholder-class="search__ph"
+          confirm-type="search"
+          bindinput="onSearchInput" />
+        <text wx:if="{{keyword}}" class="search__clear" bindtap="onClearSearch">✕</text>
+      </view>
+
       <view wx:if="{{error}}" class="ui-notice" bindtap="onRetry">
         <text class="ui-notice__text">这次没刷新成功 · {{error}}</text>
         <text class="ui-notice__action">重试</text>
@@ -47,10 +59,35 @@
         <text class="ui-notice__action">重试</text>
       </view>
 
-        <view class="tip">
-          <text class="tip__text">房间只是分组：删房间、搬柜子都不会丢东西，东西还是靠位置归位。</text>
+      <!-- ==================== 搜索结果（有关键词时顶掉房间视图） ==================== -->
+      <block wx:if="{{keyword}}">
+        <view class="sr__head">
+          <text class="sr__count">{{resultCount}} 件</text>
+          <text class="sr__hint">按柜子归位，点一条进柜子</text>
         </view>
 
+        <view wx:for="{{results}}" wx:key="id" class="sr" data-cab="{{item.cabId}}" bindtap="onOpenResult" hover-class="sr--active" hover-stay-time="80">
+          <text class="sr__icon">{{item.emoji}}</text>
+          <view class="sr__main">
+            <text class="sr__name">{{item.name}}</text>
+            <text class="sr__meta">{{item.cabText}} · {{item.locationText}}</text>
+          </view>
+          <text class="sr__qty num">{{item.quantityText}}</text>
+        </view>
+
+        <view wx:if="{{resultMore}}" class="sr__more">
+          <text class="sr__more-text">还有 {{resultMore}} 件没列出来，再输几个字缩小范围</text>
+        </view>
+
+        <view wx:if="{{!resultCount}}" class="ui-empty">
+          <text class="ui-empty__icon">🔍</text>
+          <text class="ui-empty__title">没找到「{{keyword}}」</text>
+          <text class="ui-empty__hint">试试物品名的一两个字，或者写信箱里的位置（比如「冰箱」）。</text>
+        </view>
+      </block>
+
+      <!-- ==================== 房间视图 ==================== -->
+      <block wx:else>
         <!-- ==================== 房间分组 ==================== -->
         <view wx:for="{{groups}}" wx:key="id" class="group">
           <view class="group__head">
@@ -140,15 +177,27 @@
           </view>
         </view>
 
-        <!-- 一个房间都没有：引导去首启向导或手动建 -->
+        <!-- 一个房间都没有：下面就是新建入口，这里只交代一句 -->
         <view wx:if="{{!groups.length && !ungroupedCount}}" class="ui-empty">
           <text class="ui-empty__icon">🏠</text>
           <text class="ui-empty__title">还没建过房间</text>
           <text class="ui-empty__hint">先建「厨房」「主卧」这样的房间，再把柜子放进去。之后记东西时说「阳台柜」也能认出位置。</text>
-          <button class="ui-btn is-primary ui-empty__action" bindtap="onCreateRoom">＋ 新建房间</button>
+        </view>
+
+        <!-- 新建房间：从导航挪到页面最下面（导航留给搜索和标题） -->
+        <button class="ui-btn is-block add-room" bindtap="onCreateRoom">＋ 新建房间</button>
+
+        <!-- 清单页的唯一入口。导航腾空后不能把它弄丢：按过期排序、按分类看只有那边有 -->
+        <view class="foot-links">
+          <text class="foot-link" bindtap="onOpenList">按清单看（排序 / 分类）›</text>
+        </view>
+
+        <view class="tip">
+          <text class="tip__text">房间只是分组：删房间、搬柜子都不会丢东西，东西还是靠位置归位。</text>
         </view>
 
         <view class="bottom-space"></view>
+      </block>
     </view>
   </scroll-view>
 

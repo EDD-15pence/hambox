@@ -177,6 +177,32 @@
   box-shadow: var(--shadow-raised-press);
 }
 
+/* 导航右侧图标按钮（主题切换专用）
+ *
+ * 上面的约定是「按钮内不放 emoji」，这里是一个刻意的例外：日间 / 夜间是
+ * **状态**不是动作，两个字要占 88rpx，把标题挤成「家里…」；换成图标后
+ * 只占 56rpx，标题能完整显示。点击面积仍然按 64rpx 高给足。
+ *
+ * 用法：<text class="nav-icon-btn" bindtap="onToggleTheme">{{isDark ? '☀️' : '🌙'}}</text>
+ */
+.nav-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56rpx;
+  height: 64rpx;
+  border-radius: var(--r-sm);
+  font-size: 30rpx;
+  line-height: 1;
+  opacity: 0.85;
+  transition: opacity var(--dur-fast) ease-out, box-shadow var(--dur-fast) ease-out;
+}
+
+.nav-icon-btn:active {
+  opacity: 1;
+  box-shadow: var(--shadow-raised-press);
+}
+
 /* ============================================================
  * 分段控件：同一份数据的两种看法（容器 / 清单）
  *
