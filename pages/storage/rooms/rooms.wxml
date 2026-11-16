@@ -5,7 +5,7 @@
       <view class="app-nav__titles">
         <text class="app-nav__title">家里的收纳</text>
         <!-- 不再是「房间 › 柜子」那种路径：这一页本来就是房间，写数量更有用 -->
-        <text class="app-nav__sub">{{roomCount}} 个房间 · {{total}} 个柜子</text>
+        <text class="app-nav__sub">{{roomCount}} 个房间 · {{total}} 个容器</text>
       </view>
     </view>
     <view class="app-nav__actions">
@@ -63,7 +63,7 @@
       <block wx:if="{{keyword}}">
         <view class="sr__head">
           <text class="sr__count">{{resultCount}} 件</text>
-          <text class="sr__hint">按柜子归位，点一条进柜子</text>
+          <text class="sr__hint">按容器归位，点一条进容器</text>
         </view>
 
         <view wx:for="{{results}}" wx:key="id" class="sr" data-cab="{{item.cabId}}" bindtap="onOpenResult" hover-class="sr--active" hover-stay-time="80">
@@ -94,7 +94,7 @@
             <text class="group__icon">{{item.icon}}</text>
             <view class="group__title">
               <text class="group__name">{{item.name}}</text>
-              <text class="group__sub">{{item.count}} 个柜子</text>
+              <text class="group__sub">{{item.count}} 个容器</text>
             </view>
             <view class="group__ops">
               <text
@@ -120,7 +120,7 @@
           </view>
 
           <text wx:if="{{item.dupNames.length}}" class="group__warn">
-            同房间有两个「{{item.dupNames[0]}}」，建议把「房间 + 柜子」写进关键字
+            同房间有两个「{{item.dupNames[0]}}」，建议把「房间 + 容器」写进关键字
           </text>
 
           <view class="cabs">
@@ -131,6 +131,7 @@
               class="cab"
               data-id="{{cab.id}}"
               bindtap="onOpenContainer"
+              bindlongpress="onEditContainer"
               hover-class="cab--active"
               hover-stay-time="80">
               <text class="cab__icon">{{cab.icon}}</text>
@@ -141,12 +142,12 @@
 
             <view class="cab cab--add" data-room="{{item.id}}" bindtap="onAddContainer">
               <text class="cab__plus">＋</text>
-              <text class="cab__addtext">柜子</text>
+              <text class="cab__addtext">容器</text>
             </view>
           </view>
 
           <view wx:if="{{!item.containers.length}}" class="group__empty">
-            <text class="group__empty-text">这个房间还没有柜子</text>
+            <text class="group__empty-text">这个房间还没有容器</text>
           </view>
         </view>
 
@@ -156,10 +157,10 @@
             <text class="group__icon">📦</text>
             <view class="group__title">
               <text class="group__name">未分组</text>
-              <text class="group__sub">{{ungroupedCount}} 个柜子</text>
+              <text class="group__sub">{{ungroupedCount}} 个容器</text>
             </view>
           </view>
-          <text class="group__warn is-hint">这些柜子还没分到房间，点开就能选。</text>
+          <text class="group__warn is-hint">这些容器还没分到房间，点开就能选。</text>
           <view class="cabs">
             <view
               wx:for="{{ungrouped}}"
@@ -168,6 +169,7 @@
               class="cab"
               data-id="{{cab.id}}"
               bindtap="onOpenContainer"
+              bindlongpress="onEditContainer"
               hover-class="cab--active"
               hover-stay-time="80">
               <text class="cab__icon">{{cab.icon}}</text>
@@ -181,11 +183,14 @@
         <view wx:if="{{!groups.length && !ungroupedCount}}" class="ui-empty">
           <text class="ui-empty__icon">🏠</text>
           <text class="ui-empty__title">还没建过房间</text>
-          <text class="ui-empty__hint">先建「厨房」「主卧」这样的房间，再把柜子放进去。之后记东西时说「阳台柜」也能认出位置。</text>
+          <text class="ui-empty__hint">先建「厨房」「主卧」这样的房间，再把容器放进去。之后记东西时说「阳台柜」也能认出位置。</text>
         </view>
 
         <!-- 新建房间：从导航挪到页面最下面（导航留给搜索和标题） -->
         <button class="ui-btn is-block add-room" bindtap="onCreateRoom">＋ 新建房间</button>
+
+        <!-- 整理收纳：手动打开两步向导（批量建房间 + 容器）。绝不自动弹（1.3.19 的教训） -->
+        <button class="ui-btn is-block open-wizard" bindtap="onOpenWizard">整理收纳 · 一次加一批房间和容器</button>
 
         <!-- 清单页的唯一入口。导航腾空后不能把它弄丢：按过期排序、按分类看只有那边有 -->
         <view class="foot-links">
@@ -193,13 +198,38 @@
         </view>
 
         <view class="tip">
-          <text class="tip__text">房间只是分组：删房间、搬柜子都不会丢东西，东西还是靠位置归位。</text>
+          <text class="tip__text">房间只是分组：删房间、搬容器都不会丢东西，东西还是靠位置归位。长按容器可直接改名 / 改层数 / 换房间。</text>
         </view>
 
         <view class="bottom-space"></view>
       </block>
     </view>
   </scroll-view>
+
+  <!-- ==================== 整理向导（整屏，手动打开） ==================== -->
+  <view wx:if="{{wizardOn}}" class="wz-layer">
+    <view class="app-nav" style="padding-top:{{statusBarHeight}}px;padding-right:{{navRight}}px">
+      <view class="nav-left">
+        <text class="nav-back-icon" bindtap="onWizardBack">‹</text>
+        <view class="app-nav__titles">
+          <text class="app-nav__title">{{wzStep === 1 ? '收拾一下' : '每个房间放什么'}}</text>
+          <text class="app-nav__sub">第 {{wzStep}} / 2 步</text>
+        </view>
+      </view>
+      <view class="app-nav__actions">
+        <text class="nav-text-btn" bindtap="closeWizard">关闭</text>
+      </view>
+    </view>
+
+    <!-- 与首启引导同一份组件：只提交新增、409 跳过、取消勾选不删 -->
+    <room-wizard
+      id="wz"
+      existing-rooms="{{existingRooms}}"
+      existing-containers="{{existingContainers}}"
+      bind:stepchange="onWizardStep"
+      bind:done="onWizardDone"
+      bind:skip="closeWizard" />
+  </view>
 
   <!-- ==================== 房间编辑面板 ==================== -->
   <view wx:if="{{editor}}" class="ui-mask" bindtap="onCloseEditor">

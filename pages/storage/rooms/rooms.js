@@ -23,6 +23,13 @@
  * - 去掉「容器」按钮，**搜索框常驻页面顶部**：找东西是这个页面最高频的动作，
  *   不该先点一次「搜索」才出现输入框。搜的是物品（名字 / 位置 / 备注），
  *   直接列结果、点一条就进它所在的柜子 —— 不经过容器墙。
+ *
+ * 1.3.22 把「整理」找回来（用户「整理页怎么不见了，可以快速修改房间和容器」）：
+ * - **底部「整理收纳」入口**：手动打开两步向导（勾房间 → 勾容器，批量建）。
+ *   1.3.19 收回的是「每次进入自动弹」，不是能力本身 —— 现在改成**只有点了才开**，
+ *   走完 / 关闭都不写 `setup_done`（那是首启页的事，见 §21.12 八 D 第 3 条）。
+ * - **长按容器小块 = 直接进编辑面板**（改名 / 层数 / 关键字 / 换房间），
+ *   点了才跳，仍然复用 S-09 那一份面板，不在这页重写。
  */
 var nav = require('../../../utils/nav');
 var theme = require('../../../utils/theme');
@@ -57,6 +64,13 @@ Page({
     total: 0,
     roomCount: 0,
 
+    // 整理向导（手动打开，绝不自动弹）
+    wizardOn: false,
+    wzStep: 1,
+    // 交给向导组件的两份现状：房间（预勾 + 判重）与容器原始行（认领内置柜子要用 is_builtin / keys / rows）
+    existingRooms: [],
+    existingContainers: [],
+
     // 房间编辑面板：null = 关着
     editor: null,
     saving: false,
@@ -82,6 +96,11 @@ Page({
   },
 
   onBack: function () {
+    // 向导开着时，返回键先退一步 / 关掉向导，不要把整页退掉
+    if (this.data.wizardOn) {
+      this.onWizardBack();
+      return;
+    }
     wx.navigateBack({
       delta: 1,
       fail: function () { wx.reLaunch({ url: '/pages/index/index' }); }
@@ -90,6 +109,47 @@ Page({
 
   onToggleTheme: function () {
     this.setData({ isDark: theme.toggleTheme() });
+  },
+
+  // ==============================
+  // 整理向导（底部入口，手动打开）
+  // ==============================
+
+  onOpenWizard: function () {
+    if (!this.data.existingContainers.length) {
+      wx.showToast({ title: '数据还没到，稍等一下', icon: 'none' });
+      return;
+    }
+    this.setData({ wizardOn: true, wzStep: 1 });
+  },
+
+  /** 向导里的返回：第 2 步先退到第 1 步，第 1 步才关掉向导 */
+  onWizardBack: function () {
+    var wz = this.selectComponent('#wz');
+    if (wz && wz.data.step === 2) {
+      wz.onPrev();
+      return;
+    }
+    this.closeWizard();
+  },
+
+  onWizardStep: function (e) {
+    this.setData({ wzStep: (e.detail && e.detail.step) || 1 });
+  },
+
+  onWizardDone: function () {
+    this.setData({ wizardOn: false });
+    wx.showToast({ title: '收拾好了', icon: 'none' });
+    this.load();
+  },
+
+  /**
+   * 关掉向导 = 这次不弄了。**绝不写 `setup_done`** —— 那是首启页的状态，
+   * 这里顺手置位会把还没见过引导的人永久挡在外面（§21.12 八 D 第 3 条）。
+   */
+  closeWizard: function () {
+    this.setData({ wizardOn: false });
+    this.load();
   },
 
   // ==============================
@@ -144,7 +204,19 @@ Page({
           ungrouped: self.decorateCabs(grouped.ungrouped, counts),
           ungroupedCount: grouped.ungroupedCount,
           total: grouped.total,
-          roomCount: (rooms || []).length
+          roomCount: (rooms || []).length,
+          // 向导要的是**后端原始行**（认领内置柜子看 is_builtin / room_id / keys），
+          // 不能拿页面加工过的 groups / defs
+          existingContainers: defs || [],
+          existingRooms: (rooms || []).map(function (row) {
+            return {
+              id: row.id,
+              name: row.name,
+              icon: row.icon,
+              sortOrder: row.sort_order || 0,
+              isBuiltin: !!row.is_builtin
+            };
+          })
         });
 
         // 从柜内返回时关键词还在：数据换了（可能刚改过名字）要把结果重算一遍
@@ -261,10 +333,23 @@ Page({
   // ==============================
 
   onOpenContainer: function (e) {
+    // 长按刚触发过：部分机型在 longpress 之后还会补一个 tap，
+    // 不吞掉就会同时 push 两个页面（看里面 + 编辑）
+    if (Date.now() - (this._lpAt || 0) < 600) return;
     var id = e.currentTarget.dataset.id;
     if (!id) return;
     wx.navigateTo({
       url: '/pages/storage/containers/containers?open=' + encodeURIComponent(id)
+    });
+  },
+
+  /** 长按容器小块 = 直接进编辑面板（改名 / 层数 / 关键字 / 换房间），不用先进柜子 */
+  onEditContainer: function (e) {
+    var id = e.currentTarget.dataset.id;
+    if (!id) return;
+    this._lpAt = Date.now();
+    wx.navigateTo({
+      url: '/pages/storage/containers/containers?edit=' + encodeURIComponent(id)
     });
   },
 
@@ -353,7 +438,7 @@ Page({
     wx.showModal({
       title: '删除「' + name + '」',
       content: count
-        ? '里面的 ' + count + ' 个柜子会回到「未分组」，东西一件都不会丢。'
+        ? '里面的 ' + count + ' 个容器会回到「未分组」，东西一件都不会丢。'
         : '这个房间还空着，删掉不影响任何东西。',
       confirmText: '删除',
       confirmColor: '#d9534f',

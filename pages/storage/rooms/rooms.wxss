@@ -170,6 +170,28 @@
   margin-top: var(--sp-4);
 }
 
+/* 整理向导入口：整行、但不是主按钮 —— 它是「偶尔用一次」的动作，
+   日常路径是「点容器」和「搜索」，别跟它们抢注意力 */
+.open-wizard {
+  margin-top: var(--sp-2);
+}
+
+/* ---------------- 整理向导层 ---------------- */
+
+/* 整屏盖住页面（含导航）：向导自己带一条导航，页面导航此时不该还能点。
+   组件根节点是 `:host{flex:1}`，所以这一层必须是纵向 flex 并且自己有高度 */
+.wz-layer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-page);
+}
+
 /* 页面底部的轻量入口：清单页要留着，但不该跟「新建房间」抢注意力 */
 .foot-links {
   margin-top: var(--sp-3);
