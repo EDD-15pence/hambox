@@ -199,6 +199,38 @@ function needsSetup(containers, rooms) {
   return containers.every(function (c) { return !!c && c.is_builtin === true; });
 }
 
+/**
+ * 批量解析结果 → 卡片数据。
+ *
+ * 语音面板与快速记录页共用这一份：两处各写一份迟早字段对不上
+ * （1.3.13 权限守卫批量改漏一级就是同一类问题）。
+ *
+ * `_snap` 留住"解析原来的样子"，保存/取消时写识别日志用：
+ * 用户改过的字段只有和这份对比才看得出来。
+ */
+function batchItemOf(r) {
+  return {
+    // wx:key 用它：删中间一条时若用 index，输入框会把上一行的值留在原位
+    _id: 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    name: r.name,
+    category: r.categoryId,
+    categoryName: r.categoryName,
+    quantity: r.quantity,
+    unit: r.unit || '个',
+    location: r.location || '',
+    produceDate: r.produceDate || '',
+    expireDate: r.expireDate || '',
+    _snap: {
+      name: r.name,
+      quantity: r.quantity,
+      unit: r.unit,
+      location: r.location,
+      expireDate: r.expireDate,
+      category: r.categoryId
+    }
+  };
+}
+
 // ==============================
 // 导出
 // ==============================
@@ -229,5 +261,8 @@ module.exports = {
   SETUP_KEY: SETUP_KEY,
   getSetupState: getSetupState,
   setSetupState: setSetupState,
-  needsSetup: needsSetup
+  needsSetup: needsSetup,
+
+  // 批量解析结果 → 卡片数据
+  batchItemOf: batchItemOf
 };

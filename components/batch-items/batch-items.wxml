@@ -1,0 +1,61 @@
+<!-- 批量解析结果：一句话拆成 N 条，逐条可改，删掉说重的 -->
+<view class="bi-list">
+  <view class="bi-card" wx:for="{{items}}" wx:key="_id">
+    <view class="bi-card__head">
+      <text class="bi-card__no">{{index + 1}}</text>
+      <input
+        class="bi-card__name"
+        value="{{item.name}}"
+        data-index="{{index}}"
+        data-field="name"
+        placeholder="物品名称"
+        placeholder-class="ui-placeholder"
+        cursor-spacing="24"
+        bindinput="onInput" />
+      <text class="bi-card__del" data-index="{{index}}" catchtap="onRemove">删除</text>
+    </view>
+
+    <view class="bi-card__meta">
+      <view class="bi-chip">
+        <input
+          class="bi-chip__qty"
+          type="digit"
+          value="{{item.quantity}}"
+          data-index="{{index}}"
+          data-field="quantity"
+          cursor-spacing="24"
+          bindinput="onInput" />
+        <picker
+          range="{{units}}"
+          data-index="{{index}}"
+          bindchange="onUnit"
+          catchtap="noop">
+          <text class="bi-chip__unit">{{item.unit || '个'}}</text>
+        </picker>
+      </view>
+
+      <picker
+        mode="date"
+        value="{{item.expireDate}}"
+        data-index="{{index}}"
+        bindchange="onExpire">
+        <text class="bi-chip__date {{item.expireDate ? '' : 'is-empty'}}">{{item.expireDate ? '过期 ' + item.expireDate : '未设过期日'}}</text>
+      </picker>
+
+      <text wx:if="{{item.categoryName}}" class="bi-chip__cat">{{item.categoryName}}</text>
+    </view>
+
+    <view class="bi-card__loc">
+      <text class="bi-card__loc-label">位置</text>
+      <input
+        class="bi-card__loc-input"
+        value="{{item.location}}"
+        data-index="{{index}}"
+        data-field="location"
+        placeholder="没说就不填"
+        placeholder-class="ui-placeholder"
+        cursor-spacing="24"
+        bindinput="onInput" />
+    </view>
+  </view>
+</view>

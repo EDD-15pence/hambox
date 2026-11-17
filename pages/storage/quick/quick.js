@@ -79,6 +79,10 @@ Page({
     recording: false,
     voiceAvailable: false,
     inputFocus: true,
+    // 一句话说了多件：批量卡列表（此时不显示单件表单）
+    batchMode: false,
+    batchItems: [],
+    batchSaving: false,
     // 语音识别后按历史词库纠正过的用词，给个轻提示，避免用户觉得「我明明没说错」
     fixNote: '',
     // 从容器页进来时预填的位置（冰箱冷藏 / 药箱…），空串表示从别处进来的
@@ -306,16 +310,42 @@ Page({
         statusText: '',
         daysLeft: null,
         needName: false,
-        focusName: false
+        focusName: false,
+        batchMode: false,
+        batchItems: []
       });
       return;
     }
     // 动态位置词（RM-05）：容器名 / keys / 房间名 / 房间+容器，让
     // 「阳台柜 两盒药」这种没说「放」的口语也能解析出位置
-    var result = quickParse.parseQuickInput(raw, {
+    var opts = {
       today: this.data.todayText,
       locations: (this._lexicon && this._lexicon.parseLocations) || []
-    });
+    };
+
+    // 说了多件就出批量卡：一句话拆成 N 条，逐条可改
+    var batch = quickParse.parseQuickBatch(raw, opts);
+    if (batch.count > 1) {
+      var preset = this._presetLocation || '';
+      this.setData({
+        parsed: true,
+        batchMode: true,
+        batchItems: batch.items.map(function (r) {
+          var it = storageUtils.batchItemOf(r);
+          // 从柜子里进来的：没说位置的那几件仍落到这个柜子
+          if (!it.location && preset) it.location = preset;
+          return it;
+        }),
+        missing: [],
+        needName: false,
+        focusName: false,
+        statusText: '',
+        daysLeft: null
+      });
+      return;
+    }
+
+    var result = batch.items[0];
     // 口语里说了位置就听话里的，没说才用从容器带过来的预填值
     var location = result.location || this._presetLocation || '';
     // 留住"解析成了什么"，保存时和用户改后的值对比，写进识别日志
@@ -342,6 +372,8 @@ Page({
     this.setData({
       draft: draft,
       parsed: true,
+      batchMode: false,
+      batchItems: [],
       missing: result.missing,
       // 只提示、不抢焦点：用户可能还在上面那个框里打字
       needName: needName,
@@ -464,6 +496,128 @@ Page({
     // 顶部输入框让出焦点，否则两个 focus 会打架、键盘落到上面去
     this.setData({ needName: true, focusName: false, inputFocus: false });
     setTimeout(function () { self.setData({ focusName: true }); }, 80);
+  },
+
+  // ==============================
+  // 批量（一句话说了多件）
+  // ==============================
+  onBatchEdit: function (e) {
+    var d = e.detail;
+    var patch = {};
+    patch['batchItems[' + d.index + '].' + d.field] = d.value;
+    this.setData(patch);
+  },
+
+  onBatchRemove: function (e) {
+    var list = this.data.batchItems.slice();
+    list.splice(e.detail.index, 1);
+    if (!list.length) {
+      // 全删完就退回"重新说"，别留一个「全部添加 0 件」
+      this.setData({ batchMode: false, batchItems: [], parsed: false });
+      return;
+    }
+    this.setData({ batchItems: list });
+  },
+
+  /**
+   * 批量保存：串行发，一件失败不影响其余。
+   * 为什么串行：后端写 SQLite，并发 save 容易打成一团，件数又本来就不多。
+   */
+  onSaveBatch: function () {
+    var self = this;
+    if (this.data.batchSaving) return;
+
+    var items = (this.data.batchItems || []).filter(function (it) {
+      return (it.name || '').trim();
+    });
+    if (!items.length) {
+      wx.showToast({ title: '至少给一件填个名称', icon: 'none' });
+      return;
+    }
+
+    this.setData({ batchSaving: true });
+    wx.showLoading({ title: '保存中', mask: true });
+
+    var ok = 0;
+    var failed = 0;
+    var chain = Promise.resolve();
+
+    items.forEach(function (it) {
+      chain = chain.then(function () {
+        var name = (it.name || '').trim();
+        var location = (it.location || '').trim();
+        return api.createItem({
+          name: name,
+          category: it.category,
+          quantity: Number(it.quantity) || 1,
+          unit: it.unit,
+          location: location,
+          produceDate: it.produceDate || '',
+          expireDate: it.expireDate || '',
+          note: self.data.raw
+        }).then(function () {
+          ok++;
+          lexicon.remember(self._lexicon, name, location);
+          voiceLog.append({
+            raw: self._rawText || self.data.raw,
+            fixed: self.data.raw,
+            fixes: self._fixes || [],
+            parsed: it._snap || {},
+            final: {
+              name: name,
+              quantity: Number(it.quantity) || 1,
+              unit: it.unit,
+              location: location,
+              expireDate: it.expireDate,
+              category: it.category
+            },
+            saved: true
+          });
+        }).catch(function () {
+          failed++;
+        });
+      });
+    });
+
+    chain.then(function () {
+      wx.hideLoading();
+      var count = self.data.savedCount;
+      for (var i = 0; i < ok; i++) count = bumpTodayCount();
+
+      self.setData({
+        batchSaving: false,
+        batchMode: false,
+        batchItems: [],
+        raw: '',
+        parsed: false,
+        missing: [],
+        needName: false,
+        focusName: false,
+        statusText: '',
+        daysLeft: null,
+        fixNote: '',
+        savedCount: count
+      });
+
+      if (failed) {
+        wx.showToast({
+          title: ok + ' 件已存，' + failed + ' 件失败',
+          icon: 'none',
+          duration: 2500
+        });
+      } else {
+        wx.showToast({ title: '已记录 ' + ok + ' 件', icon: 'success', duration: 900 });
+      }
+
+      // 从柜子里进来的：记完回去看新块
+      if (ok && self._fromContainer) {
+        setTimeout(function () {
+          wx.navigateBack({
+            fail: function () { wx.redirectTo({ url: '/pages/storage/rooms/rooms' }); }
+          });
+        }, 700);
+      }
+    });
   },
 
   onSave: function () {

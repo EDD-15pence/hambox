@@ -4,6 +4,7 @@
   "navigationBarTextStyle": "black",
   "backgroundColor": "#f6f7fb",
   "usingComponents": {
-    "feedback-fab": "/components/feedback-fab/feedback-fab"
+    "feedback-fab": "/components/feedback-fab/feedback-fab",
+    "batch-items": "/components/batch-items/batch-items"
   }
 }

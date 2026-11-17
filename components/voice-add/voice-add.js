@@ -34,6 +34,9 @@ var MISSING_NAMES = {
   location: '位置'
 };
 
+/** 一条解析结果 → 批量卡的数据（与快速记录页共用 storageUtils.batchItemOf） */
+var batchItemOf = storageUtils.batchItemOf;
+
 Component({
   options: {
     styleIsolation: 'apply-shared'
@@ -54,6 +57,10 @@ Component({
     saving: false,
     raw: '',
     parsed: false,
+    // 一句话说了多件：batchMode 时显示卡片列表，而不是单件表单
+    batchMode: false,
+    batchItems: [],
+    batchSaving: false,
     bars: [0, 1, 2, 3, 4],
     // 键盘高度补偿（§5.5 弹层键盘避让硬规则 2）
     kb: 0,
@@ -169,7 +176,10 @@ Component({
         try { this._session.stop(); } catch (e) { /* 未在录音时 stop 会抛错 */ }
       }
       // 已经解析出来却关掉，说明结果不能用，这类最值得记
-      if (this.data.parsed) this.logVoice(false);
+      if (this.data.parsed) {
+        if (this.data.batchMode) this.logBatch(false);
+        else this.logVoice(false);
+      }
       this.destroySession();
       this.reset();
     },
@@ -233,6 +243,8 @@ Component({
             recognizing: false,
             raw: '',
             parsed: false,
+            batchMode: false,
+            batchItems: [],
             missing: [],
             missingText: ''
           });
@@ -258,15 +270,33 @@ Component({
       }
 
       var fixed = lexicon.correct(text, this._lexicon);
-      var result = quickParse.parseQuickInput(fixed.text, {
+      var opts = {
         today: this.data.todayText,
         // 动态位置词（RM-05）：与 quick 页同一套词表
         locations: (this._lexicon && this._lexicon.parseLocations) || []
-      });
+      };
 
       // 日志要对比"插件原文 / 纠错后 / 解析值 / 用户最终保存值"，先把前三个留住
       this._rawText = text;
       this._fixes = fixed.fixes;
+
+      // 一句话说了多件 → 批量卡；只有一件时仍走原来的单件表单
+      var batch = quickParse.parseQuickBatch(fixed.text, opts);
+      if (batch.count > 1) {
+        this.setData({
+          recording: false,
+          recognizing: false,
+          raw: fixed.text,
+          parsed: true,
+          batchMode: true,
+          batchItems: batch.items.map(batchItemOf),
+          missing: [],
+          missingText: ''
+        });
+        return;
+      }
+
+      var result = quickParse.parseQuickInput(fixed.text, opts);
       this._parsedSnapshot = {
         name: result.name,
         quantity: result.quantity,
@@ -337,11 +367,130 @@ Component({
       });
     },
 
+    /** 批量里一条卡片的最终字段 */
+    finalOf: function (it) {
+      return {
+        name: (it.name || '').trim(),
+        quantity: Number(it.quantity) || 1,
+        unit: it.unit,
+        location: (it.location || '').trim(),
+        expireDate: it.expireDate,
+        category: it.category
+      };
+    },
+
+    /**
+     * 批量日志：一件一条，原文相同。
+     * 拆错成两件、名称是空的，这两种只能从批量日志里看出来。
+     */
+    logBatch: function (saved) {
+      var self = this;
+      (this.data.batchItems || []).forEach(function (it) {
+        voiceLog.append({
+          raw: self._rawText || '',
+          fixed: self.data.raw || '',
+          fixes: self._fixes || [],
+          parsed: it._snap || {},
+          final: saved ? self.finalOf(it) : null,
+          saved: saved
+        });
+      });
+    },
+
+    /* ============ 批量卡片 ============ */
+    onBatchEdit: function (e) {
+      var d = e.detail;
+      var patch = {};
+      patch['batchItems[' + d.index + '].' + d.field] = d.value;
+      this.setData(patch);
+    },
+
+    onBatchRemove: function (e) {
+      var list = this.data.batchItems.slice();
+      list.splice(e.detail.index, 1);
+      if (!list.length) {
+        // 全删完就退回收音，别留一个「全部添加 0 件」的死按钮
+        this.setData({ batchMode: false, batchItems: [], parsed: false, raw: '' });
+        this.startVoice();
+        return;
+      }
+      this.setData({ batchItems: list });
+    },
+
+    /** 批量保存：串行发，避免并发写后端；一件失败不影响其余 */
+    saveBatch: function () {
+      var self = this;
+      if (this.data.batchSaving) return;
+
+      var items = (this.data.batchItems || []).filter(function (it) {
+        return (it.name || '').trim();
+      });
+      if (!items.length) {
+        wx.showToast({ title: '至少给一件填个名称', icon: 'none' });
+        return;
+      }
+
+      this.setData({ batchSaving: true });
+      wx.showLoading({ title: '保存中', mask: true });
+
+      var ok = 0;
+      var failed = 0;
+      var chain = Promise.resolve();
+
+      items.forEach(function (it) {
+        chain = chain.then(function () {
+          var name = (it.name || '').trim();
+          return api.createItem({
+            name: name,
+            category: it.category,
+            quantity: Number(it.quantity) || 1,
+            unit: it.unit,
+            location: (it.location || '').trim(),
+            produceDate: it.produceDate || '',
+            expireDate: it.expireDate || '',
+            note: self.data.raw
+          }).then(function (item) {
+            ok++;
+            lexicon.remember(self._lexicon, name, it.location);
+            voiceLog.append({
+              raw: self._rawText || '',
+              fixed: self.data.raw || '',
+              fixes: self._fixes || [],
+              parsed: it._snap || {},
+              final: self.finalOf(it),
+              saved: true
+            });
+            self.triggerEvent('saved', { item: item });
+          }).catch(function () {
+            failed++;
+          });
+        });
+      });
+
+      chain.then(function () {
+        wx.hideLoading();
+        self.setData({ batchSaving: false });
+        if (failed) {
+          wx.showToast({
+            title: ok + ' 件已存，' + failed + ' 件失败',
+            icon: 'none',
+            duration: 2500
+          });
+        } else {
+          wx.showToast({ title: '已记录 ' + ok + ' 件', icon: 'success', duration: 900 });
+        }
+        self.destroySession();
+        self.reset();
+      });
+    },
+
     /** 重说：清掉结果，回到收音并立刻开录 */
     onRetry: function () {
       this.setData({
         parsed: false,
         raw: '',
+        batchMode: false,
+        batchItems: [],
         missing: [],
         missingText: '',
         statusText: '',
@@ -429,6 +578,10 @@ Component({
     onConfirm: function () {
       var self = this;
       var draft = this.data.draft;
+      if (this.data.batchMode) {
+        this.saveBatch();
+        return;
+      }
       if (this.data.saving) return;
 
       var name = (draft.name || '').trim();
@@ -478,6 +631,9 @@ Component({
         recording: false,
         recognizing: false,
         saving: false,
+        batchMode: false,
+        batchItems: [],
+        batchSaving: false,
         raw: '',
         parsed: false,
         draft: Object.assign({}, EMPTY_DRAFT),

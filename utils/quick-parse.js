@@ -48,7 +48,8 @@ var DEFAULT_UNIT_BY_CATEGORY = {
 
 var UNITS = [
   '瓶', '袋', '盒', '包', '罐', '听', '个', '支', '条', '块', '桶', '提', '箱',
-  '斤', '公斤', 'kg', 'KG', 'Kg', '克', 'g', '升', 'L', 'l', '毫升', 'ml', '片', '粒', '颗'
+  '斤', '公斤', 'kg', 'KG', 'Kg', '克', 'g', '升', 'L', 'l', '毫升', 'ml', '片', '粒', '颗',
+  '把', '捆', '束', '份', '盘'
 ];
 
 var LOCATION_WORDS = [
@@ -336,12 +337,15 @@ function escapeRegExp(s) {
   return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/** 数量+单位 的公共正则：extractQuantity 与批量内部切分共用一套量词表 */
+function buildQtyRegExp() {
+  var unitAlt = UNITS.slice().sort(function (a, b) { return b.length - a.length; }).map(escapeRegExp).join('|');
+  return new RegExp('(半|[0-9]+(?:\\.[0-9]+)?|[零〇一二两三四五六七八九十]+)\\s*(' + unitAlt + ')', 'g');
+}
+
 /** 数量 + 单位；'12瓶'、'三袋'、'一瓶' 都能认 */
 function extractQuantity(rest) {
-  var unitAlt = UNITS.slice().sort(function (a, b) { return b.length - a.length; }).map(escapeRegExp).join('|');
-  // 「半」也是数量：口语里「半袋年糕」「半瓶可乐」很常见，漏了它数量会退回默认 1，
-  // 而且「半袋」整个残留进名称
-  var re = new RegExp('(半|[0-9]+(?:\\.[0-9]+)?|[零〇一二两三四五六七八九十]+)\\s*(' + unitAlt + ')', 'g');
+  var re = buildQtyRegExp();
   var m;
   while ((m = re.exec(rest)) !== null) {
     var num = m[1] === '半' ? 0.5 : toNumber(m[1]);
@@ -473,10 +477,20 @@ function extractLocation(rest, dynamicLocations) {
 
   // 位置词后面是空格 = 口语分句，位置到此为止：
   //   「阳台柜 两盒药」→ 位置「阳台柜」、名称「两盒药」
+  // 后面跟方位词（里/中/上/下）→ 方位词并入位置并在此截断：
+  //   「冰箱里牛奶两瓶」→ 位置「冰箱里」、名称「牛奶」（不截断会吃掉「牛奶」）
   // 后面直接接字 = 定语或延续，交给 trimLocationTail 判断能吃到哪：
   //   「冰箱冷藏的牛奶快过期了」→ 位置「冰箱冷藏」
   var after = rest.charAt(span.end);
-  var cutEnd = (after === ' ' || after === '') ? span.end : span.start + tailText.length;
+  var DIRECTION = '里中内上下前后边面旁';
+  var cutEnd;
+  if (after && DIRECTION.indexOf(after) !== -1) {
+    cutEnd = span.end + 1;
+  } else if (after === ' ' || after === '') {
+    cutEnd = span.end;
+  } else {
+    cutEnd = span.start + tailText.length;
+  }
   var location = rest.slice(span.start, cutEnd).trim();
   if (!location) return { location: '', rest: rest };
 
@@ -597,9 +611,334 @@ function parseQuickInput(text, opts) {
   };
 }
 
+// ============================================================
+// 批量：一句话说多件（「牛奶两瓶、鸡蛋一盒，都放冰箱冷藏」）
+// ============================================================
+
+/**
+ * 拆句用的「轻归一」：只做全角转半角，**不**把逗号变空格。
+ * normalize() 会把 ，、；; 全换成空格，分隔信息就丢了，拆句必须在它之前做。
+ */
+function lightNormalize(text) {
+  var s = String(text == null ? '' : text);
+  s = s.replace(/[\uFF01-\uFF5E]/g, function (ch) {
+    return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
+  });
+  s = s.replace(/\u3000/g, ' ');
+  return s;
+}
+
+/** 段首的补充词：出现这些说明这段是在给上一件补信息，不是新物品 */
+var CONT_PREFIX = /^(保质期|保质|有效期|保鲜期|生产日期|生产|制造日期|制造|出厂日期|出厂|过期|到期|截止|存放|放在|放到|放进|放入|存入|收纳在|收纳于|存放于|收在|置于|搁在|都是|都|一起|全部|均|然后|放|存|买|购|大前天|前天|今天|今日|昨天|昨日)/;
+
+/** 一段文本里出现这些，说明它是属性而不是新物品名 */
+var ATTR_RE = /(保质|有效期|保鲜期|生产|制造|出厂|过期|到期|截止|存放|放在|放到|放进|放入|存入|收在|搁|都|一起|全部|均|买|购|元|块|毛|今天|今日|昨天|昨日|前天|\d)/;
+
+var SHARED_MARK_RE = /(都|一起|全部|均)/g;
+
+/** 这段里有没有「数量+单位」（时间单位不算，那是保质期不是数量） */
+function hasQtyUnit(tok) {
+  return extractQuantity(String(tok || '')).quantity != null;
+}
+
+/**
+ * 语音转写常常一句下来没有标点：`牛奶两瓶鸡蛋一盒都放冰箱`。
+ * 这种在一整段里连说多件的情况，按「第 2 个数量单位」开始切开。
+ *
+ * 语序有两种，切点不同（弄反了会把名称切到下一件去）：
+ *   名称在前「牛奶两瓶 | 鸡蛋一盒」→ 切在第 1 个量词的结尾
+ *   数量在前「两瓶牛奶 | 两盒鸡蛋」→ 切在第 2 个量词的开头
+ *
+ * 只在出现 ≥2 处数量单位时才切，单件（`洗发水两瓶`）原样返回。
+ */
+function splitByQty(text) {
+  var tok = String(text || '');
+  var re = buildQtyRegExp();
+  var spans = [];
+  var m;
+  while ((m = re.exec(tok)) !== null) {
+    // 「6个月」的「个」不是量词，别在这里切
+    if (m[2] === '个' && tok.charAt(m.index + m[0].length) === '月') continue;
+    spans.push({ start: m.index, end: m.index + m[0].length });
+  }
+  if (spans.length < 2) return [tok];
+
+  // 第 1 个量词前还有字 → 是「名称+数量」语序
+  var nameFirst = spans[0].start > 0;
+  var cuts = [];
+  for (var i = 0; i < spans.length - 1; i++) {
+    cuts.push(nameFirst ? spans[i].end : spans[i + 1].start);
+  }
+
+  var segs = [];
+  var from = 0;
+  for (var j = 0; j < cuts.length; j++) {
+    var cut = cuts[j];
+    if (cut <= from || cut >= tok.length) continue;
+    segs.push(tok.slice(from, cut));
+    from = cut;
+  }
+  segs.push(tok.slice(from));
+  return segs.map(function (s) { return s.trim(); }).filter(Boolean);
+}
+
+function hasLocationWord(tok, words) {
+  var s = String(tok || '');
+  for (var i = 0; i < words.length; i++) {
+    if (s.indexOf(words[i]) !== -1) return true;
+  }
+  return false;
+}
+
+/**
+ * 这段是不是「光一个位置」：`阳台柜`、`厨房`、`冰箱冷藏`。
+ *
+ * 用在切件判断上：口语常把位置说在物品前面（「阳台柜 两盒药」），
+ * 这时位置词是下一件的定语，不能因为后面跟了数量就把它们切成两件。
+ */
+function isBareLocation(text, words) {
+  var s = String(text || '');
+  if (!s) return false;
+  var copy = s;
+  for (var i = 0; i < words.length; i++) {
+    copy = copy.split(words[i]).join(' ');
+  }
+  copy = copy.replace(/[的了在和与及\s]/g, '');
+  return copy === '';
+}
+
+/**
+ * 把原文按「硬分隔（；。！？换行）+ 软分隔（逗号、顿号、空格）」切成 token。
+ * hard=true 表示这一 token 前面有硬分隔，是换件更强信号。
+ */
+function tokenize(text) {
+  var s = lightNormalize(text)
+    .replace(/\u3002/g, ';')      // 。
+    .replace(/\u3001/g, ',')      // 、
+    .replace(/[；;]/g, '\u0001')
+    .replace(/[！？!?]/g, '\u0001')
+    .replace(/\r?\n/g, '\u0001');
+
+  var out = [];
+  s.split('\u0001').forEach(function (chunk, ci) {
+    var toks = chunk.split(/[,:\s]+/).filter(Boolean);
+    toks.forEach(function (t, ti) {
+      // 同一 token 里连说多件（无标点）时再切一刀
+      splitByQty(t).forEach(function (piece, pi) {
+        out.push({ text: piece, hard: ci > 0 && ti === 0 && pi === 0 });
+      });
+    });
+  });
+  return out;
+}
+
+/**
+ * 拆成「每件一段文本」。
+ *
+ * 默认是「合并」，只有明确像新物品才切——拆错成两件比合在一起更烦人：
+ *   「牛奶两瓶，保质期7天，放冰箱」 → 保质/放 都是补充，只有 1 件
+ *   「牛奶两瓶、鸡蛋一盒」           → 两段都有数量，切 2 件
+ *   「牛奶两瓶、鸡蛋」               → 上一件已完整，剩下的纯名称也切出去
+ */
+function splitItemTexts(raw, dynamicLocations) {
+  var toks = tokenize(raw);
+  var words = locationWordsOf(dynamicLocations).concat(LOCATION_WORDS);
+  var out = [];
+  var cur = '';
+
+  function push() {
+    var t = String(cur || '').trim();
+    // 只剩「帮我记一下」这种口头语的段直接丢掉，别让它变成一张空卡
+    if (t && cleanupName(stripFillers(t))) out.push(t);
+    cur = '';
+  }
+
+  for (var i = 0; i < toks.length; i++) {
+    var t = toks[i];
+    var text = t.text;
+
+    if (!cur) { cur = text; continue; }
+
+    // 1. 明显是补充：保质期 / 生产日期 / 「都放…」
+    if (CONT_PREFIX.test(text) || (ATTR_RE.test(text) && !hasQtyUnit(text))) {
+      cur = cur + ' ' + text;
+      continue;
+    }
+
+    var prevComplete = hasQtyUnit(cur);
+
+    // 2. 位置词：上一件已报全 → 它是下一件的定语（「…两盒药」「厨房柜…」）
+    if (prevComplete && hasLocationWord(text, words)) {
+      push();
+      cur = text;
+      continue;
+    }
+
+    // 3. 自带数量单位 → 新的一件；但前面只是光一个位置时，它和位置是同一件
+    if (hasQtyUnit(text)) {
+      if (isBareLocation(cur, words)) {
+        cur = cur + ' ' + text;
+      } else {
+        push();
+        cur = text;
+      }
+      continue;
+    }
+
+    // 4. 上一件已经报全（有数量），这段又不像属性、不像位置 → 大概率是下一件的名字
+    if (prevComplete && !hasLocationWord(text, words) && text.length <= 10) {
+      push();
+      cur = text;
+      continue;
+    }
+
+    // 5. 硬分隔也切（「牛奶两瓶。鸡蛋一盒。」）
+    if (t.hard) {
+      push();
+      cur = text;
+      continue;
+    }
+
+    cur = cur + ' ' + text;
+  }
+  push();
+  return out;
+}
+
+/**
+ * 把「都放冰箱冷藏」这类共享尾巴从一件里剥出来。
+ * 返回 { self: 物品那部分, shared: 共享那部分 }
+ */
+function splitShared(part, words) {
+  var s = String(part || '');
+  var m;
+  SHARED_MARK_RE.lastIndex = 0;
+  while ((m = SHARED_MARK_RE.exec(s)) !== null) {
+    if (m.index === 0) continue;
+    var self = s.slice(0, m.index).trim();
+    var shared = s.slice(m.index).trim();
+    if (!self) continue;
+    // 共享段得真的带位置或日期，否则「都是酸奶」这种「都」不该拆
+    var signal = /(放|存|收|搁|保质|有效期|过期|到期|\d|冷藏|冷冻)/.test(shared) ||
+      hasLocationWord(shared, words || LOCATION_WORDS);
+    if (!signal) continue;
+    return { self: self, shared: shared };
+  }
+  return { self: s, shared: '' };
+}
+
+function recomputeMissing(it) {
+  var missing = [];
+  if (!it.produceDate) missing.push('produceDate');
+  if (!it.shelfLifeMonths && !it.shelfLifeDays) missing.push('shelfLife');
+  if (!it.location) missing.push('location');
+  it.missing = missing;
+  return it;
+}
+
+/** 拆出来的条数上限：一段话能说 12 件已经很夸张，再多基本是长文本误用 */
+var MAX_BATCH = 12;
+
+/**
+ * 批量解析：一句话里说了多件东西 → 拆成多条解析结果。
+ *
+ * 没有多处物品时返回 1 条，调用方可以直接按单件处理（不用判断「要不要显示批量 UI」）。
+ *
+ * @param {string} text
+ * @param {{today?: string, locations?: Array}} [opts]
+ * @returns {{raw: string, items: Array, shared: Object|null, count: number}}
+ */
+function parseQuickBatch(text, opts) {
+  var raw = normalize(text);
+  var locations = opts && opts.locations;
+  var words = locationWordsOf(locations).concat(LOCATION_WORDS);
+  var parts = splitItemTexts(text, locations);
+
+  var selfParts = [];
+  var sharedTexts = [];
+  parts.forEach(function (p) {
+    var sp = splitShared(p, words);
+    if (sp.self) selfParts.push(sp.self);
+    if (sp.shared) sharedTexts.push(sp.shared);
+  });
+
+  // 整句只有共享段（比如只说了「都放冰箱冷藏」）：退回单件逻辑，别造出空件
+  if (!selfParts.length) {
+    return { raw: raw, items: [parseQuickInput(text, opts)], shared: null, count: 1 };
+  }
+
+  var shared = null;
+  if (sharedTexts.length) {
+    var sp2 = parseQuickInput(sharedTexts.join(' '), opts);
+    // 共享段只取「能共享」的字段；名称一定是噪声（"都放冰箱冷藏" 里没有物品）
+    shared = {
+      location: sp2.location,
+      produceDate: sp2.produceDate,
+      expireDate: sp2.expireDate,
+      shelfLifeMonths: sp2.shelfLifeMonths,
+      shelfLifeDays: sp2.shelfLifeDays,
+      shelfLifeText: sp2.shelfLifeText
+    };
+  }
+
+  var items = [];
+  var lastLocation = '';
+  selfParts.slice(0, MAX_BATCH).forEach(function (p) {
+    var it = parseQuickInput(p, opts);
+    if (!it.name) return;   // 拆出来的碎片（只剩「还有」之类）直接丢掉
+
+    // 位置：自己说了听自己的 > 共享段（用户明说"都"） > 上一件（连说同一柜子）
+    if (!it.location) {
+      if (shared && shared.location) it.location = shared.location;
+      else if (lastLocation) it.location = lastLocation;
+    }
+
+    // 日期同理，但只补空缺，不覆盖自己说的
+    if (shared) {
+      if (!it.produceDate && shared.produceDate) it.produceDate = shared.produceDate;
+      if (!it.shelfLifeMonths && !it.shelfLifeDays) {
+        it.shelfLifeMonths = shared.shelfLifeMonths;
+        it.shelfLifeDays = shared.shelfLifeDays;
+        it.shelfLifeText = shared.shelfLifeText;
+      }
+      if (!it.expireDate && shared.expireDate) it.expireDate = shared.expireDate;
+    }
+
+    recomputeMissing(it);
+    items.push(it);
+    if (it.location) lastLocation = it.location;
+  });
+
+  if (!items.length) {
+    return { raw: raw, items: [parseQuickInput(text, opts)], shared: null, count: 1 };
+  }
+
+  // 口语习惯：「三袋薯片、两瓶可乐、一盒巧克力，放客厅茶几」——
+  // 位置只报在最后一件，前面几件其实也是这儿。只有「前面全没位置」时才回填，
+  // 免得把「牛奶放冰箱、鸡蛋放阳台」这种各说各的盖掉
+  if (items.length > 1) {
+    var tailLoc = '';
+    for (var k = items.length - 1; k >= 0; k--) {
+      if (items[k].location) { tailLoc = items[k].location; break; }
+    }
+    var anyBefore = items.slice(0, -1).some(function (it) { return it.location; });
+    if (tailLoc && !anyBefore) {
+      items.forEach(function (it) {
+        if (!it.location) it.location = tailLoc;
+        recomputeMissing(it);
+      });
+    }
+  }
+
+  return { raw: raw, items: items, shared: shared, count: items.length };
+}
+
 module.exports = {
   parseQuickInput: parseQuickInput,
+  parseQuickBatch: parseQuickBatch,
+  splitItemTexts: splitItemTexts,
   normalize: normalize,
+  lightNormalize: lightNormalize,
   stripFillers: stripFillers,
   guessCategory: guessCategory,
   toNumber: toNumber,

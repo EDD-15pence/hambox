@@ -281,6 +281,16 @@
   color: var(--warning);
 }
 
+/* ============ 批量卡片 ============ */
+.va-batch-hint {
+  padding: 0 var(--sp-1) var(--sp-2);
+}
+
+.va-batch-hint__text {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
 /* ============ 底部操作 ============ */
 .va-footer {
   display: flex;

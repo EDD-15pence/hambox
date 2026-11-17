@@ -264,5 +264,102 @@ r = parseWith('提醒我卧室衣柜的毛衣快过期了', DYN);
 check('动态定语·位置', r.location, '卧室衣柜');
 check('动态定语·名称', r.name, '毛衣');
 
+// ============================================================
+// 批量：一句话说多件
+// ============================================================
+
+function batch(text, locations) {
+  return P.parseQuickBatch(text, { today: TODAY, locations: locations || [] });
+}
+
+// 1. 共享尾部：两句都放冰箱冷藏
+var b = batch('牛奶两瓶、鸡蛋一盒，都放冰箱冷藏');
+check('批量·件数', b.count, 2);
+check('批量·名称1', b.items[0].name, '牛奶');
+check('批量·数量1', b.items[0].quantity, 2);
+check('批量·名称2', b.items[1].name, '鸡蛋');
+check('批量·共享位置1', b.items[0].location, '冰箱冷藏');
+check('批量·共享位置2', b.items[1].location, '冰箱冷藏');
+
+// 2. 各自带日期和位置（硬分隔「，」+ 位置）
+b = batch('可乐 生产日期9月1日 保质期9个月 放厨房柜子，薯片三袋放客厅茶几');
+check('批量·各自位置', b.count, 2);
+check('批量·可乐位置', b.items[0].location, '厨房柜子');
+check('批量·可乐过期日', b.items[0].expireDate, '2027-06-01');
+check('批量·薯片名称', b.items[1].name, '薯片');
+check('批量·薯片数量', b.items[1].quantity, 3);
+check('批量·薯片位置', b.items[1].location, '客厅茶几');
+
+// 3. 分号 + 「还有」开头，各自保质期
+b = batch('今天买了两瓶牛奶，保质期7天，放冰箱；还有一盒鸡蛋，保质期30天，放冰箱');
+check('批量·分号件数', b.count, 2);
+check('批量·牛奶', b.items[0].name, '牛奶');
+check('批量·牛奶过期', b.items[0].expireDate, '2026-11-05');
+check('批量·鸡蛋', b.items[1].name, '鸡蛋');
+check('批量·鸡蛋过期', b.items[1].expireDate, '2026-11-28');
+
+// 4. 一键回归：只有一件时不许被拆
+b = batch('可乐 生产日期9月1日 保质期9个月 放厨房柜子');
+check('批量·单件件数', b.count, 1);
+check('批量·单件名称', b.items[0].name, '可乐');
+check('批量·单件位置', b.items[0].location, '厨房柜子');
+
+// 5. 后一件没说位置 → 继承上一件
+b = batch('牛奶两瓶放冰箱冷藏，鸡蛋一盒');
+check('批量·继承件数', b.count, 2);
+check('批量·继承位置', b.items[1].location, '冰箱冷藏');
+
+// 6. 纯名称并列（后一件没有数量词）
+b = batch('牛奶两瓶、鸡蛋');
+check('批量·无数量件数', b.count, 2);
+check('批量·无数量名称', b.items[1].name, '鸡蛋');
+
+// 7. 动态词表：没有「放」也能按容器切开
+b = batch('阳台柜 两盒药，厨房柜 三袋米', ['阳台柜', '厨房柜']);
+check('批量·动态词件数', b.count, 2);
+check('批量·动态词位置1', b.items[0].location, '阳台柜');
+check('批量·动态词位置2', b.items[1].location, '厨房柜');
+
+// 8. 一句话里只有一个物品、一段共享尾巴 —— 不许拆成两件
+b = batch('牛奶两瓶 都放冰箱冷藏');
+check('批量·共享不拆件', b.count, 1);
+check('批量·共享不拆名称', b.items[0].name, '牛奶');
+check('批量·共享不拆位置', b.items[0].location, '冰箱冷藏');
+
+// 9. 「都是酸奶」里的「都」不是共享位置，别把名称切掉
+b = batch('两瓶牛奶、一盒酸奶，都是冷藏的');
+check('批量·都字不误拆', b.items[1].name, '酸奶');
+
+// 10. 语音转写没标点，一句连说两件：按第 2 个量词切
+b = batch('牛奶两瓶鸡蛋一盒都放冰箱冷藏');
+check('无标点·件数', b.count, 2);
+check('无标点·名称1', b.items[0].name, '牛奶');
+check('无标点·名称2', b.items[1].name, '鸡蛋');
+check('无标点·位置', b.items[1].location, '冰箱冷藏');
+
+// 11. 数量在前的语序（两瓶牛奶 | 两盒鸡蛋），切点不能落到名称后面
+b = batch('两瓶牛奶两盒鸡蛋');
+check('数量前置·件数', b.count, 2);
+check('数量前置·名称1', b.items[0].name, '牛奶');
+check('数量前置·数量1', b.items[0].quantity, 2);
+check('数量前置·名称2', b.items[1].name, '鸡蛋');
+check('数量前置·单位2', b.items[1].unit, '盒');
+
+// 12. 「位置+名称+数量」：位置到方位词为止，别把名称吃进位置
+r = parse('冰箱里牛奶两瓶');
+check('方位词·位置', r.location, '冰箱里');
+check('方位词·名称', r.name, '牛奶');
+
+// 13. 口头语单独成段时不许留空件
+b = batch('帮我记一下：冰箱里牛奶两瓶、鸡蛋一盒');
+check('口头语·件数', b.count, 2);
+check('口头语·名称1', b.items[0].name, '牛奶');
+
+// 14. 量词「把」
+r = parse('香蕉一把 放餐桌');
+check('把·数量', r.quantity, 1);
+check('把·单位', r.unit, '把');
+check('把·名称', r.name, '香蕉');
+
 console.log(failures === 0 ? '\nALL PASS' : '\n' + failures + ' 项失败');
 process.exit(failures === 0 ? 0 : 1);

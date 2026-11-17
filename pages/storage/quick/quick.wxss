@@ -157,6 +157,15 @@
   margin-top: var(--sp-3);
 }
 
+/* 批量卡列表的说明行 */
+.batch-hint {
+  display: block;
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-tiny);
+  line-height: 1.5;
+  color: var(--text-3);
+}
+
 /* ---------- 字段（与编辑页同一套） ---------- */
 .field {
   margin-bottom: var(--sp-2);

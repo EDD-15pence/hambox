@@ -1,0 +1,124 @@
+/* 批量解析结果卡片列表 */
+
+.bi-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.bi-card {
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-card);
+}
+
+/* 序号 + 名称 + 删除 */
+.bi-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.bi-card__no {
+  flex: none;
+  width: 40rpx;
+  height: 40rpx;
+  line-height: 40rpx;
+  text-align: center;
+  border-radius: 50%;
+  font-size: var(--fs-tiny);
+  color: var(--primary-text);
+  background: var(--primary-weak);
+}
+
+.bi-card__name {
+  flex: 1;
+  min-width: 0;
+  height: 64rpx;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.bi-card__del {
+  flex: none;
+  padding: var(--sp-1) 0 var(--sp-1) var(--sp-2);
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+/* 数量 / 过期日 / 分类 一行 */
+.bi-card__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+}
+
+.bi-chip {
+  display: flex;
+  align-items: center;
+  gap: 2rpx;
+  height: 52rpx;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-pill);
+  background: var(--bg-sunken);
+}
+
+.bi-chip__qty {
+  width: 72rpx;
+  height: 52rpx;
+  text-align: center;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.bi-chip__unit {
+  font-size: var(--fs-caption);
+  color: var(--text-2);
+}
+
+.bi-chip__date {
+  display: block;
+  height: 52rpx;
+  line-height: 52rpx;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-tiny);
+  color: var(--text-2);
+  background: var(--bg-sunken);
+}
+
+.bi-chip__date.is-empty {
+  color: var(--text-3);
+}
+
+.bi-chip__cat {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+/* 位置 */
+.bi-card__loc {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+}
+
+.bi-card__loc-label {
+  flex: none;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.bi-card__loc-input {
+  flex: 1;
+  min-width: 0;
+  height: 52rpx;
+  font-size: var(--fs-caption);
+  color: var(--text-1);
+}

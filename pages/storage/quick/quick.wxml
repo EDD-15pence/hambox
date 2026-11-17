@@ -54,8 +54,31 @@
       <text class="saved__hint">{{presetLocation ? '记完自动回到柜子' : '接着记下一条就行，不用返回'}}</text>
     </view>
 
-    <!-- 解析结果 -->
-    <view wx:if="{{parsed}}" class="result">
+    <!-- 批量结果：一句话说了多件，拆成 N 条逐条确认 -->
+    <view wx:if="{{parsed && batchMode}}" class="result">
+      <view class="result__head">
+        <text class="result__title">听出 {{batchItems.length}} 件</text>
+        <text class="ui-badge">逐条可改</text>
+      </view>
+
+      <text class="batch-hint">删掉说重的那件；想整段重说，直接改上面那句话</text>
+
+      <batch-items
+        items="{{batchItems}}"
+        units="{{presetUnits}}"
+        bind:edit="onBatchEdit"
+        bind:remove="onBatchRemove" />
+
+      <view class="result__actions">
+        <button
+          class="ui-btn is-block is-primary"
+          bindtap="onSaveBatch"
+          disabled="{{batchSaving}}">{{batchSaving ? '保存中…' : '全部添加 ' + batchItems.length + ' 件'}}</button>
+      </view>
+    </view>
+
+    <!-- 解析结果（单件） -->
+    <view wx:if="{{parsed && !batchMode}}" class="result">
       <!-- 兜底：整句里没认出名称时，别让用户对着空框发呆 -->
       <view wx:if="{{needName}}" class="fallback">
         <text class="fallback__title">这次没抓出是哪件东西</text>

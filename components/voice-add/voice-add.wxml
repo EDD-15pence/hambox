@@ -54,7 +54,27 @@
       </view>
     </view>
 
-    <!-- 阶段二：确认 -->
+    <!-- 阶段二：一句话说了多件 → 卡片列表 -->
+    <block wx:elif="{{batchMode}}">
+      <scroll-view scroll-y class="va-scroll">
+        <view class="va-raw">
+          <text class="va-raw__text">{{raw}}</text>
+          <text class="va-raw__again" bindtap="onRetry">重新说</text>
+        </view>
+
+        <view class="va-batch-hint">
+          <text class="va-batch-hint__text">听出 {{batchItems.length}} 件，逐条改一下再全部添加</text>
+        </view>
+
+        <batch-items
+          items="{{batchItems}}"
+          units="{{units}}"
+          bind:edit="onBatchEdit"
+          bind:remove="onBatchRemove" />
+      </scroll-view>
+    </block>
+
+    <!-- 阶段三：确认（单件） -->
     <scroll-view wx:else scroll-y class="va-scroll">
       <view class="va-raw">
         <text class="va-raw__text">{{raw}}</text>
@@ -136,11 +156,11 @@
     </scroll-view>
 
     <view class="va-footer">
-      <button wx:if="{{!parsed}}" class="ui-btn is-ghost" bindtap="onClose">取消</button>
+      <button wx:if="{{!parsed && !batchMode}}" class="ui-btn is-ghost" bindtap="onClose">取消</button>
       <button
         class="ui-btn is-primary"
         bindtap="onConfirm"
-        disabled="{{!parsed || saving}}">{{saving ? '保存中…' : '确认添加'}}</button>
+        disabled="{{(!parsed && !batchMode) || saving || batchSaving}}">{{batchSaving ? '保存中…' : (batchMode ? '全部添加 ' + batchItems.length + ' 件' : '确认添加')}}</button>
     </view>
   </view>
 </view>
