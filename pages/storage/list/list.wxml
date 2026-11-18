@@ -205,6 +205,15 @@
   <!-- 语音记账：抬到添加按钮上方，避免两个悬浮球叠在一起 -->
   <voice-add fab-offset="{{128}}" bind:saved="onVoiceSaved" />
 
+  <!-- 撤销条：减到 0 就是删了，给 5 秒反悔（S-14）。抬到两个悬浮球上面 -->
+  <undo-bar
+    visible="{{undoVisible}}"
+    token="{{undoToken}}"
+    text="{{undoText}}"
+    bottom="{{248}}"
+    bind:undo="onUndoItem"
+    bind:expire="onUndoExpire" />
+
   <!-- 删除确认 -->
   <view wx:if="{{showDeleteModal}}" class="ui-mask" bindtap="onCancelDelete">
     <view class="ui-sheet" catchtap="stopPropagation">

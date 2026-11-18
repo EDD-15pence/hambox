@@ -1,0 +1,13 @@
+<!--
+  撤销条：删完浮在底部 5 秒，点一下把刚才删的恢复回来。
+  不占位（position: fixed），所以列表 / 柜子墙都不用为它留白。
+-->
+<view
+  wx:if="{{visible}}"
+  class="ub"
+  style="bottom: calc({{bottom}}rpx + env(safe-area-inset-bottom))">
+  <text class="ub__text">{{text}}</text>
+  <view class="ub__btn" hover-class="ub__btn--active" hover-stay-time="60" bindtap="onTap">
+    撤销 · {{left}}s
+  </view>
+</view>

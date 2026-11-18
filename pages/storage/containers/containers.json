@@ -2,6 +2,7 @@
   "navigationBarTitleText": "按容器看",
   "usingComponents": {
     "conn-error": "/components/conn-error/conn-error",
-    "feedback-fab": "/components/feedback-fab/feedback-fab"
+    "feedback-fab": "/components/feedback-fab/feedback-fab",
+    "undo-bar": "/components/undo-bar/undo-bar"
   }
 }

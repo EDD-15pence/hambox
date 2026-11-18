@@ -146,7 +146,11 @@ Page({
     // 非空 = 数据来自本地缓存（后端没连上）
     offlineText: '',
     // 拖拽时浮出的「换柜子」胶囊，render 时按当前容器算
-    xferTargets: []
+    xferTargets: [],
+    // 撤销条（S-14）：点「用完了」就删，给 5 秒反悔
+    undoVisible: false,
+    undoToken: 0,
+    undoText: ''
   },
 
   onLoad: function (options) {
@@ -476,6 +480,12 @@ Page({
     var qty = Number(next);
     if (isNaN(qty) || qty < 0) qty = 0;
     qty = Math.round(qty * 10) / 10;
+    // 减到 0 = 用完了：和清单页同一个动作（S-14）。
+    // 不能只写个 0 留着——那样柜子里会永远摆着一件「0 件」的东西占着格子。
+    if (qty === 0) {
+      this.onItemUsedUp();
+      return;
+    }
     item.quantity = qty;
     this.setData({ 'itemEditor.quantity': qty, 'itemEditor.quantityText': String(qty) });
     this.render();
@@ -518,6 +528,12 @@ Page({
       .catch(function (err) {
         var snap = self._itemSnapshot;
         if (!snap || String(snap.id) !== String(id)) return;
+        // 这条已经被「用完了」删掉了：不能再把尸体塞回 _items，
+        // 否则界面上一件已经删掉的东西会诈尸（删除和 PUT 抢跑的窗口很窄但真实存在）
+        var stillThere = (self._items || []).some(function (it) {
+          return String(it.id) === String(id);
+        });
+        if (!stillThere) return;
         self._items = (self._items || []).map(function (it) {
           return String(it.id) === String(id) ? snap : it;
         });
@@ -532,29 +548,68 @@ Page({
       });
   },
 
+  /**
+   * 用完了：删掉 + 5 秒撤销（S-14）。
+   *
+   * 为什么不再弹「确定删掉？」：弹窗 + 5 秒撤销是两道保险，叠起来只让人多点一下。
+   * 删掉后马上能从撤销条捞回来，比拦一道弹窗更快也更敢点。
+   *
+   * 后端是软删，所以撤销回来 id 不变，`item_slots` 里的位次也还在——
+   * 东西会回到柜子里原来那一格，不会掉进「未归位」。
+   */
   onItemUsedUp: function () {
     var self = this;
     var ed = this.data.itemEditor;
     if (!ed) return;
-    wx.showModal({
-      title: '用完了？',
-      content: '「' + ed.name + '」会从库存里删掉',
-      confirmText: '删掉',
-      success: function (res) {
-        if (!res.confirm) return;
-        api.deleteItem(ed.id).then(function () {
-          self._items = (self._items || []).filter(function (it) {
-            return String(it.id) !== String(ed.id);
-          });
-          self.setData({ itemEditor: null });
-          self._itemSnapshot = null;
-          self.render();
-          wx.showToast({ title: '已删掉', icon: 'none' });
-        }).catch(function (err) {
-          wx.showToast({ title: (err && err.message) || '没删掉', icon: 'none' });
-        });
-      }
+    var id = ed.id;
+    // 面板是从 _items 派生的，正常都找得到；万一没找到也留个最小对象，
+    // 免得撤销时读 `undo.item.id` 直接崩
+    var item = this.itemById(id) || { id: id, name: ed.name, quantity: ed.quantity };
+
+    api.deleteItem(id).then(function () {
+      self._items = (self._items || []).filter(function (it) {
+        return String(it.id) !== String(id);
+      });
+      self._undo = { item: item, label: ed.name };
+      self.setData({
+        itemEditor: null,
+        undoVisible: true,
+        undoToken: self.data.undoToken + 1,
+        undoText: '已用完「' + ed.name + '」'
+      });
+      self._itemSnapshot = null;
+      self.render();
+    }).catch(function (err) {
+      wx.showToast({ title: (err && err.message) || '没删掉', icon: 'none' });
     });
+  },
+
+  onUndoItem: function () {
+    var self = this;
+    var undo = this._undo;
+    if (!undo) {
+      this.setData({ undoVisible: false });
+      return;
+    }
+    api.restoreItem(undo.item.id).then(function (fresh) {
+      var restored = Object.assign({}, undo.item, fresh || {});
+      var exists = (self._items || []).some(function (it) {
+        return String(it.id) === String(restored.id);
+      });
+      if (!exists) self._items = (self._items || []).concat([restored]);
+      self._undo = null;
+      self.setData({ undoVisible: false });
+      // render 会按 slots 重新摆格，所以回到的正是原来那一层
+      self.render();
+      wx.showToast({ title: '已恢复', icon: 'none' });
+    }).catch(function (err) {
+      wx.showToast({ title: (err && err.message) || '撤销失败', icon: 'none' });
+    });
+  },
+
+  onUndoExpire: function () {
+    this._undo = null;
+    this.setData({ undoVisible: false });
   },
 
   onGoItemDetail: function () {

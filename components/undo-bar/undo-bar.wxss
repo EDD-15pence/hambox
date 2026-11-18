@@ -1,0 +1,47 @@
+/*
+ * 撤销条
+ * 浮在底部，形状照抄反馈页那条（.fb-bar）——同一类「刚做完一件事，给你 5 秒反悔」，
+ * 长得不一样反而要多学一次。
+ */
+.ub {
+  position: fixed;
+  z-index: 40;
+  left: var(--page-x);
+  right: var(--page-x);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  box-sizing: border-box;
+  height: 96rpx;
+  padding: 0 var(--sp-2) 0 var(--sp-3);
+  border-radius: var(--r-pill);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-float);
+}
+
+.ub__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--fs-caption);
+  color: var(--text-2);
+}
+
+.ub__btn {
+  flex: none;
+  padding: 0 var(--sp-3);
+  height: 64rpx;
+  line-height: 64rpx;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--primary-weak);
+}
+
+.ub__btn--active {
+  background: var(--primary-soft);
+}

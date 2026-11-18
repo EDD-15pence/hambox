@@ -354,6 +354,16 @@ function deleteItem(id) {
   return request('/api/items/' + encodeURIComponent(id), 'DELETE');
 }
 
+/**
+ * 撤销删除（S-14）。
+ *
+ * 后端是软删除，所以回来的是**同一条**（id 不变），`item_slots` 里的柜内位次
+ * 也跟着回来——不是拿缓存重建一个新条目。
+ */
+function restoreItem(id) {
+  return request('/api/items/' + encodeURIComponent(id) + '/restore', 'POST').then(toViewItem);
+}
+
 // ==============================
 // 分类
 // ==============================
@@ -1144,6 +1154,7 @@ module.exports = {
   createItem: createItem,
   updateItem: updateItem,
   deleteItem: deleteItem,
+  restoreItem: restoreItem,
   listCategories: listCategories,
   createCategory: createCategory,
   deleteCategory: deleteCategory,

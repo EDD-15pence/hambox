@@ -511,7 +511,7 @@
               bindblur="onItemQtyBlur" />
             <text class="step__btn" data-delta="1" catchtap="onItemQtyStep">＋</text>
           </view>
-          <text class="field__hint">改完自动保存，不用点确定。减到 0 也不会自动删掉。</text>
+          <text class="field__hint">改完自动保存，不用点确定。减到 0 就当用完了，会删掉，5 秒内能撤销。</text>
         </view>
       </view>
 
@@ -529,6 +529,15 @@
       <view class="pending-bar__ok {{pendingCheckedCount ? '' : 'is-off'}}" bindtap="onPlaceChecked">放进柜子</view>
     </view>
   </view>
+
+  <!-- 撤销条：点「用完了」就是删了，给 5 秒反悔（S-14）。东西按原位次摆回去 -->
+  <undo-bar
+    visible="{{undoVisible}}"
+    token="{{undoToken}}"
+    text="{{undoText}}"
+    bottom="{{112}}"
+    bind:undo="onUndoItem"
+    bind:expire="onUndoExpire" />
 
   <!-- 拖拽时藏起来：底部会浮出「换柜子」条，两个都贴底会挤在一起 -->
   <feedback-fab hidden="{{!!drag}}" spacer="{{false}}" />

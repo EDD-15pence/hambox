@@ -38,6 +38,10 @@ Page({
     showDeleteModal: false,
     deleteTargetId: null,
     deleteTargetName: '',
+    // 撤销条（S-14）：减到 0 / 用完了就删，给 5 秒反悔
+    undoVisible: false,
+    undoToken: 0,
+    undoText: '',
     // 分类管理弹窗
     showCategoryModal: false,
     customCategories: [],
@@ -325,6 +329,13 @@ Page({
     else next = current + 1;
     if (next === current) return;
 
+    // 减到 0 = 用完了，直接删（S-14）。不再留一条 0 件的行，
+    // 理由见 removeItem 的注释。
+    if (next === 0) {
+      this.removeItem(item);
+      return;
+    }
+
     var self = this;
     this.patchQuantity(id, next);
 
@@ -336,6 +347,86 @@ Page({
         self.patchQuantity(id, current);
         wx.showToast({ title: (err && err.message) || '改数量失败', icon: 'none', duration: 2200 });
       });
+  },
+
+  /**
+   * 用完一件：删掉，并给 5 秒撤销（S-14）。
+   *
+   * 为什么不留一条 `quantity = 0` 的记录：买新的会**新建**一条
+   * （后端只按 `client_id` 幂等，不按名字合并），那条 0 件的行永远等不到补货，
+   * 只会一直半透明地占着列表、还照样算进过期统计和柜内格位。
+   *
+   * 后端是软删，所以撤销回来是同一个 id，柜内位次也跟着回来。
+   */
+  removeItem: function (item, name) {
+    var self = this;
+    var id = item.id;
+    var index = -1;
+    var items = this.data.items;
+    for (var i = 0; i < items.length; i++) {
+      if (String(items[i].id) === String(id)) { index = i; break; }
+    }
+    if (index < 0) return;
+
+    var label = name || item.name;
+    // 先乐观移除：点一下就从列表消失，不等网络
+    var rest = items.filter(function (it) {
+      return String(it.id) !== String(id);
+    });
+    this._undo = { index: index, item: item };
+    this.setData({
+      undoVisible: true,
+      undoToken: this.data.undoToken + 1,
+      undoText: '已用完「' + label + '」'
+    });
+    this.applyItemList(rest);
+
+    api.deleteItem(id).catch(function (err) {
+      // 失败就放回原位、收掉撤销条——不能让用户以为已经删了
+      self._undo = null;
+      var back = self.data.items.slice();
+      back.splice(Math.min(index, back.length), 0, item);
+      self.setData({ undoVisible: false });
+      self.applyItemList(back);
+      wx.showToast({ title: (err && err.message) || '删除失败', icon: 'none', duration: 2200 });
+    });
+  },
+
+  onUndoItem: function () {
+    var self = this;
+    var undo = this._undo;
+    if (!undo) {
+      this.setData({ undoVisible: false });
+      return;
+    }
+    api.restoreItem(undo.item.id).then(function (fresh) {
+      var items = self.data.items.slice();
+      var restored = Object.assign({}, undo.item, fresh || {});
+      items.splice(Math.min(undo.index, items.length), 0, restored);
+      self._undo = null;
+      self.setData({ undoVisible: false });
+      self.applyItemList(items);
+      wx.showToast({ title: '已恢复', icon: 'none' });
+    }).catch(function (err) {
+      wx.showToast({ title: (err && err.message) || '撤销失败', icon: 'none' });
+    });
+  },
+
+  /** 5 秒过完：收条子。数据仍在库里，只是不再给撤销入口。 */
+  onUndoExpire: function () {
+    this._undo = null;
+    this.setData({ undoVisible: false });
+  },
+
+  /**
+   * 列表变化后统一重算：分类上的件数、顶部统计、banner、筛选结果。
+   *
+   * 不能只 `setData({ items })` + `applyFilters()` —— 那三样都在 `render()` 里算，
+   * 只改 items 会让「全部 N 件」「过期 N」停在删除前的数字。
+   */
+  applyItemList: function (items) {
+    var cats = (this.data.defaultCategories || []).concat(this.data.customCategories || []);
+    this.render(items, cats, this.data.sortBy);
   },
 
   /** 只改这一条的数量并重排，不整页重拉 */
