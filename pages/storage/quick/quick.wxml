@@ -51,7 +51,7 @@
 
     <view wx:if="{{savedCount > 0}}" class="saved">
       <text class="saved__text">今天已记 {{savedCount}} 条</text>
-      <text class="saved__hint">{{presetLocation ? '记完自动回到柜子' : '接着记下一条就行，不用返回'}}</text>
+      <text class="saved__hint">{{presetLocation ? '记完自动回到容器' : '接着记下一条就行，不用返回'}}</text>
     </view>
 
     <!-- 批量结果：一句话说了多件，拆成 N 条逐条确认 -->

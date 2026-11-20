@@ -172,11 +172,10 @@ Page({
     // 其次是从清单模式切回来时，回到切换前停留的那个柜子（只恢复一次）
     this._restoreActiveId = query.open || storageView.loadActiveContainer();
     if (query.open) {
-      // 房间页点柜子 = 看里面。两个配套：
-      // ① 墙默认不画空柜子，目标柜可能不在 wall 里 → 这一轮强制画全，否则会落在墙上
-      // ② 记下来源，柜内点返回直接回房间页，别又退回一面墙
+      // 房间页点柜子 = 看里面。配套一条：
+      // 记下来源，柜内点返回直接回房间页，别又退回一面墙
+      // （空容器现在一直画在墙上，目标柜不会落空，不再需要「强制画全」）
       this._fromRooms = true;
-      this._forceShowEmpty = true;
     }
     // 在清单页搜了「可乐」再切过来，墙上直接把可乐所在的柜子点亮。
     // 但 `?open=` 是「点某个柜子看里面」，带着旧搜索词会把目标柜过滤掉、又落回墙上
@@ -264,15 +263,13 @@ Page({
   /** 只重算视图，不发请求。搜索、拖拽、整理态切换都走这里 */
   render: function () {
     var pending = this._pending || [];
-    // 有在途要归位、或者正在挑落点时，把空容器也画出来 —— 否则没地方可以拖
+    // 空容器也画出来：房间页展示的是全量容器，墙是同一批数据的另一种看法，
+    // 藏空容器会让「刚建的冰箱」在墙上凭空消失（1.3.25 真机反馈）
     var grouped = containers.groupByContainer(this._items || [], {
       order: this._order || {},
       slots: this._slots || {},
-      // `_forceShowEmpty`：从房间页 `?open=` 进来那一次要能找到目标柜（哪怕是空的），
-      // 画完立刻清掉，避免整面墙一直挂着所有空柜子
-      showEmpty: pending.length > 0 || !!this.data.picking || !!this._forceShowEmpty
+      showEmpty: true
     });
-    this._forceShowEmpty = false;
 
     // 留一份没被搜索过滤的墙，改关键词时不用重新请求
     this._rawWall = grouped.wall;
@@ -385,7 +382,7 @@ Page({
     // 挑选态：点哪个柜子就把这些在途放进去（单件 / 批量走同一条路）
     if (this.data.picking && this.data.picking.length) {
       if (id === containers.UNPLACED.id) {
-        wx.showToast({ title: '挑一个具体的柜子', icon: 'none' });
+        wx.showToast({ title: '挑一个具体的容器', icon: 'none' });
         return;
       }
       var ids = this.data.picking;
@@ -806,7 +803,7 @@ Page({
     var self = this;
     wx.showModal({
       title: '删除容器',
-      content: '只删掉「' + editor.name + '」这个柜子，里面的东西不会丢，会进「未归位」。',
+      content: '只删掉「' + editor.name + '」这个容器，里面的东西不会丢，会进「未归位」。',
       confirmText: '删除',
       confirmColor: '#d9534f',
       success: function (res) {
@@ -886,7 +883,7 @@ Page({
     if (!this.data.pendingSelect) {
       this.setData({
         picking: [ds.id],
-        pickingText: '把「' + (ds.name || '这件') + '」放进哪个柜子？'
+        pickingText: '把「' + (ds.name || '这件') + '」放进哪个容器？'
       });
       this.render();
       return;
@@ -942,7 +939,7 @@ Page({
     });
     this.setData({
       picking: ids,
-      pickingText: '把 ' + ids.length + ' 件放进哪个柜子？'
+      pickingText: '把 ' + ids.length + ' 件放进哪个容器？'
     });
     this.render();
   },
@@ -963,7 +960,7 @@ Page({
     var queue = (ids || []).slice();
     var failed = 0;
     var total = queue.length;
-    wx.showLoading({ title: total > 1 ? '正在放进柜子' : '放进去了', mask: true });
+    wx.showLoading({ title: total > 1 ? '正在放进容器' : '放进去了', mask: true });
 
     function step() {
       if (!queue.length) {
@@ -972,7 +969,7 @@ Page({
         if (failed) {
           wx.showToast({ title: failed + ' 件没放进去', icon: 'none' });
         } else {
-          wx.showToast({ title: total > 1 ? '都放好了' : '已放进柜子', icon: 'none' });
+          wx.showToast({ title: total > 1 ? '都放好了' : '已放进容器', icon: 'none' });
         }
         return;
       }
@@ -1232,7 +1229,7 @@ Page({
     if (!sameContainer) {
       location = containers.presetLocation(toContainer, toZone);
       if (!location) {
-        wx.showToast({ title: '这个柜子还没有归位关键字', icon: 'none' });
+        wx.showToast({ title: '这个容器还没有归位关键字', icon: 'none' });
         return;
       }
     }
@@ -1436,7 +1433,7 @@ Page({
 
     // 拖到「未归位」上是没有意义的：那等于没放
     if (overId === containers.UNPLACED.id) {
-      wx.showToast({ title: '拖到具体的柜子上才算放好', icon: 'none' });
+      wx.showToast({ title: '拖到具体的容器上才算放好', icon: 'none' });
       return;
     }
     this.placePending(this._pdragId, overId, '');

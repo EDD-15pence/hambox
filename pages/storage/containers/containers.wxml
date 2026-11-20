@@ -60,7 +60,7 @@
         <view class="pending__head">
           <text class="pending__title">在路上</text>
           <text class="pending__count num">{{pendingCount}}</text>
-          <text wx:if="{{!pendingSelect}}" class="pending__hint">长按拖进柜子</text>
+          <text wx:if="{{!pendingSelect}}" class="pending__hint">长按拖进容器</text>
           <text wx:else class="pending__hint">点一下勾选</text>
           <text
             wx:if="{{pendingCount > 1}}"
@@ -133,7 +133,7 @@
             <text class="wall-sec__name">{{sec.name}}</text>
             <text wx:if="{{sec.hint}}" class="wall-sec__hint">{{sec.hint}}</text>
           </view>
-          <text class="wall-sec__count">{{sec.isUnplaced ? sec.count + ' 件' : sec.count + ' 个柜子'}}</text>
+          <text class="wall-sec__count">{{sec.isUnplaced ? sec.count + ' 件' : sec.count + ' 个容器'}}</text>
         </view>
 
         <view class="wall {{picking ? 'is-picking' : ''}}">
@@ -221,7 +221,7 @@
 
           <!-- 空房间不藏起来：刚建完房间的人需要看到「柜子没进去」（§21.12 二） -->
           <view wx:if="{{sec.empty}}" class="wall-sec__empty">
-            <text class="wall-sec__empty-text">这个房间还没有柜子</text>
+            <text class="wall-sec__empty-text">这个房间还没有容器</text>
           </view>
           <view
             wx:if="{{sec.empty}}"
@@ -229,7 +229,7 @@
             data-room="{{sec.addRoomId}}"
             bindtap="onAddCabFromWall">
             <text class="cab__plus">＋</text>
-            <text class="cab__addtext">柜子</text>
+            <text class="cab__addtext">容器</text>
           </view>
         </view>
       </block>
@@ -359,7 +359,7 @@
 
   <!-- 拖拽时浮出的「换柜子」条：柜内看不见别的柜子，靠它把东西拖出去 -->
   <view wx:if="{{drag && xferTargets.length}}" class="xfer">
-    <text class="xfer__hint">松手放到别的柜子</text>
+    <text class="xfer__hint">松手放到别的容器</text>
     <scroll-view class="xfer__list" scroll-x enable-flex>
       <view
         wx:for="{{xferTargets}}" wx:key="id"
@@ -467,7 +467,7 @@
             placeholder-class="ui-placeholder"
             maxlength="60"
             bindinput="onEditorKeys" />
-          <text class="field__hint">记东西时位置里出现这些词，就归到这个柜子。</text>
+          <text class="field__hint">记东西时位置里出现这些词，就归到这个容器。</text>
         </view>
       </scroll-view>
 
@@ -526,7 +526,7 @@
     <text class="pending-bar__count">已选 {{pendingCheckedCount}} 件</text>
     <view class="pending-bar__actions">
       <text class="pending-bar__cancel" bindtap="onCancelPendingSelect">取消</text>
-      <view class="pending-bar__ok {{pendingCheckedCount ? '' : 'is-off'}}" bindtap="onPlaceChecked">放进柜子</view>
+      <view class="pending-bar__ok {{pendingCheckedCount ? '' : 'is-off'}}" bindtap="onPlaceChecked">放进容器</view>
     </view>
   </view>
 

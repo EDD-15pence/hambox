@@ -6,7 +6,7 @@
       <block wx:if="{{step === 1}}">
         <view class="lead">
           <text class="lead__title">你家有哪些房间？</text>
-          <text class="lead__desc">勾上就建，已经建过的默认打着勾。不想现在弄就点右上「跳过」——直接进管理视图，已经有的柜子一个都不会动。</text>
+          <text class="lead__desc">勾上就建，已经建过的默认打着勾。不想现在弄就点右上「跳过」——直接进管理视图，已经有的容器一个都不会动。</text>
         </view>
 
         <view class="picks">
@@ -77,7 +77,7 @@
               <input
                 class="ui-input cfg__name"
                 value="{{cab.name}}"
-                placeholder="柜子名字"
+                placeholder="容器名字"
                 placeholder-class="ui-placeholder"
                 maxlength="12"
                 cursor-spacing="24"
@@ -112,7 +112,7 @@
         </view>
 
         <view class="note">
-          <text class="note__text">之后想加房间、搬柜子、改层数，都在这份整理的「管理」里。</text>
+          <text class="note__text">之后想加房间、搬容器、改层数，都在这份整理的「管理」里。</text>
         </view>
       </block>
 
